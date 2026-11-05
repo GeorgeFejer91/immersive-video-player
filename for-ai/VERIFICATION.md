@@ -23,7 +23,11 @@ Updated 2026-11-05. Evidence is scoped to the named surface, not a universal pro
 
 ## Publication
 
-Pending: public repository creation, exact remote SHA, GitHub Actions and live Pages HTML/MP4/browser checks. Update this section after observing them; a local build is not deployment.
+VERIFIED: public repository https://github.com/GeorgeFejer91/immersive-video-player, Pages https://georgefejer91.github.io/immersive-video-player/. Product commit 0ba034fdbf66ff396e73c4e0e07b15a930200506 matched origin/main and Pages deployment 7581683995. Actions run 42083862166 succeeded, including Linux build, asset pins, 28 Node tests and four deterministic browser tests (public-network test is opt-in in CI).
+
+VERIFIED against the published HTTPS site: 5/5 browser tests, including public VDO handshake, scheduled Play/Pause, seek, projection, replacement phone and revocation. Same-machine browser contexts; direct route, SDK RTT 1 ms, one preview-position comparison 0.06629 seconds. This remains bounded desktop-browser evidence.
+
+Live root returned HTTP 200 and expected viewer/controller content; MP4 range bytes=0-63 returned HTTP 206, video/mp4, bytes 0-63/75484266 and ftyp signature. Git object comparisons confirmed exact committed bytes match checked BRSP/adapter/SDK/media files. Documentation receipt follows the product commit; fresh Git/Actions reads identify the current main revision.
 
 ## Open qualification boundaries
 

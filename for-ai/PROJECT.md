@@ -25,11 +25,11 @@ The 2026-11-05 user instruction authorizes implementation, public GitHub push, P
 - [x] Full-length H.264/AAC Jona encode; exact bytes, fast-start, duration and full decode checked.
 - [x] Viewer, phone QR pairing, WebXR renderer, acknowledged controls and clean VR surface.
 - [x] Browser playback/layout/Stop and public VDO scheduled-play/control/handoff test; recorded in VERIFICATION.md.
-- [ ] Review final source/selection, push public repository, configure Pages and verify exact remote SHA/Actions.
-- [ ] Fetch live HTML/JS/MP4 ranges and exercise published viewer/controller.
+- [x] Review final source/selection, push public repository, configure Pages and verify exact remote SHA/Actions (product 0ba034f, run 42083862166 passed).
+- [x] Live Pages HTML/MP4 ranges and all five browser tests passed, including real public VDO control and handoff.
 
 Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact frame synchronization are separate qualification gates. Do not infer them from Chromium or deployment. Browser timers/decoders cannot promise frame lock.
 
 ## Handoff
 
-Repository: GeorgeFejer91/immersive-video-player, main. This is a fresh canonical repository; older native work is outside it. Bootstrap d9b1425; product changes pending review/publication. Next: finish browser/network verification, then publish. Recheck fresh Git and evidence at resume.
+Repository: GeorgeFejer91/immersive-video-player, main. This is a fresh canonical repository; older native work is outside it. Product 0ba034f was published and verified live; run 42083862166 passed. The documentation receipt follows that product tree. Current requested publication goal is complete; next optional qualification is attended physical Quest + phone acceptance. Recheck fresh Git, Actions and the evidence record at resume.
