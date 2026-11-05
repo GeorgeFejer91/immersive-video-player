@@ -1,1 +1,6 @@
 * text=auto eol=lf
+
+# Preserve reviewed/pinned upstream bytes and inherited formatting.
+public/vendor/** -text -whitespace
+public/licenses/** -text -whitespace
+src/remote/** -text

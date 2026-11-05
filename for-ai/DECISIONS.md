@@ -29,3 +29,15 @@ For later decisions, add one compact entry with:
 
 Do not rewrite accepted history to hide a changed direction. Add a superseding
 decision and link both entries.
+
+## D-0002 — Static viewer with phone authority requests
+
+2026-11-05, Accepted. Current user instruction authorizes public browser implementation and publication, superseding the historical native-only release goal. Use one viewer-owned reducer and one active invited phone. The phone sends only typed commands; viewer state and acknowledgements determine success. Both fetch bundled MP4; VDO.Ninja carries no media. A future timeline anchor and bounded clock sampling avoid a backend, with an explicit approximate-sync limit.
+
+## D-0003 — Jona-only footage exception
+
+2026-11-05, Accepted. User explicitly requested Jona ship with this repository. The full-length web encode is public; no other footage, private artifacts or source-video directories may be added. Film rights are separate from software licenses. Preserve exact provenance and asset allow-list.
+
+## D-0004 — Attach WebRTC lanes before waiting for open
+
+2026-11-05, Accepted. Real VDO browsers delivered controller hello before target openChannel promises resolved; the inherited adapter dropped it. Attach via documented getChannel immediately, buffer at most eight early reliable messages, flush after both lanes peeropen, retain generation fencing. Keep pinned SDK unmodified and record local adapter hash. Three regression tests and real public signaling/control/handoff passed.

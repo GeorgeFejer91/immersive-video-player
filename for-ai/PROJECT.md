@@ -1,57 +1,35 @@
 # Project contract
 
-## Purpose
+Updated 2026-11-05. This file owns the active checklist; do not create a competing task ledger.
 
-A GitHub Pages immersive MP4 viewer synchronized with a smartphone remote over BRSP and VDO.Ninja WebRTC.
+## Goal and authorization
 
-## Primary goal
+Publish a live GitHub Pages immersive MP4 viewer. A headset browser sees only the locally rendered film in WebXR; an invited smartphone becomes the central playback/view controller. Use BRSP/1 mutual proof over VDO.Ninja data-only WebRTC, a common scheduled timeline and drift correction. Include full-length Jona as an ordinary repository asset.
 
-Deliver the smallest usable result that satisfies the current user request and
-can be verified at its real output surface.
+The 2026-11-05 user instruction authorizes implementation, public GitHub push, Pages configuration and live publication. `jonah.mp4` is the requested Jona video. This supersedes the older native-only goal and creates a narrow publication exception for this film alone. Other footage, native artifacts, private logs/screenshots, device identifiers and credentials remain excluded. No downstream film reuse license is granted; library licenses apply only to code.
 
-## Goal and session continuity
+## Architecture
 
-Overall goal: the purpose above. Product acceptance criteria are **Undecided**
-until the first product task defines observable outcomes.
+- `src/player.js`: single viewer-owned reducer, exact allow-list and timeline anchors.
+- `src/main.js`: activation, pairing, lifecycle, media, clock sampling, acknowledgements, 250 ms heartbeat and 2 second stale handling.
+- `src/viewer.js`: Three.js WebXR/head pose and ray-to-source projection. Jona is mono circular fisheye.
+- `src/remote/`: pinned BRSP core and locally patched VDO adapter; hashes in `scripts/verify-assets.mjs`.
+- `src/text-fit.js`: actual pinned Pretext measurement, readable reflow and rendered checks.
+- `public/media/jona.mp4`: full-length web encode below 100 MiB; provenance in `public/media-provenance.json`.
+- Vite builds relative asset paths into `dist/`; Actions verifies/builds/deploys main. No backend, arbitrary remote URL, camera/mic, analytics, service worker or native bridge.
 
-Resume existing GSD `.planning/` state or the established project checklist.
-Until an execution workflow owns the state, use this small active checklist:
+## Acceptance checklist
 
-- [ ] Define the first product outcome and its acceptance evidence.
-- [ ] Implement the agreed outcome and retain its verification result.
+- [x] Record directive and shared skill baseline; preserve native work as history.
+- [x] Bounded timeline/projection/pairing schemas and meaningful reducer/protocol checks.
+- [x] Full-length H.264/AAC Jona encode; exact bytes, fast-start, duration and full decode checked.
+- [x] Viewer, phone QR pairing, WebXR renderer, acknowledged controls and clean VR surface.
+- [x] Browser playback/layout/Stop and public VDO scheduled-play/control/handoff test; recorded in VERIFICATION.md.
+- [ ] Review final source/selection, push public repository, configure Pages and verify exact remote SHA/Actions.
+- [ ] Fetch live HTML/JS/MP4 ranges and exercise published viewer/controller.
 
-Replace these bootstrap tasks with the agreed product tasks. Before a session
-ends, record the next concrete action, blockers, evidence, and last-observed
-branch/commit/publication state in the canonical task owner. Keep one active
-checklist and do not close the overall goal before its acceptance criteria pass.
+Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact frame synchronization are separate qualification gates. Do not infer them from Chromium or deployment. Browser timers/decoders cannot promise frame lock.
 
-## Non-goals
+## Handoff
 
-- No speculative framework, service, abstraction, compatibility layer, or
-  deployment system.
-- No second implementation tree or duplicate source of truth.
-- No capability claim without matching evidence.
-
-Add project-specific non-goals only after they prevent a plausible wrong turn.
-
-## Product/control-plane boundary
-
-- Product source and deliverables: outside `for-ai/`; exact roots are
-  **Undecided until the first deliverable selects them**.
-- Agent orchestration and durable project memory: `for-ai/`.
-- Local generated diagnostics and scratch evidence: `.for-ai-local/` (ignored).
-
-## Architecture and ownership
-
-The implementation stack, modules, external contracts, and deployment surface
-are currently **Undecided**. Once selected, record only the top-level ownership
-map here and route detailed protocols to task-specific files.
-
-## Current verified state
-
-- Fresh Git repository initialized on 2026-11-05.
-- AI control plane created and mechanically checked.
-- No product implementation has been scaffolded.
-
-Git and runnable checks are the authority for branch, revision, and behavior.
-Do not turn this section into a second status ledger.
+Repository: GeorgeFejer91/immersive-video-player, main. This is a fresh canonical repository; older native work is outside it. Bootstrap d9b1425; product changes pending review/publication. Next: finish browser/network verification, then publish. Recheck fresh Git and evidence at resume.

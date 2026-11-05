@@ -1,0 +1,12 @@
+{
+  "title": "Jona",
+  "sourceName": "jonah.mp4",
+  "publicationAuthorization": "User explicitly requested this video be shipped with the public repository on 2026-11-05. This permission does not extend to other footage.",
+  "publicPath": "media/jona.mp4",
+  "durationSeconds": 467.306,
+  "sizeBytes": 75484266,
+  "sha256": "cc2f0c97487756862aaa21ab8662a1be6cb864a4eb8429c3dd30c43ddf1f53ad",
+  "encoding": "Full-length 1920x1920, 30 fps H.264/yuv420p at 1200k, AAC 96k, fast-start; metadata removed.",
+  "projection": "Mono circular fisheye; default 270 degree source lens, adjustable by controller.",
+  "rights": "Video is not covered by the third-party software licenses. No downstream reuse license is granted here."
+}

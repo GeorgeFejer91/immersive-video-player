@@ -1,0 +1,59 @@
+:root { font-family: Arial, Helvetica, sans-serif; color: #242824; background: #f3f2ec; font-size: 16px; line-height: 1.5; color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select { font: inherit; }
+button, select, summary, a { -webkit-tap-highlight-color: transparent; }
+button { min-height: 46px; padding: 10px 16px; border: 1px solid #b8bdb5; border-radius: 4px; background: transparent; color: inherit; cursor: pointer; line-height: 1.4; white-space: normal; overflow-wrap: break-word; }
+button:hover { background: #e5e7df; }
+button.primary { background: #314d3b; border-color: #314d3b; color: #fff; }
+button.primary:hover { background: #243d2d; }
+button:disabled, fieldset:disabled { opacity: .55; cursor: default; }
+:focus-visible { outline: 3px solid #b66b29; outline-offset: 3px; }
+[hidden] { display: none !important; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 384px); min-height: 100dvh; }
+.screen { position: sticky; top: 0; height: 100dvh; min-width: 0; background: #080a09; color: #f7f7f0; }
+#stage { position: absolute; inset: 0; touch-action: none; }
+#stage canvas { width: 100%; height: 100%; display: block; }
+#video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.screen-header, .screen-caption { position: absolute; inset-inline: 28px; display: flex; justify-content: space-between; align-items: center; gap: 16px; pointer-events: none; flex-wrap: wrap; }
+.screen-header { top: 24px; font-size: 13px; }
+.wordmark { font-size: 18px; color: inherit; text-decoration: none; pointer-events: auto; letter-spacing: -.5px; }
+.screen-caption { bottom: 24px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.panel { padding: 40px 28px 24px; min-width: 0; }
+.panel-header { margin-bottom: 24px; }
+.eyebrow { font-size: 11px; letter-spacing: .13em; color: #586354; margin: 0 0 10px; }
+h1 { font: normal 54px/1.1 Georgia, serif; margin: 0 0 16px; letter-spacing: -2px; }
+h2, legend { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
+p { margin: 0 0 16px; }
+.small { font-size: 13px; line-height: 1.6; color: #50594d; }
+.notice { border-inline-start: 2px solid #667e54; padding-inline-start: 12px; margin-bottom: 18px; font-size: 14px; overflow-wrap: break-word; }
+.actions, .transport { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.actions > button, .transport > button { flex: 1 1 110px; min-width: 0; }
+.pairing { padding-block: 24px; margin-top: 16px; border-top: 1px solid #ccd0c6; border-bottom: 1px solid #ccd0c6; }
+.connection { font-size: 13px; margin: 14px 0 0; overflow-wrap: break-word; }
+#qr { display: block; width: min(100%, 232px); height: auto; margin: 16px auto; }
+input:not([type=range]), select { width: 100%; min-height: 46px; color: inherit; background: #fffefa; border: 1px solid #b8bdb5; border-radius: 3px; padding: 8px; margin-bottom: 10px; min-width: 0; }
+#invite-link { font-size: 12px; }
+label { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin: 16px 0 4px; }
+output { font-variant-numeric: tabular-nums; white-space: nowrap; }
+input[type=range] { display: block; width: 100%; min-height: 40px; accent-color: #314d3b; margin: 0 0 8px; }
+fieldset { border: 0; padding: 0; margin: 28px 0 20px; min-width: 0; }
+legend { margin-bottom: 14px; }
+#recenter, #copy-link, #use-link { width: 100%; }
+details { margin-top: 20px; }
+summary { min-height: 44px; cursor: pointer; padding-block: 10px; font-size: 14px; }
+details p { margin-top: 10px; }
+.about { border-top: 1px solid #ccd0c6; margin-top: 24px; padding-top: 8px; }
+.about a { color: #314d3b; font-size: 13px; overflow-wrap: break-word; }
+.screen-toggle { position: absolute; bottom: 60px; right: 24px; color: white; background: #151716; }
+body.controls-hidden .app { grid-template-columns: 1fr; }
+body.controls-hidden .panel, body.controls-hidden .screen-header, body.controls-hidden .screen-caption { display: none; }
+body.phone .screen { height: 250px; position: relative; }
+body.phone .app { display: block; max-width: 620px; margin-inline: auto; }
+body.phone .panel { padding-top: 24px; }
+body.phone .panel-header { margin-bottom: 16px; }
+body.phone h1 { font-size: 38px; }
+body.phone #intro, body.phone #enter-vr, body.phone #vr-help, body.phone #hide-controls { display: none; }
+body.phone .pairing { margin-top: 0; padding-top: 16px; }
+@media (max-width: 700px) { .app { display: block; } .screen { position: relative; height: 50dvh; min-height: 240px; } .panel { padding: 28px 20px; } .screen-header, .screen-caption { inset-inline: 20px; } h1 { font-size: 44px; } body.controls-hidden .screen { height: 100dvh; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

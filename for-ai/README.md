@@ -53,7 +53,7 @@ leave evidence, blockers, and a concrete next action in that same state owner.
 ## New-project state
 
 Created: 2026-11-05
-Repository: Not created (-LocalOnly)
-Visibility at initialization: local-only
+Repository: https://github.com/GeorgeFejer91/immersive-video-player (publication in progress)
+Visibility: public publication authorized 2026-11-05
 
-No product stack or output tree is implied by this bootstrap.
+Product stack and acceptance state are defined in PROJECT.md.

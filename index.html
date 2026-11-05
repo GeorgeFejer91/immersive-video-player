@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self' wss://wss.vdo.ninja https://turnservers.vdo.ninja; object-src 'none'; base-uri 'none'; form-action 'self'">
+  <meta name="description" content="Watch Jona in an immersive video view. Pair a smartphone to control playback, perspective and sound.">
+  <meta name="theme-color" content="#151716">
+  <title>Jona — Immersive player</title>
+  <script src="./vendor/vdoninja/1.5.5/vdoninja-sdk.min.js" defer></script>
+</head>
+<body>
+  <main class="app">
+    <section class="screen" aria-label="Immersive video">
+      <div id="stage" tabindex="0" aria-label="Video panorama. Drag or use arrow keys to look around."></div>
+      <video id="video" playsinline preload="auto" src="./media/jona.mp4" aria-hidden="true"></video>
+      <header class="screen-header"><a class="wordmark" href="./">Immersive</a><span id="role-label">Viewer</span></header>
+      <div class="screen-caption"><span>Jona</span><span id="screen-time">00:00 / 07:47</span></div>
+      <button id="show-controls" class="screen-toggle" hidden>Show controls</button>
+    </section>
+    <aside id="panel" class="panel" aria-label="Video controls">
+      <header class="panel-header"><p class="eyebrow" id="panel-kicker">AN IMMERSIVE FILM</p><h1>Jona</h1><p id="intro">A view to step into. A phone to guide it.</p></header>
+      <div class="notice" id="notice" role="status" aria-live="polite">Enable playback here before starting from your phone.</div>
+      <div class="actions">
+        <button id="arm" class="primary">Enable playback</button>
+        <button id="enter-vr">Enter VR</button>
+      </div>
+      <p id="vr-help" class="small">On a WebXR headset, enter VR for head tracking. On a screen, drag to look around.</p>
+      <section class="pairing" aria-labelledby="pair-title">
+        <h2 id="pair-title">Phone remote</h2>
+        <p class="small" id="pair-help">Enable the remote, then scan the link on any smartphone. One phone controls the session at a time.</p>
+        <div class="actions"><button id="connect">Enable phone remote</button><button id="stop" hidden>End session</button></div>
+        <div id="invitation" hidden>
+          <canvas id="qr" aria-label="Scan this QR code on your phone to open its controller"></canvas>
+          <label for="invite-link">Controller link</label><input id="invite-link" readonly autocomplete="off" spellcheck="false">
+          <button id="copy-link">Copy controller link</button>
+          <p class="small">Keep this link private. It expires when you end the session or after 30 minutes.</p>
+        </div>
+        <div id="paste-invitation" hidden><label for="pasted-link">Paste the viewer’s controller link</label><input id="pasted-link" type="url" autocomplete="off" spellcheck="false"><button id="use-link">Use invitation</button></div>
+        <p id="connection" class="connection" role="status" aria-live="polite">Remote is off</p>
+      </section>
+      <fieldset id="controls" disabled>
+        <legend>Playback</legend>
+        <div class="transport"><button id="play" class="primary">Play together</button><button id="pause">Pause</button></div>
+        <label for="seek">Position <output id="position">00:00</output></label>
+        <input id="seek" type="range" min="0" max="467.3" step="0.1" value="0">
+        <label for="volume">Viewer volume <output id="volume-value">100%</output></label>
+        <input id="volume" type="range" min="0" max="1" step="0.05" value="1">
+        <button id="recenter">Recenter view</button>
+        <details><summary>Adjust the view</summary>
+          <label for="projection">Video projection</label>
+          <select id="projection"><option value="fisheye">Kodak circular fisheye</option><option value="equirect360">360° equirectangular</option><option value="equirect180">180° equirectangular</option><option value="flat">Flat screen</option></select>
+          <label for="lens">Source lens angle <output id="lens-value">270°</output></label><input id="lens" type="range" min="180" max="360" step="5" value="270">
+          <label for="fov">Screen field of view <output id="fov-value">80°</output></label><input id="fov" type="range" min="45" max="110" step="5" value="80">
+          <label for="yaw">Horizontal alignment <output id="yaw-value">0°</output></label><input id="yaw" type="range" min="-180" max="180" step="5" value="0">
+          <label for="pitch">Vertical alignment <output id="pitch-value">0°</output></label><input id="pitch" type="range" min="-90" max="90" step="5" value="0">
+          <p class="small">Projection changes the view of the same film. Jona is a mono source. Headset field of view comes from WebXR.</p>
+        </details>
+      </fieldset>
+      <button id="hide-controls">Hide controls</button>
+      <details class="about"><summary>Connection & playback notes</summary><p class="small">Both screens load the same film. The remote uses VDO.Ninja signaling and encrypted WebRTC data, with a mutual-proof pairing handshake. Internet is required; camera and microphone access are never requested. Direct peers can learn each other’s network address.</p><p class="small">Keep the phone page awake. A timed start and drift correction keep the previews close; buffering and browser scheduling can interrupt synchronization. If the viewer buffers, playback pauses for both screens.</p><p class="small" id="diagnostics">No active connection.</p><a href="https://github.com/GeorgeFejer91/immersive-video-player">Source & setup</a></details>
+    </aside>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

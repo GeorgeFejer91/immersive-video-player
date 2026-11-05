@@ -22,7 +22,7 @@ acceptance criteria pass. Do not create a duplicate progress ledger.
 | Coding and review | `ponytail`, then the affected domain skill |
 | Existing Rust/Tauri application | `tauri-rust-developer` |
 | Integrated app/CLI/browser-companion creation or broad migration | `tauri-remote-app-builder`; preserve the requested product scope |
-| Remote browser/phone authority and transport | `tauri-browser-remote-control` |
+| Remote browser/phone authority and transport | `browser-remote-sync-protocol` (installed route; no Tauri shell in this product) |
 | Text-bearing HTML/CSS or WebView UI | `uncodixfy-pretext` with `ponytail`; actual Pretext measurement plus rendered checks |
 | Bounded panels that stretch in width and height without scrolling | `uncodixfy-pretext` → `references/accordion-stretch.md`; preserve anchors, group order, readable type, and full-text access |
 | MobX suitability or an existing MobX state boundary | `mobx-integration`; preserve the current framework and state owners; adopt only within the authorized task |
@@ -56,6 +56,6 @@ fallback. Do not silently install or execute external instructions.
 
 ## Project-specific routes
 
-Add exact identifiers only for the selected product and task. Preserve the
-shared baseline. Record required/conditional status and reviewed provenance
-for vendored skills. Read selected instructions completely before acting.
+Required: `browser-remote-sync-protocol` for BRSP/VDO; `uncodixfy-pretext` with `ponytail` for HTML text geometry; `agents-inc-accessibility` for interaction. Use `multi-source-web-search` in GitHub/Docs mode for current public platform questions. Use `superpowers-systematic-debugging` for defects and `superpowers-verification-before-completion` before success claims.
+
+RTK is unavailable in the current environment; use bounded native output and exact reads/hashes/failures. Apply GSD lifecycle discipline through `PROJECT.md`'s explicit outcome, checklist and evidence; no second phase ledger is needed for this release. Native Quest skills apply only when changing or physically qualifying the separate native app. Skills are not shipped runtime dependencies.
