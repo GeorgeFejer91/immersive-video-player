@@ -2,7 +2,15 @@
 
 Updated 2026-11-06. This file owns the active checklist; do not create a competing task ledger.
 
-## Active update: shared session entry
+## Active update: minimal stretch accordion
+
+Only `Immersive Video Player`, QR and functional controls. No UI marketing, explainers, context or Quest instructions. Apply Uncodixfy Pretext accordion stretch: fixed header/footer, width/height-driven spacing/type, measured labels, ordered accordion groups and no internal panel scrolling. Preserve shared routing and playback authority. Normal matrix: portrait >=320×560, landscape >=640×390, desktop >=800×480 CSS px. Below that or when enlarged text cannot fit, allow readable document flow rather than clipping/shrinking. Dialogs have their own scroll policy.
+
+- [x] Minimal launcher/player markup and concise states, retaining functionality.
+- [x] Pretext stretch geometry, keyboard/resize/accordion checks and remote regression; 31 Node and 15 browser checks pass, including public VDO.
+- [ ] Publish, verify live and update evidence.
+
+## Previous update: shared session entry
 
 The main site displays a QR before playback setup. One session invitation routes Quest/immersive-capable browsers to viewing and smartphones to the compact control center. Unknown devices can select a role; explicit links always override detection. The headset must reuse the invitation rather than generate a different room. No signaling or media download on the launcher; Connect and playback/WebXR remain explicit. Browser device hints choose UX only, never authentication or grants. Current implementation/publication authorization continues for this requested live-site change.
 
@@ -41,4 +49,4 @@ Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact 
 
 ## Handoff
 
-The shared QR update is complete and live. Main product `03e66fa7c1660de8bfecc129b1abab6699b0e5f7` passed Actions `42207757845`, matched Pages deployment `7598612184`, and passed 11/11 live-site browser tests. There are 31 passing Node checks, a production build and pinned media/transport hashes. The evidence receipt is a documentation-only follow-up to that product tree. Use fresh Git/Actions reads for the current main revision. Optional next qualification: physical Quest QR scanning and real-phone lifecycle; those remain unverified. Keep the native project historical and outside this public browser repository.
+The minimal stretch UI is locally verified and ready to publish. Next: push, observe exact Actions/Pages revision, run the browser suite against the live HTTPS site and record that receipt. Local checks: 31 Node tests, production build, asset pins and 15 browser tests including public VDO. Physical devices remain unqualified. Keep the native project historical and outside this public browser repository.

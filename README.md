@@ -1,22 +1,16 @@
-# Immersive video player
+# Immersive Video Player
 
 Watch **Jona** in an immersive view, with your phone as the remote.
 
 **[Open the session page](https://georgefejer91.github.io/immersive-video-player/)**
 
-1. Open the main site on a computer or another screen. A shared session QR appears immediately.
-2. Scan the **same QR** with the Quest 3 and your smartphone. Quest opens the viewer; the phone opens its compact control center. Unknown devices show manual **Open headset viewer** and **Open phone controls** choices.
-3. On the viewer, press **Enable playback**, then **Enable phone remote**. On the phone, press **Enable phone preview**, then **Connect to viewer**. Both use the invitation from the main page.
-4. After pairing and clock synchronization, press **Enter VR** on the headset and **Play together** on the phone. On a desktop viewer, drag or use arrow keys to look around.
-5. Use the phone for Pause, seek, viewer volume, projection and recenter. Its primary playback controls remain close to the preview and stay visible while scrolling the control section.
+Scan the same QR on the headset and phone, or choose **Viewer** / **Controller**. On both, select **Enable**, then **Connect**. Select **VR** on the viewer and **Play** on the phone.
 
-Use a URL-capable QR scanner on Quest. If your headset cannot open website QR codes, use **Copy headset link** and open/send that URL in Quest Browser. The website routes the opened link; it does not install or control the headset's scanner. Each detected mode also offers an explicit switch to the other mode.
+**Connection**, **Playback** and **View** expand one at a time. The panel stretches to the available width and height. **Session** holds the link and copy buttons; **QR** opens a pairing dialog. **Hide** leaves only the video.
 
-The launcher loads no film or remote connection. Keep it open until both devices have the link. **Create another session** generates a different QR without changing viewers that have already connected. Rescan the original QR after reloading a joined device; pairing keys are held in memory, not saved in browser storage.
+The launcher loads no film or connection. **New** creates a fresh session. Pairing keys stay in memory; reopen the shared link after reloading a device. One invited phone controls at a time. Its **Disconnect** pauses the viewer and allows another phone to connect; viewer **Disconnect** clears the local invitation. Sessions expire after 30 minutes.
 
-Any invited smartphone can control the viewer. One controller is active at a time. To hand over, the phone presses **End session**; the viewer pauses and waits for another invited phone. The viewer's **End session** closes its active connection and clears its invitation; the next viewer-created session uses fresh material. A connected session expires after 30 minutes. A copied shared QR remains a bearer invitation and can be used to open a separate viewer; generate a new QR when starting a different viewing pair.
-
-The phone preview is silent to avoid audio echo; sound plays on the viewer. Browsers require the initial local playback tap. Keep both pages awake. If the viewer buffers, playback pauses; press Play together when ready.
+The phone preview is silent; audio plays on the viewer. Playback pauses if the viewer buffers.
 
 ## How it works
 
@@ -26,7 +20,7 @@ Both devices fetch the bundled MP4. The phone estimates viewer clock offset, rec
 
 Jona defaults to circular-fisheye dewarping with adjustable lens angle and alignment. Equirectangular 180/360 and flat mappings are available. These are runtime views of the same film. Jona is mono, not binocular stereo. WebXR determines headset FOV; the FOV slider affects the non-XR screen.
 
-Internet is required for VDO signaling and ICE, even on the same Wi-Fi. Direct peers can learn network addresses; TURN can relay encrypted traffic. The site shows the observed route when available. No offline-LAN or service availability guarantee. [VDO SDK](https://sdk.vdo.ninja/docs/api-reference.html), [BRSP](https://github.com/GeorgeFejer91/browser-remote-sync-protocol).
+Internet is required for VDO signaling and ICE, even on the same Wi-Fi. Direct peers can learn network addresses; TURN can relay encrypted traffic. Observed route and RTT remain available as body data attributes for diagnostics. No offline-LAN or service availability guarantee. [VDO SDK](https://sdk.vdo.ninja/docs/api-reference.html), [BRSP](https://github.com/GeorgeFejer91/browser-remote-sync-protocol).
 
 ## Run and publish
 

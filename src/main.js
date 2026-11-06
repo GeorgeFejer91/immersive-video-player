@@ -21,7 +21,7 @@ try{
 
 if(route.role){
   $('entry-invitation').hidden=true;$('new-session').hidden=true;
-  $('entry-status').textContent=route.role==='viewer'?'Opening the headset viewer…':'Opening the phone control center…';
+  $('entry-status').textContent='Loading';
   const { initPlayer }=await import('./player-app.js');
   // Showing interactive controls and binding their handlers happen in one task.
   $('entry').hidden=true;$('player').hidden=false;
@@ -36,25 +36,26 @@ if(route.role){
     links=sessionLinks(address,invitation);
     $('entry-link').value=links.join;
     $('open-viewer').href=links.viewer;$('open-controller').href=links.controller;
+    $('open-viewer').hidden=false;$('open-controller').hidden=false;
     $('entry-invitation').hidden=false;
-    $('entry-status').textContent='Ready for one headset and one phone. Scan the same QR on both devices.';
+    $('entry-status').textContent='';
     try {
       await QRCode.toCanvas($('entry-qr'),links.join,{width:360,margin:4,errorCorrectionLevel:'M'});
       // QRCode sets inline pixel dimensions. Let CSS preserve a square at phone widths.
       $('entry-qr').style.removeProperty('width');$('entry-qr').style.removeProperty('height');
     }
-    catch {if(current===invitationGeneration)$('entry-status').textContent='QR rendering is unavailable. Use the session links below.';}
+    catch {if(current===invitationGeneration)$('entry-status').textContent='QR unavailable';}
   }
   $('new-session').addEventListener('click',()=>{void display({room:generateVdoRoomId(),secret:randomToken(32)});});
   $('copy-session').addEventListener('click',async()=>{
-    try {await navigator.clipboard.writeText(links.join);$('entry-status').textContent='Session link copied. Open it on the headset and phone.';}
-    catch {$('entry-link').value=links.join;$('entry-link').select();$('entry-status').textContent='Select and copy the session link.';}
+    try {await navigator.clipboard.writeText(links.join);$('entry-status').textContent='Copied';}
+    catch {$('entry-options').open=true;$('entry-link').value=links.join;$('entry-link').select();$('entry-status').textContent='Copy link';}
   });
   $('copy-headset').addEventListener('click',async()=>{
-    try {await navigator.clipboard.writeText(links.viewer);$('entry-status').textContent='Headset link copied. Open it in Quest Browser.';}
-    catch {$('entry-link').value=links.viewer;$('entry-link').select();$('entry-status').textContent='Select and copy this headset link.';}
+    try {await navigator.clipboard.writeText(links.viewer);$('entry-status').textContent='Copied';}
+    catch {$('entry-options').open=true;$('entry-link').value=links.viewer;$('entry-link').select();$('entry-status').textContent='Copy link';}
   });
-  if(invalid){$('entry-invitation').hidden=true;$('entry-status').textContent='This invitation is incomplete or invalid. Ask for the full link, or create a new session.';}
+  if(invalid){$('entry-invitation').hidden=true;$('entry-status').textContent='Invalid link';$('open-viewer').hidden=true;$('open-controller').hidden=true;}
   else await display(route.pairing||{room:generateVdoRoomId(),secret:randomToken(32)});
   void measureTextRegions().catch(()=>{document.documentElement.dataset.pretext='unavailable';});
 }

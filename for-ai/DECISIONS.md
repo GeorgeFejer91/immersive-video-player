@@ -1,5 +1,9 @@
 # Decision log
 
+## D-0006 — Minimal stretch controls
+
+2026-11-06, Accepted. User directs the visible site to contain only the title Immersive Video Player, QR and functional controls, without Quest Browser instructions or explanatory copy. Supersedes D-0005's visible setup/fallback instruction expectation. Preserve shared routing and protocol behavior. Use native exclusive details for Connection/Playback/View, fixed header/footer, dimension-driven stretch tokens and actual Pretext measurement. Unfittable enlarged text falls back to readable document flow; QR utilities use a native dialog. Transport diagnostics remain machine-readable rather than UI prose.
+
 ## D-0005 — Shared device-aware session entry
 
 2026-11-06, Accepted. Root generates one high-entropy fragment-only session QR without media/signaling. The opened invitation chooses viewer on Quest/immersive-capable browsers, phone control center on smartphones, or manual choice when uncertain. Explicit role links override hints; hints are UX only. Viewer and controller reuse the same invitation. Recoverable errors preserve pairing, while End/expiry clear local keys and manual role links. A copied bearer may open another viewer, so a different pair should create a new QR. No static site can install/control the native headset QR scanner or bypass VR/autoplay gestures; provide explicit headset URL fallback.

@@ -2,6 +2,16 @@
 
 Updated 2026-11-06. Evidence is scoped to the named surface, not a universal product/hardware claim.
 
+## Minimal stretch UI — 2026-11-06
+
+Local PASS: 31 Node tests, production Vite build, exact Jona/BRSP/VDO asset pins and 15 Chromium browser checks including the real public VDO handshake, scheduled playback, pause, seek, projection, controller replacement and revocation. Observed direct route, rounded SDK RTT 0 ms, one preview-position comparison 0.062218 seconds; these are same-machine observations.
+
+Launcher contains the title, QR, Session utilities and Viewer/Controller/New actions. Player uses native exclusive Connection/Playback/View groups, fixed header/footer and actual pinned Pretext measurement with spacing/type driven by both dimensions. No UI explainers or Quest Browser instructions. Machine-readable route/RTT remain outside the visible UI. Source review found invalid-link recovery and portrait clean-view regressions; both reproduced as failing tests, then passed after correction.
+
+Rendered matrix passed without panel/document overflow: launcher 320×560, 390×844, 844×390, 1280×720, 1920×1080, with Session closed/open; both player modes and every accordion group at 320×560, 390×844, 640×390, 844×390, 800×480 and 1280×720. Enlarged 32 px root text, stronger button type, spacing overrides and a long German action string preserve horizontal reflow and readable type through the documented flow fallback. Native summary keyboard activation, modal Escape/focus restoration and full-height portrait clean view passed. Closed native details content is excluded using checkVisibility(), since it retains layout boxes even when not rendered. Desktop launcher and phone screenshots inspected locally; no private captures are shipped.
+
+Publication/live check pending in this product revision. Physical-device qualification boundaries below remain unchanged.
+
 ## Shared QR update — 2026-11-06
 
 Local PASS: 31/31 Node tests, Vite production build and exact media/BRSP/VDO asset checks. 11/11 production-browser tests passed on Chromium: root QR visible without MP4/signaling, same invitation routes Quest-like UA to viewer and phone-like UA to compact controls, explicit overrides/manual desktop fallback, fragment stripping, same invitation retained over failed signaling, End clears role links, refreshed role links after new sessions, correct clipboard fallback, 320 px/enlarged-text reflow, local activation/Stop, and real public VDO playback/seek/projection/phone handoff. Phone Play button was within the first 844 px viewport.

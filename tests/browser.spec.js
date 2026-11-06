@@ -31,7 +31,7 @@ test('player controls stay hidden until their module and handlers are ready',asy
   finally {release();await navigation;}
   await expect(page.locator('#player')).toBeVisible();
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
-  await page.locator('#connect').click();await expect(page.locator('#invitation')).toBeVisible();
+  await page.locator('#connect').click();await expect(page.locator('#show-qr')).toBeVisible();
   await page.locator('#stop').click();
 });
 
@@ -52,7 +52,7 @@ test('shared invitation survives signaling retry and End clears role links',asyn
   const originalRoleLink=await viewer.locator('#switch-mode').getAttribute('href');
   for(let i=0;i<2;i++){
     await viewer.locator('#connect').click();
-    await expect(viewer.locator('#connection')).toContainText('Could not reach signaling');
+    await expect(viewer.locator('#connection')).toHaveText('Connection failed');
     await expect(viewer.locator('#connect')).toBeEnabled();
     await expect(viewer.locator('#switch-mode')).toHaveAttribute('href',originalRoleLink);
   }
@@ -68,9 +68,21 @@ test('shared invitation survives signaling retry and End clears role links',asyn
 test('copy fallback restores the shared route after copying a headset override',async({page})=>{
   await page.addInitScript(()=>{Object.defineProperty(navigator,'clipboard',{value:{writeText:async()=>{throw new Error('denied');}}});});
   await page.goto('./');const shared=await page.locator('#entry-link').inputValue();
+  await page.locator('#entry-options summary').click();
   await page.locator('#copy-headset').click();
   expect(new URL(await page.locator('#entry-link').inputValue()).searchParams.get('role')).toBe('viewer');
   await page.locator('#copy-session').click();await expect(page.locator('#entry-link')).toHaveValue(shared);
+});
+
+test('New restores role choices after an invalid invitation',async({page})=>{
+  await page.goto('./?join=1#room=bad&secret=short');
+  await expect(page.locator('#entry-status')).toHaveText('Invalid link');
+  await page.locator('#new-session').click();
+  await expect(page.locator('#entry-qr')).toBeVisible();
+  await expect(page.locator('#open-viewer')).toBeVisible();
+  await expect(page.locator('#open-controller')).toBeVisible();
+  await page.locator('#open-viewer').click();
+  await expect(page.locator('#player')).toBeVisible();
 });
 
 test('one QR link chooses Quest viewer, phone controls and manual desktop fallback',async({browser,page})=>{
@@ -83,7 +95,7 @@ test('one QR link chooses Quest viewer, phone controls and manual desktop fallba
     await expect(device.locator('#switch-mode')).toBeVisible();
     if(role==='controller'){
       await expect(device.locator('body')).toHaveClass(/phone/);
-      await expect(device.locator('#role-label')).toHaveText('Control center');
+      await expect(device.locator('#role-label')).toHaveText('Controller');
       await expect(device.locator('#enter-vr')).toBeHidden();
     }
     await context.close();
@@ -100,7 +112,7 @@ test('launcher reflows at narrow widths, enlarged type and long action labels',a
   for(const [width,height] of [[320,700],[390,844],[844,390],[1440,900]]){
     await page.setViewportSize({width,height});await page.waitForTimeout(100);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-    expect(await page.locator('.entry button,.entry .button-link').evaluateAll(els=>els.filter(el=>el.scrollWidth>el.clientWidth+2||el.scrollHeight>el.clientHeight+2).map(el=>el.id))).toEqual([]);
+    expect(await page.locator('.entry button,.entry .button-link').evaluateAll(els=>els.filter(el=>el.checkVisibility()&&(el.scrollWidth>el.clientWidth+2||el.scrollHeight>el.clientHeight+2)).map(el=>el.id))).toEqual([]);
   }
   await page.setViewportSize({width:320,height:700});
   await page.addStyleTag({content:':root{font-size:32px}.entry .button-link{font-size:2rem}p{line-height:1.5;letter-spacing:.12em;word-spacing:.16em}'});
@@ -117,28 +129,32 @@ test('viewer is inert before explicit connection, local playback works and clean
   await expect(page.locator('html')).toHaveAttribute('data-pretext','measured');
   await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
   expect(requests.filter(url=>url.includes('vdo.ninja'))).toHaveLength(0);
-  await page.getByRole('button',{name:'Enable playback',exact:true}).click();
+  await page.locator('#arm').click();
   await expect(page.locator('#arm')).toBeDisabled();
+  await page.locator('#playback-settings summary').click();
   await page.locator('#play').click();
   await expect(page.locator('body')).toHaveAttribute('data-playing','true',{timeout:7000});
   await page.locator('#pause').click();
   await expect(page.locator('body')).toHaveAttribute('data-playing','false');
-  await page.getByRole('button',{name:'Hide controls',exact:true}).click();
+  await page.locator('#hide-controls').click();
   await expect(page.locator('#show-controls')).toBeFocused();
   await page.locator('#show-controls').click();
   await expect(page.locator('#hide-controls')).toBeFocused();
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('#hide-controls').click();
+  expect(await page.locator('.screen').evaluate(el=>Math.abs(el.getBoundingClientRect().height-innerHeight))).toBeLessThan(1);
+  await page.locator('#show-controls').click();
   expect(errors).toEqual([]);
 });
 
 test('rendered labels reflow at phone widths, landscape, desktop, large type and spacing',async({page})=>{
   await page.goto('./?role=viewer');
   await expect(page.locator('html')).toHaveAttribute('data-pretext','measured');
-  await page.locator('.about').evaluate(el=>el.open=true);
   for(const [width,height] of [[320,700],[390,844],[844,390],[1440,900],[1920,1080]]){
     await page.setViewportSize({width,height});
     await page.waitForTimeout(150);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-    const overflowing=await page.locator('button,summary,.notice,.connection').evaluateAll(els=>els.filter(el=>el.getClientRects().length&&(el.scrollWidth>el.clientWidth+2||el.scrollHeight>el.clientHeight+2)).map(el=>el.id||el.textContent));
+    const overflowing=await page.locator('button,summary,.status').evaluateAll(els=>els.filter(el=>el.checkVisibility()&&(el.scrollWidth>el.clientWidth+2||el.scrollHeight>el.clientHeight+2)).map(el=>el.id||el.textContent));
     expect(overflowing).toEqual([]);
   }
   await page.setViewportSize({width:320,height:700});
@@ -154,7 +170,7 @@ test('phone strips bearer fragment and requires local preview before connecting'
   expect(new URL(page.url()).hash).toBe('');
   await expect(page.locator('#play')).toBeDisabled();
   await page.locator('#connect').click();
-  await expect(page.locator('#notice')).toContainText('Enable phone preview first');
+  await expect(page.locator('#notice')).toHaveText('Enable first');
   await expect(page.locator('#paste-invitation')).toBeHidden();
 });
 
@@ -162,10 +178,16 @@ test('Stop wins while signaling is unavailable and clears invitation',async({pag
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
   await page.goto('./?role=viewer');
   await page.locator('#connect').click();
+  await page.locator('#show-qr').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog',{name:'Session QR'})).toBeVisible();
   await expect(page.locator('#invitation')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#show-qr')).toBeFocused();
   await page.locator('#stop').click();
   await expect(page.locator('#invite-link')).toHaveValue('');
   await expect(page.locator('#invitation')).toBeHidden();
+  await expect(page.locator('#show-qr')).toBeHidden();
   await expect(page.locator('#connect')).toBeEnabled();
 });
 
@@ -198,9 +220,10 @@ test('public VDO route: real handshake, scheduled play, seek, projection and con
   await expect(phone.locator('#seek')).toBeEnabled();
   await phone.locator('#seek').fill('100');await phone.locator('#seek').dispatchEvent('change');
   await expect.poll(()=>viewer.locator('video').evaluate(v=>v.currentTime)).toBeGreaterThan(99);
-  await phone.locator('fieldset details summary').click();
+  await phone.locator('#view-settings summary').click();
   await expect(phone.locator('#projection')).toBeEnabled();await phone.locator('#projection').selectOption('equirect360');
   await expect(viewer.locator('#projection')).toHaveValue('equirect360');
+  await phone.locator('#connection-settings summary').click();
   await phone.locator('#stop').click();
   await expect(viewer.locator('#connection')).toContainText(/waiting|announced/i,{timeout:20000});
   await phone.close();phone=await phoneContext.newPage();
@@ -208,7 +231,8 @@ test('public VDO route: real handshake, scheduled play, seek, projection and con
   await phone.locator('#arm').click();await phone.locator('#connect').click();
   await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
   await phone.waitForTimeout(2200);
-  console.log(JSON.stringify({route:await phone.locator('#diagnostics').textContent(),observedPreviewDriftSeconds:Math.abs(times[0]-times[1])}));
+  console.log(JSON.stringify({route:await phone.locator('body').getAttribute('data-route'),rtt:await phone.locator('body').getAttribute('data-rtt'),observedPreviewDriftSeconds:Math.abs(times[0]-times[1])}));
+  await viewer.locator('#connection-settings summary').click();
   await viewer.locator('#stop').click();await expect(phone.locator('#connection')).toContainText(/disconnected|ended|failed/i);
   await viewerContext.close();await phoneContext.close();await launcherContext.close();
 });

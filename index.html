@@ -5,89 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self' wss://wss.vdo.ninja https://turnservers.vdo.ninja; object-src 'none'; base-uri 'none'; form-action 'self'">
-  <meta name="description" content="Watch Jona in an immersive video view. Pair a smartphone to control playback, perspective and sound.">
-  <meta name="theme-color" content="#151716">
-  <title>Jona — Immersive player</title>
+  <meta name="theme-color" content="#f3f2ec">
+  <title>Immersive Video Player</title>
   <script src="./vendor/vdoninja/1.5.5/vdoninja-sdk.min.js" defer></script>
 </head>
 <body class="landing">
-  <main id="entry" class="entry" aria-labelledby="entry-title">
-    <header class="entry-header"><span class="wordmark">Immersive</span><a href="https://github.com/GeorgeFejer91/immersive-video-player">Source & setup</a></header>
-    <div class="entry-layout">
-      <section class="entry-copy">
-        <p class="eyebrow">JONA · IMMERSIVE VIDEO</p>
-        <h1 id="entry-title">One film.<br>Two devices.</h1>
-        <p>Scan the same QR with your Quest 3 and your phone.</p>
-        <ol class="entry-steps"><li><strong>Headset</strong><span>Opens the immersive viewer. Enable playback and the phone remote, then enter VR.</span></li><li><strong>Phone</strong><span>Opens your control center. Enable the preview, connect, then press Play together.</span></li></ol>
-        <p class="small">No app connection starts until you choose Connect. Keep this page open until both devices have the link.</p>
-        <details><summary>Opening the link on Quest</summary><p class="small">Use a QR scanner that can open website links in Quest Browser. If scanning is unavailable, copy or send the headset link and open it in Quest Browser. Entering VR still needs a headset tap.</p></details>
-      </section>
-      <section class="entry-session" aria-label="Join this viewing session">
-        <div id="entry-invitation">
-          <canvas id="entry-qr" role="img" aria-label="Shared session QR. Scan with a headset for the viewer, or a phone for controls."></canvas>
-          <p class="small entry-qr-caption">One QR for your headset and phone</p>
-          <nav class="entry-links" aria-label="Choose your device"><a id="open-viewer" class="button-link primary">Open headset viewer</a><a id="open-controller" class="button-link">Open phone controls</a></nav>
-          <label for="entry-link">Shared session link</label><input id="entry-link" readonly autocomplete="off" spellcheck="false">
-          <div class="actions"><button id="copy-session">Copy session link</button><button id="copy-headset">Copy headset link</button></div>
-        </div>
-        <p id="entry-status" class="connection" role="status" aria-live="polite">Preparing your session QR…</p>
-        <button id="new-session">Create another session</button>
-        <p class="small">This QR contains a private pairing link. Share it only with your viewing partner. Each session supports one active headset and one phone controller.</p>
-      </section>
-    </div>
+  <main id="entry" class="entry stretch-shell" data-layout="bounded">
+    <header class="shell-header"><h1>Immersive Video Player</h1><p id="entry-status" class="status" role="status" aria-live="polite"></p></header>
+    <section id="entry-invitation" class="entry-body stretch-body">
+      <div class="qr-space"><canvas id="entry-qr" role="img" aria-label="Session QR"></canvas></div>
+      <details id="entry-options"><summary>Session</summary><div class="utility-content">
+        <input id="entry-link" aria-label="Session link" readonly autocomplete="off" spellcheck="false">
+        <div class="actions"><button id="copy-session">Copy link</button><button id="copy-headset">Copy viewer</button></div>
+      </div></details>
+    </section>
+    <footer class="shell-footer"><a id="open-viewer" class="button-link primary fixed-action">Viewer</a><a id="open-controller" class="button-link fixed-action">Controller</a><button id="new-session" class="fixed-action">New</button></footer>
   </main>
   <main id="player" class="app" hidden>
-    <section class="screen" aria-label="Immersive video">
-      <div id="stage" tabindex="0" aria-label="Video panorama. Drag or use arrow keys to look around."></div>
+    <section class="screen" aria-label="Video">
+      <div id="stage" tabindex="0" aria-label="Video panorama"></div>
       <video id="video" playsinline preload="none" data-src="./media/jona.mp4" aria-hidden="true"></video>
-      <header class="screen-header"><a class="wordmark" href="./">Immersive</a><span id="role-label">Viewer</span></header>
-      <div class="screen-caption"><span>Jona</span><span id="screen-time">00:00 / 07:47</span></div>
-      <button id="show-controls" class="screen-toggle" hidden>Show controls</button>
+      <div class="screen-caption"><span id="role-label">Viewer</span><span id="screen-time">00:00 / 07:47</span></div>
+      <button id="show-controls" class="screen-toggle" hidden>Controls</button>
     </section>
-    <aside id="panel" class="panel" aria-label="Video controls">
-      <header class="panel-header"><p class="eyebrow" id="panel-kicker">AN IMMERSIVE FILM</p><h1>Jona</h1><p id="intro">A view to step into. A phone to guide it.</p></header>
-      <div class="notice" id="notice" role="status" aria-live="polite">Enable playback here before starting from your phone.</div>
-      <div class="actions">
-        <button id="arm" class="primary">Enable playback</button>
-        <button id="enter-vr">Enter VR</button>
+    <aside id="panel" class="panel stretch-shell" data-layout="bounded" aria-label="Controls">
+      <header class="shell-header"><h1>Immersive Video Player</h1><p id="connection" class="status" role="status" aria-live="polite">Offline</p><p id="notice" class="status" role="status" aria-live="polite"></p></header>
+      <div class="panel-body stretch-body">
+        <details id="connection-settings" name="controls" data-accordion open><summary>Connection</summary><div class="accordion-content">
+          <div class="actions"><button id="arm" class="primary fixed-action">Enable</button><button id="connect" class="fixed-action">Connect</button><button id="enter-vr" class="fixed-action">VR</button><button id="stop" class="fixed-action" hidden>Disconnect</button><button id="show-qr" hidden>QR</button></div>
+          <div id="paste-invitation" hidden><input id="pasted-link" aria-label="Session link" type="url" placeholder="Session link" autocomplete="off" spellcheck="false"><button id="use-link">Join</button></div>
+        </div></details>
+        <fieldset id="controls" aria-label="Playback controls" disabled>
+          <details id="playback-settings" name="controls" data-accordion><summary>Playback</summary><div class="accordion-content">
+            <div class="transport"><button id="play" class="primary">Play</button><button id="pause">Pause</button></div>
+            <label class="range-row" for="seek"><span>Time</span><input id="seek" type="range" min="0" max="467.3" step="0.1" value="0"><output id="position">00:00</output></label>
+            <label class="range-row" for="volume"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.05" value="1"><output id="volume-value">100%</output></label>
+            <button id="recenter">Recenter</button>
+          </div></details>
+          <details id="view-settings" name="controls" data-accordion><summary>View</summary><div class="accordion-content">
+            <label class="select-row" for="projection"><span>Mode</span><select id="projection"><option value="fisheye">Fisheye</option><option value="equirect360">360°</option><option value="equirect180">180°</option><option value="flat">Flat</option></select></label>
+            <label class="range-row" for="lens"><span>Lens</span><input id="lens" type="range" min="180" max="360" step="5" value="270"><output id="lens-value">270°</output></label>
+            <label class="range-row" for="fov"><span>FOV</span><input id="fov" type="range" min="45" max="110" step="5" value="80"><output id="fov-value">80°</output></label>
+            <label class="range-row" for="yaw"><span>Yaw</span><input id="yaw" type="range" min="-180" max="180" step="5" value="0"><output id="yaw-value">0°</output></label>
+            <label class="range-row" for="pitch"><span>Pitch</span><input id="pitch" type="range" min="-90" max="90" step="5" value="0"><output id="pitch-value">0°</output></label>
+          </div></details>
+        </fieldset>
       </div>
-      <p id="vr-help" class="small">On a WebXR headset, enter VR for head tracking. On a screen, drag to look around.</p>
-      <section class="pairing" aria-labelledby="pair-title">
-        <h2 id="pair-title">Phone remote</h2>
-        <p class="small" id="pair-help">Enable the remote, then scan the link on any smartphone. One phone controls the session at a time.</p>
-        <div class="actions"><button id="connect">Enable phone remote</button><button id="stop" hidden>End session</button></div>
-        <div id="invitation" hidden>
-          <canvas id="qr" aria-label="Scan this QR code on your phone to open its controller"></canvas>
-          <label for="invite-link">Controller link</label><input id="invite-link" readonly autocomplete="off" spellcheck="false">
-          <button id="copy-link">Copy controller link</button>
-          <p class="small">Keep this link private. It expires when you end the session or after 30 minutes.</p>
-        </div>
-        <div id="paste-invitation" hidden><label for="pasted-link">Paste the viewer’s controller link</label><input id="pasted-link" type="url" autocomplete="off" spellcheck="false"><button id="use-link">Use invitation</button></div>
-        <p id="connection" class="connection" role="status" aria-live="polite">Remote is off</p>
-      </section>
-      <fieldset id="controls" disabled>
-        <legend>Playback</legend>
-        <div class="transport"><button id="play" class="primary">Play together</button><button id="pause">Pause</button></div>
-        <label for="seek">Position <output id="position">00:00</output></label>
-        <input id="seek" type="range" min="0" max="467.3" step="0.1" value="0">
-        <label for="volume">Viewer volume <output id="volume-value">100%</output></label>
-        <input id="volume" type="range" min="0" max="1" step="0.05" value="1">
-        <button id="recenter">Recenter view</button>
-        <details><summary>Adjust the view</summary>
-          <label for="projection">Video projection</label>
-          <select id="projection"><option value="fisheye">Kodak circular fisheye</option><option value="equirect360">360° equirectangular</option><option value="equirect180">180° equirectangular</option><option value="flat">Flat screen</option></select>
-          <label for="lens">Source lens angle <output id="lens-value">270°</output></label><input id="lens" type="range" min="180" max="360" step="5" value="270">
-          <label for="fov">Screen field of view <output id="fov-value">80°</output></label><input id="fov" type="range" min="45" max="110" step="5" value="80">
-          <label for="yaw">Horizontal alignment <output id="yaw-value">0°</output></label><input id="yaw" type="range" min="-180" max="180" step="5" value="0">
-          <label for="pitch">Vertical alignment <output id="pitch-value">0°</output></label><input id="pitch" type="range" min="-90" max="90" step="5" value="0">
-          <p class="small">Projection changes the view of the same film. Jona is a mono source. Headset field of view comes from WebXR.</p>
-        </details>
-      </fieldset>
-      <button id="hide-controls">Hide controls</button>
-      <nav class="role-choice" aria-label="Device mode"><a id="switch-mode" hidden></a><a href="./">New session</a></nav>
-      <details class="about"><summary>Connection & playback notes</summary><p class="small">Both screens load the same film. The remote uses VDO.Ninja signaling and encrypted WebRTC data, with a mutual-proof pairing handshake. Internet is required; camera and microphone access are never requested. Direct peers can learn each other’s network address.</p><p class="small">Keep the phone page awake. A timed start and drift correction keep the previews close; buffering and browser scheduling can interrupt synchronization. If the viewer buffers, playback pauses for both screens.</p><p class="small" id="diagnostics">No active connection.</p><a href="https://github.com/GeorgeFejer91/immersive-video-player">Source & setup</a></details>
+      <footer class="shell-footer"><a id="switch-mode" class="button-link fixed-action" hidden></a><a class="button-link fixed-action" href="./">New</a><button id="hide-controls" class="fixed-action">Hide</button></footer>
     </aside>
   </main>
+  <dialog id="qr-dialog" aria-label="Session QR"><form method="dialog"><button>Close</button></form><div id="invitation" hidden><canvas id="qr" role="img" aria-label="Session QR"></canvas><input id="invite-link" aria-label="Controller link" readonly autocomplete="off" spellcheck="false"><button id="copy-link">Copy</button></div></dialog>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
