@@ -14,6 +14,8 @@ Product `fa6903e140fff46cd020d0dc6891bbda7f4f1af3` is pushed. Actions `422161655
 
 Live PASS: `b6272743c3f2a558928e24190f2f5bbc494920e5` passed Actions `42217057959`, environment deployment `7599991616` reported success and the SHA-keyed Pages status was succeed. Root returned HTTP 200 with accordion markup and no old hero. All 15 tests passed against the published HTTPS site, including real public VDO scheduled playback, seek/projection, phone handoff and revocation. Direct route, SDK RTT 1 ms, one preview-position comparison 0.000655 seconds. Main publication objective is achieved; this documentation receipt follows the tested runtime tree. Physical-device qualification boundaries below remain unchanged.
 
+Handoff check: the PowerShell context checker intermittently stopped git ls-remote early through Select-Object -First, reporting a false remote-resolution error despite a matching manual SHA. It now collects native output/exit status before selecting a line; the RequireRemote gate passes. This control-plane fix changes no shipped runtime files.
+
 ## Shared QR update — 2026-11-06
 
 Local PASS: 31/31 Node tests, Vite production build and exact media/BRSP/VDO asset checks. 11/11 production-browser tests passed on Chromium: root QR visible without MP4/signaling, same invitation routes Quest-like UA to viewer and phone-like UA to compact controls, explicit overrides/manual desktop fallback, fragment stripping, same invitation retained over failed signaling, End clears role links, refreshed role links after new sessions, correct clipboard fallback, 320 px/enlarged-text reflow, local activation/Stop, and real public VDO playback/seek/projection/phone handoff. Phone Play button was within the first 844 px viewport.
