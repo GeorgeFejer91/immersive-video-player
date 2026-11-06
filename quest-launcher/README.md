@@ -6,6 +6,8 @@ A small sideloadable app icon named **Immersive Video Player**. Opening it sends
 
 With developer mode already enabled, connect the Quest by USB and accept its USB debugging prompt. Use Meta Quest Developer Hub or SideQuest to install `ImmersiveVideoPlayer-Quest.apk`, or run:
 
+Meta's current [device installation guide](https://developers.meta.com/vr/documentation/android-apps/enable-developer-mode/) covers developer mode, USB authorization and finding sideloaded apps. Its [Developer Hub deployment guide](https://developers.meta.com/vr/documentation/unity/ts-mqdh-deploy-build/) also documents dragging the APK into Device Manager → Apps.
+
 ```powershell
 adb devices -l
 adb -s <your-quest-serial> install -r <path-to-ImmersiveVideoPlayer-Quest.apk>
