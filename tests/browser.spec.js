@@ -273,6 +273,8 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await viewer.locator('#view-settings summary').click();
   await viewer.locator('#projection').selectOption('equirect360');
   await expect(viewer.locator('#projection')).toHaveValue('equirect360');
+  // Stop's native seek must finish before deliberately blocking a subsequent play.
+  await viewer.waitForFunction(()=>{const video=document.querySelector('video');return video.paused&&!video.seeking&&video.readyState>=3;});
   // A blocked headset decoder must stop the shared timeline, rather than leave a false green playback state.
   await viewer.locator('#video').evaluate(v=>{v.play=()=>Promise.reject(new DOMException('Blocked','NotAllowedError'));});
   await expect(phone.locator('#play')).toBeEnabled();await phone.locator('#play').click();

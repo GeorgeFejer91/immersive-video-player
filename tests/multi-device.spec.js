@@ -1,5 +1,10 @@
 import { test,expect } from '@playwright/test';
 test.use({serviceWorkers:'allow'});
+async function seek(page,position){
+  const slider=page.locator('#seek');await expect(slider).toBeEnabled();
+  // One focused range gesture: do not let a heartbeat replace a synthetic unfocused value.
+  await slider.evaluate((element,value)=>{element.focus();element.value=String(value);element.dispatchEvent(new Event('change',{bubbles:true}));},position);
+}
 
 test('multiple phones and an additional viewer control one synchronized video without replacing each other',async({browser})=>{
   test.skip(process.env.RUN_NETWORK!=='1','Public data-only WebRTC qualification.');
@@ -44,7 +49,7 @@ test('multiple phones and an additional viewer control one synchronized video wi
     }
     await expect(phones[2].locator('#pause')).toBeEnabled();await phones[2].locator('#pause').click();
     for(const page of [host,...phones,follower])await expect(page.locator('body')).toHaveAttribute('data-playing','false');
-    await phones[1].locator('#seek').fill('100');await phones[1].locator('#seek').dispatchEvent('change');
+    await seek(phones[1],100);
     for(const page of [host,...phones,follower])await expect.poll(()=>page.locator('video').evaluate(video=>video.currentTime)).toBeGreaterThan(99);
     const beforeJoin=await host.locator('body').getAttribute('data-revision');
     const late=await join(link,{viewport:{width:390,height:844}});
@@ -60,7 +65,7 @@ test('multiple phones and an additional viewer control one synchronized video wi
     await expect(phones[1].locator('#headset-status')).toHaveAttribute('data-state','synced',{timeout:45000});
     await expect(host.locator('body')).toHaveAttribute('data-peers','4');
     await expect(host.locator('body')).toHaveAttribute('data-revision',beforeJoin);
-    await phones[1].locator('#seek').fill('150');await phones[1].locator('#seek').dispatchEvent('change');
+    await seek(phones[1],150);
     for(const page of [host,phones[1],phones[2],follower,late])await expect.poll(()=>page.locator('video').evaluate(video=>video.currentTime)).toBeGreaterThan(149);
     // A recoverable host interruption must not send a terminal session notification.
     await host.evaluate(()=>window.dispatchEvent(new Event('offline')));
@@ -68,7 +73,7 @@ test('multiple phones and an additional viewer control one synchronized video wi
     await expect(host.locator('body')).toHaveAttribute('data-peers','4',{timeout:45000});
     for(const page of [phones[1],phones[2],late])await expect(page.locator('#headset-status')).toHaveAttribute('data-state','synced',{timeout:30000});
     await expect(host.locator('#invite-link')).toHaveValue(link);
-    await phones[2].locator('#seek').fill('175');await phones[2].locator('#seek').dispatchEvent('change');
+    await seek(phones[2],175);
     for(const page of [host,phones[1],phones[2],follower,late])await expect.poll(()=>page.locator('video').evaluate(video=>video.currentTime)).toBeGreaterThan(174);
     await expect(late.locator('#halt')).toBeEnabled();await late.locator('#halt').click();
     for(const page of [host,phones[1],phones[2],follower,late])await expect.poll(()=>page.locator('video').evaluate(video=>video.currentTime)).toBeLessThan(.1);
@@ -107,7 +112,7 @@ test('a new and a reconnected smartphone join an already playing timeline withou
     const host=await open(new URL('?launch=quest',process.env.TEST_URL||'http://127.0.0.1:4174/').href);
     const link=await host.locator('#invite-link').inputValue(),first=await open(link,true);
     await first.locator('#play').click();await synchronized();
-    await first.locator('#seek').fill('20');await first.locator('#seek').dispatchEvent('change');
+    await seek(first,20);
     await expect.poll(()=>host.locator('video').evaluate(video=>video.currentTime)).toBeGreaterThan(19);await synchronized();
     const revision=await host.locator('body').getAttribute('data-revision');
     const late=await open(link,true);await synchronized();
