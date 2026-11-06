@@ -8,7 +8,7 @@ Phone shows the same bundled MP4 directly in a native video element, without vid
 
 - [x] Implement phone player, Stop semantics and truthful headset status.
 - [x] Verified: 33 Node/build/hash checks, 15 deterministic browser checks and the public data-only VDO control/handoff/error regression.
-- [ ] Publish live and update evidence.
+- [x] Published 408194e: Actions 42225070772 attempt 2 and Pages/environment deployment 7601285654 succeeded; all 16 checks passed on HTTPS. Evidence updated.
 
 ## Previous update: minimal stretch accordion
 
@@ -28,7 +28,7 @@ The main site displays a QR before playback setup. One session invitation routes
 
 ## Goal and authorization
 
-Publish a live GitHub Pages immersive MP4 viewer. A headset browser sees only the locally rendered film in WebXR; an invited smartphone becomes the central playback/view controller. Use BRSP/1 mutual proof over VDO.Ninja data-only WebRTC, a common scheduled timeline and drift correction. Include full-length Jona as an ordinary repository asset.
+Publish a live GitHub Pages immersive MP4 viewer. A headset browser sees only the locally rendered film in WebXR; an invited smartphone becomes the central playback controller. Use BRSP/1 mutual proof over VDO.Ninja data-only WebRTC, a common scheduled timeline and drift correction. Include full-length Jona as an ordinary repository asset.
 
 The 2026-11-05 user instruction authorizes implementation, public GitHub push, Pages configuration and live publication. `jonah.mp4` is the requested Jona video. This supersedes the older native-only goal and creates a narrow publication exception for this film alone. Other footage, native artifacts, private logs/screenshots, device identifiers and credentials remain excluded. No downstream film reuse license is granted; library licenses apply only to code.
 
@@ -57,4 +57,4 @@ Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact 
 
 ## Handoff
 
-Phone video-player update is ready to publish. Local 33 Node checks/build/hash pins, 15 deterministic browser checks and actual public VDO control/Stop/handoff/error handling passed. Next: publish, observe exact Pages revision and run the phone/public-network checks on HTTPS. Shared launcher and immersive viewer remain in scope; physical-device qualification remains separate. Keep the native project historical and outside this public browser repository.
+Phone video player is complete and live. Product 408194e3fc1c8dc2f05a6f5c61591090a2ff88a4 passed Actions 42225070772 attempt 2 and Pages/environment deployment 7601285654. All 16 live HTTPS browser checks passed, including real data-only VDO control, Stop/reset, pulse state, phone handoff and rejected-play recovery. Local 33 Node/build/hash checks and 15 deterministic browser checks passed. This evidence receipt changes documentation only; use fresh Git/Actions reads for current main. Physical-device qualification remains separate. Keep the native project historical and outside this public browser repository.
