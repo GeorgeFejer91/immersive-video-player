@@ -33,6 +33,7 @@ test('shared invitation survives signaling retry and End clears role links',asyn
     Object.defineProperty(window,'VDONinjaSDK',{configurable:true,get:()=>OfflineSdk,set:()=>{}});
   });
   const viewer=await context.newPage();await viewer.goto(link);
+  await expect(viewer.locator('#switch-mode')).toBeVisible();
   const originalRoleLink=await viewer.locator('#switch-mode').getAttribute('href');
   for(let i=0;i<2;i++){
     await viewer.locator('#connect').click();
