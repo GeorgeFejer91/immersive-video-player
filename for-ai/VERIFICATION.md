@@ -10,7 +10,7 @@ Launcher contains the title, QR, Session utilities and Viewer/Controller/New act
 
 Rendered matrix passed without panel/document overflow: launcher 320×560, 390×844, 844×390, 1280×720, 1920×1080, with Session closed/open; both player modes and every accordion group at 320×560, 390×844, 640×390, 844×390, 800×480 and 1280×720. Enlarged 32 px root text, stronger button type, spacing overrides and a long German action string preserve horizontal reflow and readable type through the documented flow fallback. Native summary keyboard activation, modal Escape/focus restoration and full-height portrait clean view passed. Closed native details content is excluded using checkVisibility(), since it retains layout boxes even when not rendered. Desktop launcher and phone screenshots inspected locally; no private captures are shipped.
 
-Publication/live check pending in this product revision. Physical-device qualification boundaries below remain unchanged.
+Product `fa6903e140fff46cd020d0dc6891bbda7f4f1af3` is pushed. Actions `42216165567` passed its full Linux build/test job, but Pages deployment `7599841430` returned an empty status for more than five minutes and the live site still served the previous HTML. Reissuing publication from this documentation revision; runtime files are unchanged. Live verification remains pending. Physical-device qualification boundaries below remain unchanged.
 
 ## Shared QR update — 2026-11-06
 
