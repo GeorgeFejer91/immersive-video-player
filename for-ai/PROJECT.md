@@ -8,7 +8,7 @@ Only `Immersive Video Player`, QR and functional controls. No UI marketing, expl
 
 - [x] Minimal launcher/player markup and concise states, retaining functionality.
 - [x] Pretext stretch geometry, keyboard/resize/accordion checks and remote regression; 31 Node and 15 browser checks pass, including public VDO.
-- [ ] Publish, verify live and update evidence.
+- [x] Published: Actions 42217057959 and environment deployment 7599991616 succeeded for b627274; all 15 tests passed against the live HTTPS site. Evidence updated.
 
 ## Previous update: shared session entry
 
@@ -49,4 +49,4 @@ Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact 
 
 ## Handoff
 
-The minimal stretch UI is locally verified and ready to publish. Next: push, observe exact Actions/Pages revision, run the browser suite against the live HTTPS site and record that receipt. Local checks: 31 Node tests, production build, asset pins and 15 browser tests including public VDO. Physical devices remain unqualified. Keep the native project historical and outside this public browser repository.
+The minimal stretch UI is complete and live. Runtime product fa6903e is included unchanged in b6272743c3f2a558928e24190f2f5bbc494920e5, which passed Actions 42217057959 and Pages/environment deployment 7599991616. All 15 browser tests passed against that published HTTPS site, including actual public VDO control/handoff. Local 31 Node tests, build and asset pins passed; Linux deterministic browser checks passed. This evidence receipt changes documentation only. Use fresh Git/Actions reads for current main; physical-device qualification remains separate. Keep the native project historical and outside this public browser repository.
