@@ -7,7 +7,7 @@ Updated 2026-11-06. This file owns the active checklist; do not create a competi
 The main site displays a QR before playback setup. One session invitation routes Quest/immersive-capable browsers to viewing and smartphones to the compact control center. Unknown devices can select a role; explicit links always override detection. The headset must reuse the invitation rather than generate a different room. No signaling or media download on the launcher; Connect and playback/WebXR remain explicit. Browser device hints choose UX only, never authentication or grants. Current implementation/publication authorization continues for this requested live-site change.
 
 - [x] Bounded role routing/shared invitation generation; three focused Node tests passed.
-- [x] Launcher QR/manual role links/compact phone controls; 10 browser tests passed, including same-QR real VDO/WebRTC, retry, clipboard, reflow and explicit activation.
+- [x] Launcher QR/manual role links/compact phone controls; 11 browser tests passed, including same-QR real VDO/WebRTC, delayed module readiness, retry, clipboard, reflow and explicit activation.
 - [ ] Update docs/evidence, publish and verify exact deployed commit and live site.
 
 ## Goal and authorization
@@ -41,4 +41,4 @@ Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact 
 
 ## Handoff
 
-Repository: GeorgeFejer91/immersive-video-player, main. Shared QR code `728f199` and readiness-test correction `073b0d0` are pushed. Local 31 Node tests, build, asset checks and 10 browser tests pass; fresh CI `42204484164` passed all build checks, but Pages timed out syncing files and its deploy retry returned empty status. A fresh documentation/publication revision is being pushed as recovery. Next: verify a successful Pages deployment and the live QR/device routes; do not infer live publication from the pushed code. Older native work is outside this checkout. Physical Quest scanning/phone lifecycle remain unqualified. Recheck fresh Git, Actions and evidence at resume.
+Repository: GeorgeFejer91/immersive-video-player, main. Shared QR code `728f199` and readiness-test correction `073b0d0` are pushed. Local 31 Node tests, build, asset checks and 10 browser tests pass; fresh CI `42204484164` passed all build checks, but Pages timed out syncing files and its deploy retry returned empty status. Fresh revision 86cb706 deployed successfully (run 42206774659). Live tests then exposed early taps before the lazy app loaded; a delayed-module regression and visibility fix pass all 31 Node/11 browser checks locally. Next: publish that fix and repeat live tests; do not infer live acceptance from pushed code alone. Older native work is outside this checkout. Physical Quest scanning/phone lifecycle remain unqualified. Recheck fresh Git, Actions and evidence at resume.

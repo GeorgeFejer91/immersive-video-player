@@ -20,6 +20,21 @@ test('main page shows a shared QR immediately without loading video or signaling
   await expect(page.locator('#entry-link')).not.toHaveValue(link);
 });
 
+test('player controls stay hidden until their module and handlers are ready',async({page})=>{
+  let release;
+  const gate=new Promise(resolve=>{release=resolve;});
+  await page.route('**/assets/player-app-*.js',async route=>{await gate;await route.continue();});
+  const requested=page.waitForRequest(/\/assets\/player-app-.*\.js/);
+  const navigation=page.goto('./?role=viewer');
+  await requested;
+  try {await expect(page.locator('#player')).toBeHidden();}
+  finally {release();await navigation;}
+  await expect(page.locator('#player')).toBeVisible();
+  await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
+  await page.locator('#connect').click();await expect(page.locator('#invitation')).toBeVisible();
+  await page.locator('#stop').click();
+});
+
 test('shared invitation survives signaling retry and End clears role links',async({browser,page})=>{
   await page.goto('./');const link=await page.locator('#open-viewer').getAttribute('href');
   const context=await browser.newContext();

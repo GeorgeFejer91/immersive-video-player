@@ -20,9 +20,12 @@ try{
 }catch{invalid=true;route={role:null};}
 
 if(route.role){
+  $('entry-invitation').hidden=true;$('new-session').hidden=true;
+  $('entry-status').textContent=route.role==='viewer'?'Opening the headset viewer…':'Opening the phone control center…';
+  const { initPlayer }=await import('./player-app.js');
+  // Showing interactive controls and binding their handlers happen in one task.
   $('entry').hidden=true;$('player').hidden=false;
   document.body.classList.remove('landing');document.body.dataset.page=route.role;
-  const { initPlayer }=await import('./player-app.js');
   initPlayer({phone:route.role==='controller',invitation:route.pairing});
 }else{
   document.body.dataset.page='launcher';
