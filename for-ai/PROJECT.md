@@ -9,6 +9,7 @@ Phone shows the same bundled MP4 directly in a native video element, without vid
 - [x] Implement phone player, Stop semantics and truthful headset status.
 - [x] Verified: 33 Node/build/hash checks, 15 deterministic browser checks and the public data-only VDO control/handoff/error regression.
 - [x] Published 408194e: Actions 42225070772 attempt 2 and Pages/environment deployment 7601285654 succeeded; all 16 checks passed on HTTPS. Evidence updated.
+- [x] Follow-up QR routing assurance: six simulated phone/tablet browser hints entered controller connection controls directly on the live site, without a role chooser. Dedicated regression added; runtime unchanged.
 
 ## Previous update: minimal stretch accordion
 
