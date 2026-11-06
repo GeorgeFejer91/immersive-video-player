@@ -33,6 +33,7 @@ test('Quest app entry starts pairing and shows a fresh phone QR without arming m
 });
 
 test('Quest VR gesture arms playback even if immersive entry is unavailable',async({page})=>{
+  await page.addInitScript(()=>{Object.defineProperty(navigator,'xr',{value:{isSessionSupported:async()=>false}});});
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
   await page.goto('./?launch=quest');
   await expect(page.locator('#qr-dialog')).toBeVisible();
@@ -46,9 +47,11 @@ test('Quest VR gesture arms playback even if immersive entry is unavailable',asy
   await page.locator('#stop').click();
 });
 
-test('Quest auto-pairing retains its invitation after a signaling failure',async({page})=>{
+test('Quest auto-pairing retries the same invitation after signaling failure and Disconnect cancels retries',async({page})=>{
   await page.addInitScript(()=>{
+    window.__attempts=[];
     class OfflineSdk extends EventTarget{
+      constructor(options){super();window.__attempts.push(options.password);}
       async connect(){throw new Error('Signaling unavailable');}
       async disconnect(){}
     }
@@ -57,13 +60,18 @@ test('Quest auto-pairing retains its invitation after a signaling failure',async
   await page.goto('./?launch=quest');
   await expect(page.locator('#qr-dialog')).toBeVisible();
   const link=await page.locator('#invite-link').inputValue();
-  await expect(page.locator('#connection')).toHaveText('Connection failed');
+  await expect(page.locator('#connection')).toHaveText('Reconnecting');
+  await expect.poll(()=>page.evaluate(()=>window.__attempts.length)).toBeGreaterThanOrEqual(2);
+  expect(await page.evaluate(()=>new Set(window.__attempts).size)).toBe(1);
   await page.keyboard.press('Escape');
   await expect(page.locator('#show-qr')).toBeFocused();
-  await page.locator('#connect').click();
-  await expect(page.locator('#connection')).toHaveText('Connection failed');
   await expect(page.locator('#invite-link')).toHaveValue(link);
   await expect(page.locator('#arm')).toBeEnabled();
+  // Cancel a queued retry explicitly, then prove it cannot silently reopen a session.
+  await page.locator('#stop').click();
+  const attempts=await page.evaluate(()=>window.__attempts.length);
+  await page.waitForTimeout(1700);expect(await page.evaluate(()=>window.__attempts.length)).toBe(attempts);
+  await expect(page.locator('#show-qr')).toBeHidden();
 });
 
 test('Quest app entry pairs a phone over public VDO before the local VR gesture',async({browser})=>{

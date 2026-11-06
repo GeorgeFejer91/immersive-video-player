@@ -4,7 +4,7 @@ A small sideloadable app icon named **Immersive Video Player**. Opening it sends
 
 ## Install on Quest 3
 
-Select **Download Quest APK** on the [website](https://georgefejer91.github.io/immersive-video-player/), or use the [direct APK download](https://georgefejer91.github.io/immersive-video-player/downloads/ImmersiveVideoPlayer-Quest.apk). With developer mode already enabled, connect the Quest by USB and accept its USB debugging prompt. Use Meta Quest Developer Hub or SideQuest to install `ImmersiveVideoPlayer-Quest.apk`, or run:
+The website offers a PWA/browser shortcut; a dedicated APK is optional. Use the [direct APK download](https://georgefejer91.github.io/immersive-video-player/downloads/ImmersiveVideoPlayer-Quest.apk) if you prefer sideloading. With developer mode already enabled, connect the Quest by USB and accept its USB debugging prompt. Use Meta Quest Developer Hub or SideQuest to install `ImmersiveVideoPlayer-Quest.apk`, or run:
 
 Published release: **1.0.0**, 12,768 bytes. SHA-256: `af07861c7de91b344496e166bde18bd010fa863f620963fc1851d1819a2a7843`.
 

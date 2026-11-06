@@ -1,5 +1,9 @@
 # Decision log
 
+## D-0010 — Prefer the built-in Quest Library shortcut
+
+2026-11-06, Accepted. User clarifies that the goal is a Quest menu icon opening the hosted player, without a dedicated installed APK. Meta officially documents Browser shortcuts in Library (https://www.meta.com/en-gb/help/quest/172903867975450/): the user adds the current website through the Browser menu. Use the existing ?launch=quest URL for automatic viewer pairing. This supersedes the assumption behind D-0008 that a custom APK is needed for that outcome; it does not itself remove the already published optional APK. Browser shortcuts and Store-packaged PWAs are separate paths. No native package or new implementation is needed merely to open the current page from Library.
+
 ## D-0009 — Website APK download
 
 2026-11-06, Accepted. User explicitly requests implementing and publishing a website APK download. Supersedes the local-only APK part of D-0008; keys, other build outputs and device evidence remain private. Add one native download anchor in the existing root footer, with the locked Pretext measurement and readable reflow already in use. Publish only the previously verified signed 1.0.0 APK under public/downloads, preserve binary bytes in Git, and enforce its exact SHA-256 in the existing asset gate. Test an actual keyboard-triggered browser download and deployed bytes. Website download is separate from sideload installation and physical-device acceptance.
@@ -61,3 +65,7 @@ decision and link both entries.
 ## D-0004 — Attach WebRTC lanes before waiting for open
 
 2026-11-05, Accepted. Real VDO browsers delivered controller hello before target openChannel promises resolved; the inherited adapter dropped it. Attach via documented getChannel immediately, buffer at most eight early reliable messages, flush after both lanes peeropen, retain generation fencing. Keep pinned SDK unmodified and record local adapter hash. Three regression tests and real public signaling/control/handoff passed.
+
+## D-0005 — Independently authenticated controllers and browser installation
+
+2026-11-07, Accepted; supersedes the one-active-phone restriction in D-0002. Preserve one viewer-owned reducer, separate pinned BRSP connections per invited peer and a shared bounded command queue. Broadcast accepted state to all peers, isolate individual failures and retry interrupted connections with the same in-memory invitation. Explicit Disconnect and session expiry cancel recovery. Prioritize reliable smartphone-to-Quest control; no unlimited-capacity or physical-device guarantee follows from browser tests. The requested install route is a standard controller PWA plus Quest Browser's built-in Library shortcut. The optional APK remains directly available. Cache only a versioned static UI allow-list, never media, invitations, query URLs or credentials; activate updates naturally without replacing a playing session.

@@ -15,7 +15,7 @@ export function entryRoute(address, hints={}) {
   const pairing=url.hash?parseInvite(url.hash):undefined;
   if(url.searchParams.get('join')==='1'&&!pairing)throw new TypeError('Missing session invitation');
   const selected=explicit||(questLaunch?'viewer':pairing?chooseRole(hints):null);
-  return { role:selected, pairing, autoConnect:questLaunch&&selected==='viewer' };
+  return { role:selected, pairing, autoConnect:questLaunch&&selected==='viewer', follower:selected==='viewer'&&url.searchParams.get('follow')==='1' };
 }
 
 export function sessionLinks(address, invitation) {
@@ -23,5 +23,5 @@ export function sessionLinks(address, invitation) {
   const base=new URL(address);
   if(!['https:','http:'].includes(base.protocol))throw new TypeError('Unsupported site origin');
   const link=search=>{const url=new URL(base);url.search=search;url.hash=new URLSearchParams(pairing).toString();return url.href;};
-  return { join:link('?join=1'),viewer:link('?role=viewer'),controller:link('?controller=1') };
+  return { join:link('?join=1'),viewer:link('?role=viewer'),controller:link('?controller=1'),follower:link('?role=viewer&follow=1') };
 }

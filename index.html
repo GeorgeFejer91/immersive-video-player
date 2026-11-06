@@ -6,6 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self' wss://wss.vdo.ninja https://turnservers.vdo.ninja; object-src 'none'; base-uri 'none'; form-action 'self'">
   <meta name="theme-color" content="#f3f2ec">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/controller-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Immersive Video Player</title>
   <script src="./vendor/vdoninja/1.5.5/vdoninja-sdk.min.js" defer></script>
 </head>
@@ -19,7 +22,7 @@
         <div class="actions"><button id="copy-session">Copy link</button><button id="copy-headset">Copy viewer</button></div>
       </div></details>
     </section>
-    <footer class="shell-footer"><a id="open-viewer" class="button-link primary fixed-action">Viewer</a><a id="open-controller" class="button-link fixed-action">Controller</a><button id="new-session" class="fixed-action">New</button><a id="download-quest" class="button-link fixed-action" href="./downloads/ImmersiveVideoPlayer-Quest.apk" download="ImmersiveVideoPlayer-Quest.apk">Download Quest APK</a></footer>
+    <footer class="shell-footer"><a id="open-viewer" class="button-link primary fixed-action">Viewer</a><a id="open-controller" class="button-link fixed-action">Controller</a><button id="new-session" class="fixed-action">New</button><button id="install-app" class="fixed-action" aria-haspopup="dialog" aria-controls="install-help">Install app</button></footer>
   </main>
   <main id="player" class="app" hidden>
     <section class="screen" aria-label="Video">
@@ -57,7 +60,8 @@
     </aside>
   </main>
   <dialog id="phone-dialog" aria-label="Headset connection"></dialog>
-  <dialog id="qr-dialog" aria-label="Session QR"><form method="dialog"><button>Close</button></form><div id="invitation" hidden><canvas id="qr" role="img" aria-label="Session QR"></canvas><input id="invite-link" aria-label="Controller link" readonly autocomplete="off" spellcheck="false"><button id="copy-link">Copy</button></div></dialog>
+  <dialog id="install-help" aria-label="Install app"><form method="dialog"><button>Close</button></form><p id="install-instructions"></p><a id="shortcut-viewer" class="button-link" href="./?launch=quest" hidden>Open viewer</a></dialog>
+  <dialog id="qr-dialog" aria-label="Session QR"><form method="dialog"><button>Close</button></form><div id="invitation" hidden><canvas id="qr" role="img" aria-label="Session QR"></canvas><input id="invite-link" aria-label="Controller link" readonly autocomplete="off" spellcheck="false"><button id="copy-link">Copy</button><a id="join-viewer" class="button-link" hidden>Join viewer</a></div></dialog>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

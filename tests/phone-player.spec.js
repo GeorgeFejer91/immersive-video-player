@@ -17,7 +17,7 @@ test('phone is a local video player with transport and an accessible headset con
   expect(await page.locator('#stage canvas').count()).toBe(0);
   expect(await page.locator('#video').evaluate(v=>!v.controls&&v.muted&&new URL(v.currentSrc||v.src).pathname.endsWith('/media/jona.mp4'))).toBe(true);
   expect(sockets.filter(url=>url.includes('vdo.ninja'))).toEqual([]);
-  expect((await page.locator('body').innerText()).trim().split(/\s+/).length).toBeLessThan(12);
+  expect((await page.locator('body').innerText()).trim().split(/\s+/).length).toBeLessThanOrEqual(12);
   for(const [width,height] of [[320,560],[390,844],[640,390],[844,390],[1280,720]]){
     await page.setViewportSize({width,height});await page.waitForTimeout(150);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);

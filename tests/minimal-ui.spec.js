@@ -6,7 +6,7 @@ async function fits(page,selector){
 test('minimal launcher stretches without panel scrolling',async({page})=>{
   await page.goto('./');
   await expect(page.getByRole('heading',{name:'Immersive Video Player',exact:true})).toBeVisible();
-  const text=await page.locator('body').innerText();expect(text.replace('Download Quest APK','')).not.toMatch(/Quest|One film|instructions|Source|Scan|devices/i);
+  const text=await page.locator('body').innerText();expect(text).not.toMatch(/Quest|One film|instructions|Source|Scan|devices/i);
   expect(text.trim().split(/\s+/).length).toBeLessThan(20);
   for(const [width,height] of [[320,560],[390,844],[844,390],[1280,720],[1920,1080]]){
     await page.setViewportSize({width,height});

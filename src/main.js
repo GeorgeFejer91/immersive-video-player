@@ -4,11 +4,15 @@ import { randomToken } from './remote/brsp.js';
 import { generateVdoRoomId } from './remote/vdo-ninja-transport.js';
 import { entryRoute, sessionLinks } from './session-entry.js';
 import { measureTextRegions } from './text-fit.js';
+import { initInstallPrompt } from './install-app.js';
 
 const $=id=>document.getElementById(id);
 const address=location.href;
 // A scanner opens a fragment bearer. Consume it before async device checks.
 if(location.hash)history.replaceState(null,'',location.pathname+location.search);
+// OS/PWA link handoff can update only the fragment of an already open page.
+window.addEventListener('hashchange',()=>{if(location.hash)location.reload();});
+initInstallPrompt();
 const hints={userAgent:navigator.userAgent,mobile:Boolean(navigator.userAgentData?.mobile)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1)};
 let route,invalid=false;
 try{
@@ -26,7 +30,7 @@ if(route.role){
   // Showing interactive controls and binding their handlers happen in one task.
   $('entry').hidden=true;$('player').hidden=false;
   document.body.classList.remove('landing');document.body.dataset.page=route.role;
-  initPlayer({phone:route.role==='controller',invitation:route.pairing,autoConnect:route.autoConnect});
+  initPlayer({phone:route.role==='controller',invitation:route.pairing,autoConnect:route.autoConnect,follower:route.follower});
 }else{
   document.body.dataset.page='launcher';
   let links;

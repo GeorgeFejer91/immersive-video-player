@@ -1,7 +1,7 @@
-# Website APK download change scope
+# Controller PWA and shared playback change scope
 
 The active plan and acceptance evidence belong to `for-ai/PROJECT.md` and `for-ai/VERIFICATION.md`.
 
-Allowed changes: launcher HTML/footer CSS, the verified signed APK in public/downloads, asset verification, a focused browser download check, the old no-Quest-copy assertion's exception for the requested functional label, Git binary/ignore exceptions, installation documentation and the project control plane. Preserve media and pinned transport bytes, command scopes, viewer authority, normal web activation, projection and existing stretch geometry. No native runtime changes.
+Allowed changes: a per-peer BRSP host group, player integration, follower routes, PWA manifest/icons/service worker/install presentation, phone seek and reconnect behavior, focused unit/browser/network tests and the canonical control plane/docs. Preserve pinned BRSP/VDO/SDK bytes, film bytes, host authority, authentication, native activation and projection. No chat, media streaming, new backend/account, native APK changes or device operations.
 
-Initial state: `main` at `1e054e4`, with only the previous task's local PROJECT.md and VERIFICATION.md evidence receipts. Preserve their facts in this authorized continuation. Publication now includes the one signed launcher APK; keys, other native outputs and device evidence remain private.
+Initial state: branch `codex/multi-controller-pwa` from `25a3856`, carrying only the prior tasks' local control-plane receipts. Preserve those facts. The public signed APK remains optional; keys and device evidence stay private. For-AI PROJECT.md owns the plan, decisions, progress and handoff.

@@ -154,6 +154,23 @@ test('viewer is inert before explicit connection, local playback works and clean
   await expect(page.locator('#play')).toBeEnabled();
 });
 
+test('seeking a playing video preserves its playing state through transient native waiting',async({page})=>{
+  await page.goto('./?role=viewer');await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
+  await page.locator('#arm').click();await page.locator('#playback-settings summary').click();await page.locator('#play').click();
+  await expect(page.locator('body')).toHaveAttribute('data-playing','true');
+  const revision=await page.locator('body').getAttribute('data-revision');
+  await page.locator('video').evaluate(video=>{
+    Object.defineProperty(video,'seeking',{configurable:true,value:true});
+    video.dispatchEvent(new Event('waiting'));delete video.seeking;
+  });
+  await expect(page.locator('body')).toHaveAttribute('data-revision',revision);
+  await expect(page.locator('#notice')).toHaveText('');
+  await page.locator('#seek').fill('100');await page.locator('#seek').dispatchEvent('change');
+  await expect.poll(()=>page.locator('video').evaluate(video=>video.currentTime)).toBeGreaterThan(99);
+  await expect(page.locator('body')).toHaveAttribute('data-playing','true');
+  await page.locator('#pause').click();await expect(page.locator('body')).toHaveAttribute('data-playing','false');
+});
+
 test('rendered labels reflow at phone widths, landscape, desktop, large type and spacing',async({page})=>{
   await page.goto('./?role=viewer');
   await expect(page.locator('html')).toHaveAttribute('data-pretext','measured');
