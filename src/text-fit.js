@@ -6,7 +6,7 @@ export async function measureTextRegions() {
   setLocale(document.documentElement.lang);
   const cache = new Map();
   let frame;
-  const targets = [...document.querySelectorAll('button, summary, h1, h2, .notice, .connection, .small, .eyebrow, #intro')];
+  const targets = [...document.querySelectorAll('button, .button-link, summary, h1, h2, .notice, .connection, .small, .eyebrow, #intro')];
   function measure() {
     frame = undefined;
     const results = targets.filter(el => el.getClientRects().length).map(el => {

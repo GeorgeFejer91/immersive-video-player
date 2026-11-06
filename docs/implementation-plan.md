@@ -10,3 +10,5 @@ Task state owner: `for-ai/PROJECT.md`.
 4. `.github/workflows/pages.yml`, README and `for-ai/`: build/test/asset checks, publish reviewed files, verify remote commit, Actions deployment and live HTML/MP4 range requests. Do not claim physical Quest/phone or frame lock without matching evidence.
 
 Review focus: autoplay activation lost across asynchronous Play; malformed/nested args; Stop during network start; controller replacement; timer suspension or buffering. Each gets a deterministic or browser/lifecycle check. Jona publication permission comes from the current user directive only.
+
+2026-11-06 update: add `src/session-entry.js` for pure role/link decisions and make `src/main.js` the landing-page bootstrap, moving the existing player into `src/player-app.js`. Add the visible shared QR and explicit viewer/controller alternatives to index.html; preserve provided pairing material in the viewer. Test Quest and smartphone routes, unknown-device/manual fallback, no launcher signaling/media, and actual shared-session phone commands before publishing. `for-ai/PROJECT.md` owns this update's checklist.

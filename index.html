@@ -10,11 +10,36 @@
   <title>Jona — Immersive player</title>
   <script src="./vendor/vdoninja/1.5.5/vdoninja-sdk.min.js" defer></script>
 </head>
-<body>
-  <main class="app">
+<body class="landing">
+  <main id="entry" class="entry" aria-labelledby="entry-title">
+    <header class="entry-header"><span class="wordmark">Immersive</span><a href="https://github.com/GeorgeFejer91/immersive-video-player">Source & setup</a></header>
+    <div class="entry-layout">
+      <section class="entry-copy">
+        <p class="eyebrow">JONA · IMMERSIVE VIDEO</p>
+        <h1 id="entry-title">One film.<br>Two devices.</h1>
+        <p>Scan the same QR with your Quest 3 and your phone.</p>
+        <ol class="entry-steps"><li><strong>Headset</strong><span>Opens the immersive viewer. Enable playback and the phone remote, then enter VR.</span></li><li><strong>Phone</strong><span>Opens your control center. Enable the preview, connect, then press Play together.</span></li></ol>
+        <p class="small">No app connection starts until you choose Connect. Keep this page open until both devices have the link.</p>
+        <details><summary>Opening the link on Quest</summary><p class="small">Use a QR scanner that can open website links in Quest Browser. If scanning is unavailable, copy or send the headset link and open it in Quest Browser. Entering VR still needs a headset tap.</p></details>
+      </section>
+      <section class="entry-session" aria-label="Join this viewing session">
+        <div id="entry-invitation">
+          <canvas id="entry-qr" role="img" aria-label="Shared session QR. Scan with a headset for the viewer, or a phone for controls."></canvas>
+          <p class="small entry-qr-caption">One QR for your headset and phone</p>
+          <nav class="entry-links" aria-label="Choose your device"><a id="open-viewer" class="button-link primary">Open headset viewer</a><a id="open-controller" class="button-link">Open phone controls</a></nav>
+          <label for="entry-link">Shared session link</label><input id="entry-link" readonly autocomplete="off" spellcheck="false">
+          <div class="actions"><button id="copy-session">Copy session link</button><button id="copy-headset">Copy headset link</button></div>
+        </div>
+        <p id="entry-status" class="connection" role="status" aria-live="polite">Preparing your session QR…</p>
+        <button id="new-session">Create another session</button>
+        <p class="small">This QR contains a private pairing link. Share it only with your viewing partner. Each session supports one active headset and one phone controller.</p>
+      </section>
+    </div>
+  </main>
+  <main id="player" class="app" hidden>
     <section class="screen" aria-label="Immersive video">
       <div id="stage" tabindex="0" aria-label="Video panorama. Drag or use arrow keys to look around."></div>
-      <video id="video" playsinline preload="auto" src="./media/jona.mp4" aria-hidden="true"></video>
+      <video id="video" playsinline preload="none" data-src="./media/jona.mp4" aria-hidden="true"></video>
       <header class="screen-header"><a class="wordmark" href="./">Immersive</a><span id="role-label">Viewer</span></header>
       <div class="screen-caption"><span>Jona</span><span id="screen-time">00:00 / 07:47</span></div>
       <button id="show-controls" class="screen-toggle" hidden>Show controls</button>
@@ -59,6 +84,7 @@
         </details>
       </fieldset>
       <button id="hide-controls">Hide controls</button>
+      <nav class="role-choice" aria-label="Device mode"><a id="switch-mode" hidden></a><a href="./">New session</a></nav>
       <details class="about"><summary>Connection & playback notes</summary><p class="small">Both screens load the same film. The remote uses VDO.Ninja signaling and encrypted WebRTC data, with a mutual-proof pairing handshake. Internet is required; camera and microphone access are never requested. Direct peers can learn each other’s network address.</p><p class="small">Keep the phone page awake. A timed start and drift correction keep the previews close; buffering and browser scheduling can interrupt synchronization. If the viewer buffers, playback pauses for both screens.</p><p class="small" id="diagnostics">No active connection.</p><a href="https://github.com/GeorgeFejer91/immersive-video-player">Source & setup</a></details>
     </aside>
   </main>

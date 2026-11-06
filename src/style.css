@@ -7,6 +7,10 @@ button { min-height: 46px; padding: 10px 16px; border: 1px solid #b8bdb5; border
 button:hover { background: #e5e7df; }
 button.primary { background: #314d3b; border-color: #314d3b; color: #fff; }
 button.primary:hover { background: #243d2d; }
+.button-link { display: grid; grid-template-columns: minmax(0,1fr); align-items: center; min-width: 0; min-height: 46px; padding: 10px 16px; border: 1px solid #b8bdb5; border-radius: 4px; color: inherit; text-align: center; text-decoration: none; line-height: 1.4; overflow-wrap: break-word; }
+.button-link.primary { background: #314d3b; border-color: #314d3b; color: white; }
+.button-link:hover { background: #e5e7df; }
+.button-link.primary:hover { background: #243d2d; }
 button:disabled, fieldset:disabled { opacity: .55; cursor: default; }
 :focus-visible { outline: 3px solid #b66b29; outline-offset: 3px; }
 [hidden] { display: none !important; }
@@ -45,6 +49,8 @@ summary { min-height: 44px; cursor: pointer; padding-block: 10px; font-size: 14p
 details p { margin-top: 10px; }
 .about { border-top: 1px solid #ccd0c6; margin-top: 24px; padding-top: 8px; }
 .about a { color: #314d3b; font-size: 13px; overflow-wrap: break-word; }
+.role-choice { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; font-size: 13px; }
+.role-choice a { color: #314d3b; min-height: 44px; display: inline-flex; align-items: center; }
 .screen-toggle { position: absolute; bottom: 60px; right: 24px; color: white; background: #151716; }
 body.controls-hidden .app { grid-template-columns: 1fr; }
 body.controls-hidden .panel, body.controls-hidden .screen-header, body.controls-hidden .screen-caption { display: none; }
@@ -55,5 +61,34 @@ body.phone .panel-header { margin-bottom: 16px; }
 body.phone h1 { font-size: 38px; }
 body.phone #intro, body.phone #enter-vr, body.phone #vr-help, body.phone #hide-controls { display: none; }
 body.phone .pairing { margin-top: 0; padding-top: 16px; }
+.entry { max-width: 1100px; margin: 0 auto; padding: 28px 40px 48px; }
+.entry-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 64px; flex-wrap: wrap; }
+.entry-header a { color: #314d3b; font-size: 13px; min-height: 44px; display: inline-flex; align-items: center; }
+.entry-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,420px); gap: 64px; align-items: start; }
+.entry-copy h1 { font-size: 64px; line-height: 1.07; margin-bottom: 24px; }
+.entry-copy > p:not(.small,.eyebrow) { font-size: 19px; max-width: 340px; }
+.entry-steps { list-style: none; margin: 40px 0 28px; padding: 0; }
+.entry-steps li { display: grid; grid-template-columns: 80px minmax(0,1fr); gap: 16px; padding: 18px 0; border-top: 1px solid #ccd0c6; }
+.entry-steps strong { font-weight: 600; }
+.entry-steps span { font-size: 14px; line-height: 1.65; }
+.entry-session { min-width: 0; padding-top: 4px; }
+#entry-qr { display: block; width: min(100%,360px); max-width: 100%; height: auto; margin: 0 auto 16px; background: #fff; }
+.entry-qr-caption { text-align: center; }
+.entry-links { display: grid; gap: 10px; }
+#entry-link { font-size: 12px; }
+#new-session { margin: 18px 0 12px; width: 100%; }
+body.phone .screen { height: 190px; }
+body.phone .panel { padding: 16px 20px 24px; }
+body.phone .panel-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; margin-bottom: 12px; }
+body.phone .panel-header h1 { font-size: 32px; margin: 0; }
+body.phone .panel-header .eyebrow { margin: 0; }
+body.phone #pair-title, body.phone #pair-help { display: none; }
+body.phone .pairing { padding-block: 12px; margin-top: 8px; }
+body.phone .pairing .actions { margin-bottom: 0; }
+body.phone .connection { margin-top: 8px; }
+body.phone fieldset { margin-top: 16px; }
+body.phone .transport { position: sticky; top: 0; z-index: 2; background: #f3f2ec; padding-block: 8px; }
+body.phone .notice { margin-bottom: 12px; }
+@media (max-width: 760px) { .entry { padding: 20px; } .entry-header { margin-bottom: 32px; } .entry-layout { grid-template-columns: minmax(0,1fr); gap: 32px; } .entry-copy h1 { font-size: 46px; } .entry-steps { margin-top: 24px; } }
 @media (max-width: 700px) { .app { display: block; } .screen { position: relative; height: 50dvh; min-height: 240px; } .panel { padding: 28px 20px; } .screen-header, .screen-caption { inset-inline: 20px; } h1 { font-size: 44px; } body.controls-hidden .screen { height: 100dvh; } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

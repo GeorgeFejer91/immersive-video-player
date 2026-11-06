@@ -1,6 +1,14 @@
 # Project contract
 
-Updated 2026-11-05. This file owns the active checklist; do not create a competing task ledger.
+Updated 2026-11-06. This file owns the active checklist; do not create a competing task ledger.
+
+## Active update: shared session entry
+
+The main site displays a QR before playback setup. One session invitation routes Quest/immersive-capable browsers to viewing and smartphones to the compact control center. Unknown devices can select a role; explicit links always override detection. The headset must reuse the invitation rather than generate a different room. No signaling or media download on the launcher; Connect and playback/WebXR remain explicit. Browser device hints choose UX only, never authentication or grants. Current implementation/publication authorization continues for this requested live-site change.
+
+- [x] Bounded role routing/shared invitation generation; three focused Node tests passed.
+- [x] Launcher QR/manual role links/compact phone controls; 10 browser tests passed, including same-QR real VDO/WebRTC, retry, clipboard, reflow and explicit activation.
+- [ ] Update docs/evidence, publish and verify exact deployed commit and live site.
 
 ## Goal and authorization
 
@@ -11,14 +19,15 @@ The 2026-11-05 user instruction authorizes implementation, public GitHub push, P
 ## Architecture
 
 - `src/player.js`: single viewer-owned reducer, exact allow-list and timeline anchors.
-- `src/main.js`: activation, pairing, lifecycle, media, clock sampling, acknowledgements, 250 ms heartbeat and 2 second stale handling.
+- `src/main.js`: launcher QR and device-mode bootstrap; `src/session-entry.js`: pure role decisions and fragment-only session links.
+- `src/player-app.js`: activation, pairing, lifecycle, media, clock sampling, acknowledgements, 250 ms heartbeat and 2 second stale handling.
 - `src/viewer.js`: Three.js WebXR/head pose and ray-to-source projection. Jona is mono circular fisheye.
 - `src/remote/`: pinned BRSP core and locally patched VDO adapter; hashes in `scripts/verify-assets.mjs`.
 - `src/text-fit.js`: actual pinned Pretext measurement, readable reflow and rendered checks.
 - `public/media/jona.mp4`: full-length web encode below 100 MiB; provenance in `public/media-provenance.json`.
 - Vite builds relative asset paths into `dist/`; Actions verifies/builds/deploys main. No backend, arbitrary remote URL, camera/mic, analytics, service worker or native bridge.
 
-## Acceptance checklist
+## Previous release acceptance (2026-11-05)
 
 - [x] Record directive and shared skill baseline; preserve native work as history.
 - [x] Bounded timeline/projection/pairing schemas and meaningful reducer/protocol checks.
@@ -32,4 +41,4 @@ Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact 
 
 ## Handoff
 
-Repository: GeorgeFejer91/immersive-video-player, main. This is a fresh canonical repository; older native work is outside it. Product 0ba034f was published and verified live; run 42083862166 passed. The documentation receipt follows that product tree. Current requested publication goal is complete; next optional qualification is attended physical Quest + phone acceptance. Recheck fresh Git, Actions and the evidence record at resume.
+Repository: GeorgeFejer91/immersive-video-player. The shared QR update is on feat/shared-session-entry based on main 3afc942. Local 31 Node tests, build, asset checks and 10 browser tests pass; review findings have regression coverage. Next action: commit, fast-forward main, publish and verify Actions plus the live shared QR routes. Older native work is outside this checkout. Physical Quest scanning and real-phone lifecycle remain unqualified. Recheck fresh Git, Actions and evidence at resume.

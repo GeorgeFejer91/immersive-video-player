@@ -1,5 +1,9 @@
 # Decision log
 
+## D-0005 — Shared device-aware session entry
+
+2026-11-06, Accepted. Root generates one high-entropy fragment-only session QR without media/signaling. The opened invitation chooses viewer on Quest/immersive-capable browsers, phone control center on smartphones, or manual choice when uncertain. Explicit role links override hints; hints are UX only. Viewer and controller reuse the same invitation. Recoverable errors preserve pairing, while End/expiry clear local keys and manual role links. A copied bearer may open another viewer, so a different pair should create a new QR. No static site can install/control the native headset QR scanner or bypass VR/autoplay gestures; provide explicit headset URL fallback.
+
 Record only durable choices whose rationale future agents would otherwise have
 to rediscover. Source and tests remain the authority for implementation facts.
 

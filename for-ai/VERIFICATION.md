@@ -1,6 +1,16 @@
 # Verification record
 
-Updated 2026-11-05. Evidence is scoped to the named surface, not a universal product/hardware claim.
+Updated 2026-11-06. Evidence is scoped to the named surface, not a universal product/hardware claim.
+
+## Shared QR update — 2026-11-06
+
+Local PASS: 31/31 Node tests, Vite production build and exact media/BRSP/VDO asset checks. 10/10 production-browser tests passed on Chromium: root QR visible without MP4/signaling, same invitation routes Quest-like UA to viewer and phone-like UA to compact controls, explicit overrides/manual desktop fallback, fragment stripping, same invitation retained over failed signaling, End clears role links, refreshed role links after new sessions, correct clipboard fallback, 320 px/enlarged-text reflow, local activation/Stop, and real public VDO playback/seek/projection/phone handoff. Phone Play button was within the first 844 px viewport.
+
+The real-network test navigated both browser contexts from the identical launcher link and verified the viewer retained its fragment material. Observed direct route, 1 ms SDK RTT, one position comparison 0.035965 seconds. Same-machine simulated device hints are not physical Quest or iPhone evidence.
+
+Visual QA inspected normal desktop and 320 px launcher screenshots under ignored `.for-ai-local/`. QR inline sizing was reset so it stays square and fits narrow screens; long action labels reflow through a zero-minimum Grid track. Native QR camera scanning is NOT RUN. The site opens URL invitations; native URL-scanner availability remains external, with a copied headset-link fallback. Device hints never authorize commands; WebXR capability is checked independently on entering VR. Sources: [Meta browser specs](https://developers.meta.com/vr/documentation/web/browser-specs/) and [WebXR overview](https://developers.meta.com/vr/documentation/web/webxr-overview/).
+
+Publication of this update is pending exact GitHub Actions/Pages and live-site checks. The 2026-11-05 evidence below is historical and applies to that release.
 
 ## Commands
 
