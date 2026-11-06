@@ -10,7 +10,7 @@ The real-network test navigated both browser contexts from the identical launche
 
 Visual QA inspected normal desktop and 320 px launcher screenshots under ignored `.for-ai-local/`. QR inline sizing was reset so it stays square and fits narrow screens; long action labels reflow through a zero-minimum Grid track. Native QR camera scanning is NOT RUN. The site opens URL invitations; native URL-scanner availability remains external, with a copied headset-link fallback. Device hints never authorize commands; WebXR capability is checked independently on entering VR. Sources: [Meta browser specs](https://developers.meta.com/vr/documentation/web/browser-specs/) and [WebXR overview](https://developers.meta.com/vr/documentation/web/webxr-overview/).
 
-Publication of this update is pending exact GitHub Actions/Pages and live-site checks. The 2026-11-05 evidence below is historical and applies to that release.
+Publication is pending live checks. Code `728f199` passed local checks but CI `42203257126` exposed a test-only readiness race; `073b0d0` adds the explicit role-link wait. CI `42203562115` was cancelled when Ubuntu font downloads stalled. Fresh run `42204484164` passed the complete build/Node/browser checks; its deploy attempt timed out in `syncing_files`. A deploy-only retry returned an empty Pages status. A new documentation/publication revision is being pushed to leave that stuck deployment identity; this is a recovery attempt, not evidence of deployment success. The 2026-11-05 evidence below is historical and applies to that release.
 
 ## Commands
 
