@@ -1,7 +1,7 @@
-# Quest launcher change scope
+# Website APK download change scope
 
 The active plan and acceptance evidence belong to `for-ai/PROJECT.md` and `for-ai/VERIFICATION.md`.
 
-Allowed changes: session entry routing, player bootstrap and activation, focused tests, a minimal Android browser-launcher module, installation documentation and the project control plane. Preserve media and pinned transport bytes, command scopes, viewer authority, normal web activation, projection and existing UI geometry. No renderer replacement or historical native-player import.
+Allowed changes: launcher HTML/footer CSS, the verified signed APK in public/downloads, asset verification, a focused browser download check, the old no-Quest-copy assertion's exception for the requested functional label, Git binary/ignore exceptions, installation documentation and the project control plane. Preserve media and pinned transport bytes, command scopes, viewer authority, normal web activation, projection and existing stretch geometry. No native runtime changes.
 
-Initial state: clean `main` at `67af603`; no connected ADB device. Baseline dependencies must be restored from the lockfile before running checks. APKs, keys and private device evidence remain ignored local outputs.
+Initial state: `main` at `1e054e4`, with only the previous task's local PROJECT.md and VERIFICATION.md evidence receipts. Preserve their facts in this authorized continuation. Publication now includes the one signed launcher APK; keys, other native outputs and device evidence remain private.

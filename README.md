@@ -26,9 +26,9 @@ Internet is required for VDO signaling and ICE, even on the same Wi-Fi. Direct p
 
 ## Quest app launcher
 
-The [Quest launcher](quest-launcher/README.md) builds a small sideloadable APK. Its **Immersive Video Player** icon opens Meta Quest Browser directly to the viewer, starts pairing and displays a new phone QR automatically. Scan it on your phone, select **Enable** and **Connect**, then select **VR** once on the headset. That headset gesture enables video and requests immersive mode. Use the phone's **Start**, **Pause** and **Stop** controls. Browser permission prompts still apply.
+Select **Download Quest APK** on the [website](https://georgefejer91.github.io/immersive-video-player/) or [download the APK directly](https://georgefejer91.github.io/immersive-video-player/downloads/ImmersiveVideoPlayer-Quest.apk), then sideload it using Meta Quest Developer Hub, SideQuest or ADB. The [installation guide](quest-launcher/README.md) covers setup and rebuilding. Its **Immersive Video Player** icon opens Meta Quest Browser directly to the viewer, starts pairing and displays a new phone QR automatically. Scan it on your phone, select **Enable** and **Connect**, then select **VR** once on the headset. That headset gesture enables video and requests immersive mode. Use the phone's **Start**, **Pause** and **Stop** controls. Browser permission prompts still apply.
 
-The APK and signing key stay local. No native renderer, WebView or background service is involved. The ordinary session page retains its explicit Connect flow. Opening `?launch=quest` is the launcher's explicit automatic-pairing entry; each launch uses fresh in-memory pairing material.
+Only the reviewed signed launcher APK is published; its signing key stays private. Downloading does not install it automatically. No native renderer, WebView or background service is involved. The ordinary session page retains its explicit Connect flow. Opening `?launch=quest` is the launcher's explicit automatic-pairing entry; each launch uses fresh in-memory pairing material.
 
 ## Run and publish
 

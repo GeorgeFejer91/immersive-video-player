@@ -19,5 +19,6 @@ Thumbs.db
 
 # Native launcher build outputs and signing keys
 *.apk
+!public/downloads/ImmersiveVideoPlayer-Quest.apk
 *.keystore
 *.jks

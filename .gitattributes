@@ -4,3 +4,4 @@
 public/vendor/** -text -whitespace
 public/licenses/** -text -whitespace
 src/remote/** -text -whitespace
+public/downloads/*.apk -text

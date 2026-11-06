@@ -4,7 +4,7 @@ A small sideloadable app icon named **Immersive Video Player**. Opening it sends
 
 ## Install on Quest 3
 
-With developer mode already enabled, connect the Quest by USB and accept its USB debugging prompt. Use Meta Quest Developer Hub or SideQuest to install `ImmersiveVideoPlayer-Quest.apk`, or run:
+Select **Download Quest APK** on the [website](https://georgefejer91.github.io/immersive-video-player/), or use the [direct APK download](https://georgefejer91.github.io/immersive-video-player/downloads/ImmersiveVideoPlayer-Quest.apk). With developer mode already enabled, connect the Quest by USB and accept its USB debugging prompt. Use Meta Quest Developer Hub or SideQuest to install `ImmersiveVideoPlayer-Quest.apk`, or run:
 
 Meta's current [device installation guide](https://developers.meta.com/vr/documentation/android-apps/enable-developer-mode/) covers developer mode, USB authorization and finding sideloaded apps. Its [Developer Hub deployment guide](https://developers.meta.com/vr/documentation/unity/ts-mqdh-deploy-build/) also documents dragging the APK into Device Manager → Apps.
 
@@ -25,6 +25,6 @@ Requires JDK 17+, Android SDK platform 34 and build-tools 34.0.0. The SDK/JDK bu
 ./quest-launcher/build.ps1 -AndroidSdk <SDK-folder> -JavaHome <JDK-folder>
 ```
 
-Alternatively set `ANDROID_HOME` and `JAVA_HOME`. Output: `.for-ai-local/quest-launcher/ImmersiveVideoPlayer-Quest.apk`. The script checks each native command, signs and verifies the APK, checks alignment, dumps package metadata and prints SHA-256. A local development signing key is created once under `%LOCALAPPDATA%/ImmersiveVideoPlayer/quest-launcher.keystore` and reused for updates. Keep it private and backed up; it is not a store-release key. APKs, build output and keys are excluded from Git and Pages.
+Alternatively set `ANDROID_HOME` and `JAVA_HOME`. Output: `.for-ai-local/quest-launcher/ImmersiveVideoPlayer-Quest.apk`. The script checks each native command, signs and verifies the APK, checks alignment, dumps package metadata and prints SHA-256. A local development signing key is created once under `%LOCALAPPDATA%/ImmersiveVideoPlayer/quest-launcher.keystore` and reused for updates. Keep it private and backed up; it is not a store-release key. Build outputs and keys stay private. The one reviewed release APK is copied to `public/downloads/ImmersiveVideoPlayer-Quest.apk` and pinned in `scripts/verify-assets.mjs`; updates require signature/package verification, a deliberate hash-pin update and the browser download check before publication.
 
 Package: `org.immersivevideoplayer.questlauncher`. Uninstall using the headset app menu or `adb -s <serial> uninstall org.immersivevideoplayer.questlauncher`. Physical install, launcher visibility, OS handoff and headset WebXR require a connected, attended Quest; desktop browser tests do not establish those results.
