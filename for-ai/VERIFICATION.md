@@ -2,6 +2,16 @@
 
 Updated 2026-11-06. Evidence is scoped to the named surface, not a universal product/hardware claim.
 
+## Smartphone video player — 2026-11-06
+
+Local PASS: 33 Node checks, production build and exact Jona/BRSP/VDO hashes. Phone uses the same bundled MP4 in its native video element, without a phone Three renderer. The real public VDO check passed Start/Pause/Stop, viewer-local settings, replacement phone and revocation. Actual peer connections at both ends had only application SDP, zero media senders and zero media receivers. Start now uses a 500 ms future anchor; Stop resets both timelines to zero without disconnecting.
+
+Green SVG pulse requires mutually authenticated ready, a sampled clock, an actual returned state younger than two seconds and ready/non-seeking local video agreeing with its authoritative position within 350 ms and playing/paused state. Native connection dialog closes after ready; icon reopens it, Escape/Close restore focus, and reduced motion disables pulse. Concise errors remain visible in the player header. Source review reproduced two error paths: rejected viewer play left the phone playing, and Stop during a pending play incorrectly de-armed playback. Viewer failure now publishes a pause; obsolete session/anchor rejections are ignored. Both regressions passed after fixes.
+
+One same-machine direct-route observation: rounded SDK RTT 0 ms, timestamp-aligned preview-position difference 0.004524 s. A prior raw currentTime comparison was biased by asynchronous browser sampling; the instrumented passing run had raw difference 0.369864 s and sample spacing 0.371800 s. The check now timestamps each video read, projects to a common instant and waits for bounded convergence, rather than relaxing its threshold. This is browser evidence, not physical-phone or frame-lock proof.
+
+Phone portrait/landscape screenshots inspected locally. All 15 deterministic production-browser checks passed. Phone player geometry passed 320×560, 390×844, 640×390, 844×390 and 1280×720 with header/video/transport order, no document overflow and meaningful video area. 320 px enlarged 32 px root type, spacing overrides and a long German Start label preserve readable text and horizontal reflow. Keyboard dialog entry/Escape/Close focus restoration passed; viewer/launcher matrix remains covered. Publication/live check pending in this product revision; physical-device boundaries below remain unchanged.
+
 ## Minimal stretch UI — 2026-11-06
 
 Local PASS: 31 Node tests, production Vite build, exact Jona/BRSP/VDO asset pins and 15 Chromium browser checks including the real public VDO handshake, scheduled playback, pause, seek, projection, controller replacement and revocation. Observed direct route, rounded SDK RTT 0 ms, one preview-position comparison 0.062218 seconds; these are same-machine observations.

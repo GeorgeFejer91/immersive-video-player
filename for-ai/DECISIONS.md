@@ -1,5 +1,9 @@
 # Decision log
 
+## D-0007 — Native phone playback and semantic transport
+
+2026-11-06, Accepted. User requests a phone video-player surface showing the same local asset, with Start/Pause/Stop and a pulsing green/red SVG headset status button. Supersedes D-0006's phone accordion surface; viewer accordions remain. Reuse the native video and existing command handlers, skip phone WebGL, move connection controls into a native dialog, request transport scope only. Stop resets to zero without disconnecting. Shorten the scheduled start lead to 500 ms, preserving clock samples, acknowledgements, state freshness and drift correction. Green requires fresh confirmed state and matching local preview, not merely an open socket; reduced motion disables pulse. Preserve the pinned data-only transport and ship no video stream.
+
 ## D-0006 — Minimal stretch controls
 
 2026-11-06, Accepted. User directs the visible site to contain only the title Immersive Video Player, QR and functional controls, without Quest Browser instructions or explanatory copy. Supersedes D-0005's visible setup/fallback instruction expectation. Preserve shared routing and protocol behavior. Use native exclusive details for Connection/Playback/View, fixed header/footer, dimension-driven stretch tokens and actual Pretext measurement. Unfittable enlarged text falls back to readable document flow; QR utilities use a native dialog. Transport diagnostics remain machine-readable rather than UI prose.

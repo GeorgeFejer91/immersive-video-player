@@ -18,7 +18,7 @@ test('minimal launcher stretches without panel scrolling',async({page})=>{
   }
 });
 test('player accordion groups fit portrait and landscape',async({page})=>{
-  for(const role of ['role=viewer','controller=1']){
+  for(const role of ['role=viewer']){
     await page.goto('./?'+role);await expect(page.locator('#player')).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('data-pretext','measured');
     expect(await page.locator('body').innerText()).not.toMatch(/Quest|WebRTC|head tracking|immersive film|A view to step/i);

@@ -145,6 +145,13 @@ test('viewer is inert before explicit connection, local playback works and clean
   expect(await page.locator('.screen').evaluate(el=>Math.abs(el.getBoundingClientRect().height-innerHeight))).toBeLessThan(1);
   await page.locator('#show-controls').click();
   expect(errors).toEqual([]);
+  await page.locator('#video').evaluate(v=>{v.play=()=>new Promise((resolve,reject)=>{window.__rejectPlay=reject;});});
+  await page.locator('#play').click();await page.waitForFunction(()=>window.__rejectPlay);
+  await page.locator('#halt').click();
+  await page.evaluate(()=>window.__rejectPlay(new DOMException('Interrupted by Stop','AbortError')));
+  await expect(page.locator('#notice')).toHaveText('');
+  await expect(page.locator('#arm')).toBeDisabled();
+  await expect(page.locator('#play')).toBeEnabled();
 });
 
 test('rendered labels reflow at phone widths, landscape, desktop, large type and spacing',async({page})=>{
@@ -191,11 +198,15 @@ test('Stop wins while signaling is unavailable and clears invitation',async({pag
   await expect(page.locator('#connect')).toBeEnabled();
 });
 
-test('public VDO route: real handshake, scheduled play, seek, projection and controller handoff',async({browser})=>{
+test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and controller handoff',async({browser})=>{
   test.skip(process.env.RUN_NETWORK!=='1','Opt-in: public VDO service is an external dependency.');
   test.setTimeout(120000);
   const launcherContext=await browser.newContext();const launcher=await launcherContext.newPage();
   const viewerContext=await browser.newContext({userAgent:QUEST_UA}), phoneContext=await browser.newContext({userAgent:PHONE_UA,viewport:{width:390,height:844}});
+  for(const context of [viewerContext,phoneContext])await context.addInitScript(()=>{
+    const Peer=window.RTCPeerConnection;window.__peers=[];
+    window.RTCPeerConnection=class extends Peer{constructor(...args){super(...args);window.__peers.push(this);}};
+  });
   const viewer=await viewerContext.newPage();let phone=await phoneContext.newPage();
   const base=process.env.TEST_URL||'http://127.0.0.1:4174/';
   await launcher.goto(base);const link=await launcher.locator('#entry-link').inputValue();
@@ -208,22 +219,52 @@ test('public VDO route: real handshake, scheduled play, seek, projection and con
   await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
   await phone.locator('#arm').click();await phone.locator('#connect').click();
   await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
+  await expect(phone.locator('#phone-dialog')).not.toBeVisible();
+  await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','synced');
+  await expect(phone.locator('#headset-status')).toHaveAccessibleName('Headset synced');
+  expect(await phone.locator('#headset-status').evaluate(el=>getComputedStyle(el).animationName)).toBe('headset-pulse');
+  await phone.emulateMedia({reducedMotion:'reduce'});
+  expect(await phone.locator('#headset-status').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+  await phone.emulateMedia({reducedMotion:'no-preference'});
+  expect(await phone.locator('#stage canvas').count()).toBe(0);
+  for(const p of [viewer,phone])expect(await p.evaluate(()=>window.__peers.some(pc=>pc.localDescription?.sdp.includes('m=application'))&&window.__peers.every(pc=>!pc.getSenders().length&&!pc.getReceivers().length&&!/m=(audio|video)/.test(pc.localDescription?.sdp||'')))).toBe(true);
   await expect(phone.locator('#play')).toBeEnabled();
   const playBounds=await phone.locator('#play').boundingBox();expect(playBounds.y+playBounds.height).toBeLessThan(844);
   await phone.locator('#play').click();
   await expect(viewer.locator('body')).toHaveAttribute('data-playing','true',{timeout:10000});
   await expect(phone.locator('body')).toHaveAttribute('data-playing','true',{timeout:10000});
-  const times=await Promise.all([viewer,phone].map(p=>p.locator('video').evaluate(v=>v.currentTime)));
-  expect(Math.abs(times[0]-times[1])).toBeLessThan(.4);
+  let observedDrift,rawDrift,samplingGap;
+  await expect.poll(async()=>{
+    const samples=await Promise.all([viewer,phone].map(p=>p.locator('video').evaluate(v=>({position:v.currentTime,at:performance.timeOrigin+performance.now(),rate:v.playbackRate}))));
+    const at=Math.max(...samples.map(s=>s.at));
+    const positions=samples.map(s=>s.position+(at-s.at)/1000*s.rate);
+    rawDrift=Math.abs(samples[0].position-samples[1].position);samplingGap=Math.abs(samples[0].at-samples[1].at)/1000;
+    observedDrift=Math.abs(positions[0]-positions[1]);return observedDrift;
+  },{timeout:5000}).toBeLessThan(.35);
   await expect(phone.locator('#pause')).toBeEnabled();await phone.locator('#pause').click();
   await expect(viewer.locator('body')).toHaveAttribute('data-playing','false');
-  await expect(phone.locator('#seek')).toBeEnabled();
-  await phone.locator('#seek').fill('100');await phone.locator('#seek').dispatchEvent('change');
+  // Viewer settings remain local; the phone exposes only transport controls.
+  await expect(phone.locator('#view-settings')).toBeHidden();
+  await viewer.locator('#seek').fill('100');await viewer.locator('#seek').dispatchEvent('change');
   await expect.poll(()=>viewer.locator('video').evaluate(v=>v.currentTime)).toBeGreaterThan(99);
-  await phone.locator('#view-settings summary').click();
-  await expect(phone.locator('#projection')).toBeEnabled();await phone.locator('#projection').selectOption('equirect360');
+  await expect.poll(()=>phone.locator('video').evaluate(v=>v.currentTime)).toBeGreaterThan(99);
+  await expect(phone.locator('#halt')).toBeEnabled();await phone.locator('#halt').click();
+  for(const p of [viewer,phone]){
+    await expect(p.locator('body')).toHaveAttribute('data-playing','false');
+    await expect.poll(()=>p.locator('video').evaluate(v=>v.currentTime)).toBeLessThan(.1);
+  }
+  await viewer.locator('#view-settings summary').click();
+  await viewer.locator('#projection').selectOption('equirect360');
   await expect(viewer.locator('#projection')).toHaveValue('equirect360');
-  await phone.locator('#connection-settings summary').click();
+  // A blocked headset decoder must stop the shared timeline, rather than leave a false green playback state.
+  await viewer.locator('#video').evaluate(v=>{v.play=()=>Promise.reject(new DOMException('Blocked','NotAllowedError'));});
+  await expect(phone.locator('#play')).toBeEnabled();await phone.locator('#play').click();
+  await expect(viewer.locator('#notice')).toHaveText('Enable first');
+  await expect.poll(()=>phone.locator('video').evaluate(v=>v.paused),{timeout:7000}).toBe(true);
+  await expect(phone.locator('#play')).toBeEnabled();await phone.locator('#play').click();
+  await expect(phone.locator('#phone-notice')).toHaveText('viewer not ready');
+  await expect(phone.locator('#phone-notice')).toBeVisible();
+  await phone.locator('#headset-status').click();
   await phone.locator('#stop').click();
   await expect(viewer.locator('#connection')).toContainText(/waiting|announced/i,{timeout:20000});
   await phone.close();phone=await phoneContext.newPage();
@@ -231,8 +272,12 @@ test('public VDO route: real handshake, scheduled play, seek, projection and con
   await phone.locator('#arm').click();await phone.locator('#connect').click();
   await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
   await phone.waitForTimeout(2200);
-  console.log(JSON.stringify({route:await phone.locator('body').getAttribute('data-route'),rtt:await phone.locator('body').getAttribute('data-rtt'),observedPreviewDriftSeconds:Math.abs(times[0]-times[1])}));
+  console.log(JSON.stringify({route:await phone.locator('body').getAttribute('data-route'),rtt:await phone.locator('body').getAttribute('data-rtt'),observedPreviewDriftSeconds:observedDrift,rawDriftSeconds:rawDrift,samplingGapSeconds:samplingGap}));
   await viewer.locator('#connection-settings summary').click();
   await viewer.locator('#stop').click();await expect(phone.locator('#connection')).toContainText(/disconnected|ended|failed/i);
+  await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','disconnected');
+  await expect(phone.locator('#phone-dialog')).toBeHidden();
+  await expect(phone.locator('#video')).toBeVisible();
+  await expect(phone.locator('#halt')).toBeDisabled();
   await viewerContext.close();await phoneContext.close();await launcherContext.close();
 });

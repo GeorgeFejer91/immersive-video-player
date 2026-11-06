@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Player, positionAt, clockOffset, validateState, parseInvite } from '../src/player.js';
+import { Player, positionAt, clockOffset, validateState, parseInvite, previewMatches } from '../src/player.js';
 
 test('scheduled playback anchors both screens to the viewer timeline', () => {
   let now = 1000;
@@ -8,12 +8,12 @@ test('scheduled playback anchors both screens to the viewer timeline', () => {
   assert.equal(p.command('player.transport', 'play', { previewReady: true }, false).error, 'viewer_not_ready');
   const result = p.command('player.transport', 'play', { previewReady: true }, true);
   assert.equal(result.ok, true);
-  assert.equal(p.state.anchor.at, 2500);
-  assert.equal(positionAt(p.state, 2000), 0);
-  assert.equal(positionAt(p.state, 3500), 1);
+  assert.equal(p.state.anchor.at, 1500);
+  assert.equal(positionAt(p.state, 1400), 0);
+  assert.equal(positionAt(p.state, 2500), 1);
   now = 4500;
   p.command('player.transport', 'pause', {}, true);
-  assert.equal(positionAt(p.state, 9000), 2);
+  assert.equal(positionAt(p.state, 9000), 3);
 });
 test('reject malformed, out-of-scope and not-ready requests without mutation', () => {
   const p = new Player(467.3, () => 10);
@@ -55,4 +55,30 @@ test('pairing parser accepts only bounded fragment invitations, never arbitrary 
   assert.deepEqual(parseInvite('#room=brsp_abcdefgh&secret=' + secret), { room: 'brsp_abcdefgh', secret });
   assert.throws(() => parseInvite('#room=brsp_abcdefgh&secret=1234'));
   assert.throws(() => parseInvite('#room=brsp_abcdefgh&secret=' + secret + '&action=play'));
+});
+
+test('Stop resets the shared timeline and cancels a scheduled start',()=>{
+  let now=100;const p=new Player(467.3,()=>now);
+  p.command('player.transport','seek',{position:100},true);
+  p.command('player.transport','play',{previewReady:true},true);
+  now=200;
+  assert.equal(p.command('player.transport','stop',{},true).ok,true);
+  assert.equal(p.state.anchor.playing,false);
+  assert.equal(positionAt(p.state,9000),0);
+  const before=p.snapshot();
+  assert.equal(p.command('player.transport','stop',{position:10},true).ok,false);
+  assert.deepEqual(p.snapshot(),before);
+});
+
+test('preview sync requires ready media, matching transport and a bounded position difference',()=>{
+  const p=new Player(467.3,()=>100);
+  const video={readyState:4,seeking:false,paused:true,currentTime:0};
+  assert.equal(previewMatches(p.state,100,video),true);
+  assert.equal(previewMatches(p.state,100,{...video,currentTime:1}),false);
+  assert.equal(previewMatches(p.state,100,{...video,readyState:2}),false);
+  assert.equal(previewMatches(p.state,100,{...video,seeking:true}),false);
+  p.command('player.transport','play',{previewReady:true},true);
+  assert.equal(previewMatches(p.state,200,video),true); // Waiting for the scheduled anchor.
+  assert.equal(previewMatches(p.state,2000,{...video,paused:false,currentTime:1.4}),true);
+  assert.equal(previewMatches(p.state,2000,{...video,paused:true,currentTime:1.4}),false);
 });

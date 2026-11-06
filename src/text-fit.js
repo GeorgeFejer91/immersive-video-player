@@ -53,7 +53,7 @@ export async function measureTextRegions(){
     for(const shell of visible){
       const body=shell.querySelector('.stretch-body');
       if(shell.dataset.layout!=='flow'&&body?.classList.contains('panel-body')){
-        const groups=[...body.querySelectorAll('[data-accordion]')];
+        const groups=[...body.querySelectorAll('[data-accordion]')].filter(el=>el.checkVisibility());
         const summaries=groups.reduce((sum,el)=>sum+el.querySelector('summary').getBoundingClientRect().height,0);
         const available=Math.max(0,body.clientHeight-summaries-px(getComputedStyle(body).gap)*(groups.length-1));
         for(const group of groups)if(group.open)group.querySelector('.accordion-content').style.height=`${available}px`;

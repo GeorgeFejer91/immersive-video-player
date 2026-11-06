@@ -9,6 +9,12 @@ export function positionAt(state, now) {
   return Math.min(state.duration, Math.max(0, position + (playing ? Math.max(0, now - at) / 1000 : 0)));
 }
 
+export function previewMatches(state, now, video) {
+  const position=positionAt(state,now);
+  const paused=!state.anchor.playing||now<state.anchor.at||position>=state.duration;
+  return video.readyState>=3&&!video.seeking&&video.paused===paused&&Math.abs(video.currentTime-position)<=.35;
+}
+
 export class Player {
   constructor(duration, now = () => performance.now()) {
     this.now = now;
@@ -29,11 +35,11 @@ export class Player {
     if (scope === 'player.transport' && action === 'play') {
       if (!shape(args, ['previewReady']) || args.previewReady !== true) return reject('preview_not_ready');
       if (!viewerReady) return reject('viewer_not_ready');
-      change = { anchor: { position: positionAt(s, now) >= s.duration ? 0 : positionAt(s, now), at: now + 1500,
+      change = { anchor: { position: positionAt(s, now) >= s.duration ? 0 : positionAt(s, now), at: now + 500,
         playing: true, generation: s.anchor.generation + 1 } };
-    } else if (scope === 'player.transport' && action === 'pause') {
+    } else if (scope === 'player.transport' && (action === 'pause'||action === 'stop')) {
       if (!shape(args, [])) return reject('invalid_argument');
-      change = { anchor: { position: positionAt(s, now), at: now, playing: false, generation: s.anchor.generation + 1 } };
+      change = { anchor: { position: action==='stop'?0:positionAt(s, now), at: now, playing: false, generation: s.anchor.generation + 1 } };
     } else if (scope === 'player.transport' && action === 'seek') {
       if (!shape(args, ['position']) || !finite(args.position, 0, s.duration)) return reject('invalid_argument');
       change = { anchor: { position: args.position, at: now + (s.anchor.playing ? 600 : 0),

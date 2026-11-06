@@ -2,7 +2,15 @@
 
 Updated 2026-11-06. This file owns the active checklist; do not create a competing task ledger.
 
-## Active update: minimal stretch accordion
+## Active update: smartphone video player
+
+Phone shows the same bundled MP4 directly in a native video element, without video streaming or a phone WebGL renderer. Visible transport is Start/Pause/Stop; Stop resets both timelines to zero, Pause preserves position. Connection controls move into a native dialog opened by an SVG headset button and close after authenticated pairing. Green pulse requires a fresh authenticated viewer state, sampled clock and matching local preview; disconnected or unsynchronized states stay red with an accessible status name. Honor reduced motion. Keep the existing data-only VDO/BRSP authority, scheduled anchors and drift correction; expose only transport scope on the phone. Preserve minimal copy and existing headset/launcher behavior.
+
+- [x] Implement phone player, Stop semantics and truthful headset status.
+- [x] Verified: 33 Node/build/hash checks, 15 deterministic browser checks and the public data-only VDO control/handoff/error regression.
+- [ ] Publish live and update evidence.
+
+## Previous update: minimal stretch accordion
 
 Only `Immersive Video Player`, QR and functional controls. No UI marketing, explainers, context or Quest instructions. Apply Uncodixfy Pretext accordion stretch: fixed header/footer, width/height-driven spacing/type, measured labels, ordered accordion groups and no internal panel scrolling. Preserve shared routing and playback authority. Normal matrix: portrait >=320×560, landscape >=640×390, desktop >=800×480 CSS px. Below that or when enlarged text cannot fit, allow readable document flow rather than clipping/shrinking. Dialogs have their own scroll policy.
 
@@ -49,4 +57,4 @@ Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact 
 
 ## Handoff
 
-The minimal stretch UI is complete and live. Runtime product fa6903e is included unchanged in b6272743c3f2a558928e24190f2f5bbc494920e5, which passed Actions 42217057959 and Pages/environment deployment 7599991616. All 15 browser tests passed against that published HTTPS site, including actual public VDO control/handoff. Local 31 Node tests, build and asset pins passed; Linux deterministic browser checks passed. This evidence receipt changes documentation only. Use fresh Git/Actions reads for current main; physical-device qualification remains separate. Keep the native project historical and outside this public browser repository.
+Phone video-player update is ready to publish. Local 33 Node checks/build/hash pins, 15 deterministic browser checks and actual public VDO control/Stop/handoff/error handling passed. Next: publish, observe exact Pages revision and run the phone/public-network checks on HTTPS. Shared launcher and immersive viewer remain in scope; physical-device qualification remains separate. Keep the native project historical and outside this public browser repository.

@@ -4,9 +4,11 @@ Watch **Jona** in an immersive view, with your phone as the remote.
 
 **[Open the session page](https://georgefejer91.github.io/immersive-video-player/)**
 
-Scan the same QR on the headset and phone, or choose **Viewer** / **Controller**. On both, select **Enable**, then **Connect**. Select **VR** on the viewer and **Play** on the phone.
+Scan the same QR on the headset and phone, or choose **Viewer** / **Controller**. On both, select **Enable**, then **Connect**. Select **VR** on the viewer and **Start** on the phone.
 
-**Connection**, **Playback** and **View** expand one at a time. The panel stretches to the available width and height. **Session** holds the link and copy buttons; **QR** opens a pairing dialog. **Hide** leaves only the video.
+The phone becomes a local video player with **Start**, **Pause** and **Stop**. Pause holds the position; Stop resets both players to zero. The headset icon opens connection controls and pulses green when the authenticated viewer state, clock and local preview agree; otherwise it is red. Pairing controls close after connection.
+
+The viewer retains **Connection**, **Playback** and **View** sections. **Session** holds link utilities; **QR** opens pairing; **Hide** leaves only video.
 
 The launcher loads no film or connection. **New** creates a fresh session. Pairing keys stay in memory; reopen the shared link after reloading a device. One invited phone controls at a time. Its **Disconnect** pauses the viewer and allows another phone to connect; viewer **Disconnect** clears the local invitation. Sessions expire after 30 minutes.
 
@@ -14,9 +16,9 @@ The phone preview is silent; audio plays on the viewer. Playback pauses if the v
 
 ## How it works
 
-The viewer is authoritative. A high-entropy invitation stays in the URL fragment and is removed from visible history on both devices. Device hints and available immersive capabilities choose an interface; explicit role links override them. They do not authenticate a peer or grant commands. Actual WebXR support is checked at runtime, following [Meta's browser guidance](https://developers.meta.com/vr/documentation/web/browser-specs/). BRSP/1 proves both peers possess the pairing secret, negotiates player.transport/player.view scopes, and acknowledges validated commands. Pinned VDO.Ninja SDK 1.5.5 handles signaling and a single duplex data-only WebRTC connection. No camera, microphone, screen capture or video broadcast is involved.
+The viewer is authoritative. A high-entropy invitation stays in the URL fragment and is removed from visible history on both devices. Device hints choose an interface; explicit role links override them. They do not authenticate a peer or grant commands. Actual WebXR support is checked at runtime. BRSP/1 proves both peers possess the pairing secret; the phone requests only player.transport scope and commands are acknowledged. Pinned VDO.Ninja SDK 1.5.5 handles signaling and a single duplex data-only WebRTC connection. No camera, microphone, screen capture or video broadcast is involved.
 
-Both devices fetch the bundled MP4. The phone estimates viewer clock offset, receives a future playback anchor and corrects preview drift. This is approximate synchronization, not frame lock. Buffering, decoding and mobile background scheduling still matter. State older than two seconds disables phone controls. [Verification and limits](for-ai/VERIFICATION.md).
+Both devices fetch the bundled MP4. The phone uses the native video element; only the viewer needs the immersive renderer. The phone estimates viewer clock offset, receives a playback anchor 500 ms ahead and corrects preview drift. This is approximate synchronization, not frame lock. State older than two seconds disables phone controls. [Verification and limits](for-ai/VERIFICATION.md).
 
 Jona defaults to circular-fisheye dewarping with adjustable lens angle and alignment. Equirectangular 180/360 and flat mappings are available. These are runtime views of the same film. Jona is mono, not binocular stereo. WebXR determines headset FOV; the FOV slider affects the non-XR screen.
 
