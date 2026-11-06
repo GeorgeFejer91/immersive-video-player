@@ -89,6 +89,10 @@ test('Quest app entry pairs a phone over public VDO before the local VR gesture'
     await viewer.waitForFunction(()=>document.querySelector('video').readyState>=3);
     await viewer.locator('#enter-vr').click();
     await expect(viewer.locator('#arm')).toBeDisabled();
+    await viewer.waitForFunction(()=>{
+      const video=document.querySelector('#video');
+      return document.body.dataset.playing==='false'&&video.paused&&!video.seeking&&video.readyState>=3;
+    });
     await phone.locator('#play').click();
     for(const p of [viewer,phone])await expect(p.locator('body')).toHaveAttribute('data-playing','true',{timeout:10000});
     await expect(phone.locator('#halt')).toBeEnabled();await phone.locator('#halt').click();
