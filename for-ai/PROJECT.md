@@ -8,7 +8,7 @@ The main site displays a QR before playback setup. One session invitation routes
 
 - [x] Bounded role routing/shared invitation generation; three focused Node tests passed.
 - [x] Launcher QR/manual role links/compact phone controls; 11 browser tests passed, including same-QR real VDO/WebRTC, delayed module readiness, retry, clipboard, reflow and explicit activation.
-- [ ] Update docs/evidence, publish and verify exact deployed commit and live site.
+- [x] Docs/evidence updated; product 03e66fa passed Actions 42207757845, matched Pages deployment 7598612184 and passed all 11 live-site browser tests.
 
 ## Goal and authorization
 
@@ -41,4 +41,4 @@ Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact 
 
 ## Handoff
 
-Repository: GeorgeFejer91/immersive-video-player, main. Shared QR code `728f199` and readiness-test correction `073b0d0` are pushed. Local 31 Node tests, build, asset checks and 10 browser tests pass; fresh CI `42204484164` passed all build checks, but Pages timed out syncing files and its deploy retry returned empty status. Fresh revision 86cb706 deployed successfully (run 42206774659). Live tests then exposed early taps before the lazy app loaded; a delayed-module regression and visibility fix pass all 31 Node/11 browser checks locally. Next: publish that fix and repeat live tests; do not infer live acceptance from pushed code alone. Older native work is outside this checkout. Physical Quest scanning/phone lifecycle remain unqualified. Recheck fresh Git, Actions and evidence at resume.
+The shared QR update is complete and live. Main product `03e66fa7c1660de8bfecc129b1abab6699b0e5f7` passed Actions `42207757845`, matched Pages deployment `7598612184`, and passed 11/11 live-site browser tests. There are 31 passing Node checks, a production build and pinned media/transport hashes. The evidence receipt is a documentation-only follow-up to that product tree. Use fresh Git/Actions reads for the current main revision. Optional next qualification: physical Quest QR scanning and real-phone lifecycle; those remain unverified. Keep the native project historical and outside this public browser repository.
