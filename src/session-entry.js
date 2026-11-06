@@ -11,9 +11,11 @@ export function entryRoute(address, hints={}) {
   const url=new URL(address);
   const role=url.searchParams.get('role');
   const explicit=role==='viewer'||role==='controller'?role:url.searchParams.get('controller')==='1'?'controller':null;
+  const questLaunch=url.searchParams.get('launch')==='quest';
   const pairing=url.hash?parseInvite(url.hash):undefined;
   if(url.searchParams.get('join')==='1'&&!pairing)throw new TypeError('Missing session invitation');
-  return { role:explicit||(pairing?chooseRole(hints):null), pairing };
+  const selected=explicit||(questLaunch?'viewer':pairing?chooseRole(hints):null);
+  return { role:selected, pairing, autoConnect:questLaunch&&selected==='viewer' };
 }
 
 export function sessionLinks(address, invitation) {

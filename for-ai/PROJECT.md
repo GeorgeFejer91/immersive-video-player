@@ -2,7 +2,18 @@
 
 Updated 2026-11-06. This file owns the active checklist; do not create a competing task ledger.
 
-## Active update: smartphone video player
+## Active update: Quest launcher
+
+Create a sideloadable Quest 3 app icon that opens the published player directly in Meta Quest Browser, automatically creates a fresh invitation, starts data-only pairing and displays the phone QR. Keep the normal web entry inert. A headset VR gesture enables local media and requests immersive mode; browser activation rules still apply. Use a minimal Android Activity for this OS handoff rather than introducing a second renderer or Tauri shell. This requested launcher is separate from the historical native player. APKs, signing keys and device evidence stay local; existing browser publication authorization covers the web entry update.
+
+- [x] Implement launcher entry; 34 Node checks and 21 browser checks passed, including real VDO automatic pairing, gesture/error behavior, retry and revocation.
+- [x] Build and verify a signed local APK (12,768 bytes), with rebuild source and installation instructions in `quest-launcher/README.md`.
+- [ ] Run browser/asset/context gates and publish the authorized web update; record observed deployment.
+- [ ] Record device evidence or the unrun hardware boundary and deliver the APK.
+
+Scope: `src/session-entry.js`, `src/main.js`, `src/player-app.js`, corresponding tests, `quest-launcher/`, README and this control plane. Preserve BRSP/VDO bytes, viewer projection, phone authority, media bytes and normal routes. Initial Git state: clean main at 67af603; no connected ADB device. No pre-existing test failures observed yet.
+
+## Previous update: smartphone video player
 
 Phone shows the same bundled MP4 directly in a native video element, without video streaming or a phone WebGL renderer. Visible transport is Start/Pause/Stop; Stop resets both timelines to zero, Pause preserves position. Connection controls move into a native dialog opened by an SVG headset button and close after authenticated pairing. Green pulse requires a fresh authenticated viewer state, sampled clock and matching local preview; disconnected or unsynchronized states stay red with an accessible status name. Honor reduced motion. Keep the existing data-only VDO/BRSP authority, scheduled anchors and drift correction; expose only transport scope on the phone. Preserve minimal copy and existing headset/launcher behavior.
 
@@ -43,6 +54,7 @@ The 2026-11-05 user instruction authorizes implementation, public GitHub push, P
 - `src/text-fit.js`: actual pinned Pretext measurement, readable reflow and rendered checks.
 - `public/media/jona.mp4`: full-length web encode below 100 MiB; provenance in `public/media-provenance.json`.
 - Vite builds relative asset paths into `dist/`; Actions verifies/builds/deploys main. No backend, arbitrary remote URL, camera/mic, analytics, service worker or native bridge.
+- `quest-launcher/`: a permission-free Android Activity hands a fixed HTTPS launch URL to the OS browser. Its explicit `?launch=quest` web entry creates pairing automatically. APK, keys and device evidence stay local; historical native-player code remains excluded.
 
 ## Previous release acceptance (2026-11-05)
 
@@ -58,4 +70,4 @@ Physical Quest/iOS/Android comfort, suspension, relay/cellular routes and exact 
 
 ## Handoff
 
-Phone video player is complete and live. Product 408194e3fc1c8dc2f05a6f5c61591090a2ff88a4 passed Actions 42225070772 attempt 2 and Pages/environment deployment 7601285654. All 16 live HTTPS browser checks passed, including real data-only VDO control, Stop/reset, pulse state, phone handoff and rejected-play recovery. Local 33 Node/build/hash checks and 15 deterministic browser checks passed. This evidence receipt changes documentation only; use fresh Git/Actions reads for current main. Physical-device qualification remains separate. Keep the native project historical and outside this public browser repository.
+Quest launcher APK is built and verified locally; 34 Node checks, build, exact asset pins, context checks and all 21 browser checks (including both public VDO flows) passed. Source is ready for the authorized Pages update; deployment and live checks remain next. No Quest is connected, so physical installation, launcher visibility, OS browser handoff, camera scanning and headset WebXR are unrun. Deliver the local APK with `quest-launcher/README.md`. Keep historical native-player code outside this repository. Initial observed main/origin was 67af603; check fresh Git/Actions state before continuing.

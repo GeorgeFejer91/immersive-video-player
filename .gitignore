@@ -16,3 +16,8 @@ Thumbs.db
 *.swp
 *.tmp
 *.log
+
+# Native launcher build outputs and signing keys
+*.apk
+*.keystore
+*.jks

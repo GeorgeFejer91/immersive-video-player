@@ -6,13 +6,14 @@ import { createViewer } from './viewer.js';
 import { measureTextRegions } from './text-fit.js';
 import { sessionLinks } from './session-entry.js';
 
-export function initPlayer({phone=false,invitation}={}) {
+export function initPlayer({phone=false,invitation,autoConnect=false}={}) {
 const $ = id => document.getElementById(id);
 document.body.classList.toggle('phone',phone);
 const video=$('video'), model=new Player(467.3);
 let view, armed=false, state=model.snapshot(), pairing=invitation, connection, transport;
 let generation=0, heartbeat, expiry, connectDeadline, expiresAt=0, pending, samples=[], offset=0, synced=false;
 let lastStateAt=0, lastAnchor=-1, starting=false, blocked=false, wakeLock, stopped=false, lastPing=0;
+let showLaunchQr=autoConnect&&!phone;
 const format=n=>`${String(Math.floor(Math.max(0,n)/60)).padStart(2,'0')}:${String(Math.floor(Math.max(0,n)%60)).padStart(2,'0')}`;
 const notice=text=>{for(const id of ['notice','phone-notice'])if($(id).textContent!==text)$(id).textContent=text;};
 const remoteStatus=text=>{if($('connection').textContent!==text)$('connection').textContent=text;};
@@ -58,7 +59,7 @@ $('use-link').addEventListener('click',()=>{
   catch {remoteStatus('Invalid link');}
 });
 
-$('arm').addEventListener('click',async()=>{
+async function enablePlayback(){
   const original=video.currentTime;
   try {
     // Call play during the actual gesture; waiting on signaling first loses activation.
@@ -68,8 +69,15 @@ $('arm').addEventListener('click',async()=>{
     try{wakeLock=await navigator.wakeLock?.request('screen');}catch{/* Optional; browsers may refuse. */}
     refreshEnabled();
   } catch { notice('Not ready'); }
+}
+$('arm').addEventListener('click',()=>{void enablePlayback();});
+$('enter-vr').addEventListener('click',async()=>{
+  const enabling=autoConnect&&!phone&&!armed?enablePlayback():Promise.resolve();
+  // Start both requests inside the gesture; awaiting media first can lose XR activation.
+  const entering=view?view.enterVR().then(()=>true,()=>false):Promise.resolve(false);
+  await enabling;
+  if(!await entering)notice('VR unavailable');
 });
-$('enter-vr').addEventListener('click',async()=>{try { await view?.enterVR(); } catch{notice('VR unavailable');} });
 $('show-qr').addEventListener('click',()=>$('qr-dialog').showModal());
 
 $('headset-status').addEventListener('click',()=>{$('connection-settings').open=true;$('phone-dialog').showModal();$('headset-status').setAttribute('aria-expanded','true');});
@@ -153,7 +161,11 @@ async function startRemote(reuse=false){
   c.addEventListener('ready',()=>{
     if(!active())return;clearTimeout(connectDeadline);
     remoteStatus(phone?'Syncing':'Connected');
-    if(phone)$('phone-dialog').close();else $('playback-settings').open=true;
+    if(phone)$('phone-dialog').close();
+    else {
+      if(autoConnect)$('qr-dialog').close();
+      if(!autoConnect||armed)$('playback-settings').open=true;
+    }
     if(phone){pending=undefined;sendClockPing();}else c.publishState();
     refreshEnabled();
   });
@@ -200,6 +212,7 @@ async function startRemote(reuse=false){
     await QRCode.toCanvas($('qr'),url.href,{width:232,margin:2,errorCorrectionLevel:'M'});
     if(!active())return;
     $('qr').style.removeProperty('width');$('qr').style.removeProperty('height');$('show-qr').hidden=false;
+    if(showLaunchQr){showLaunchQr=false;$('show-qr').focus();$('qr-dialog').showModal();}
   }
   try{await t.start();if(active()&&t.phase==='error')throw new Error();}
   catch {if(active()){await disconnect({keepPairing:true,quiet:true});remoteStatus('Connection failed');}}
@@ -255,4 +268,5 @@ window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 renderState(state);
 video.preload='auto';video.src=video.dataset.src;video.load();
 if(phone){$('headset-status').focus();$('headset-status').click();}
+else if(autoConnect)void startRemote();
 }

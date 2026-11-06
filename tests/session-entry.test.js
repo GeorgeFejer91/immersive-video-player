@@ -35,3 +35,13 @@ test('root is a launcher; old explicit links work; malformed invitations fail cl
   assert.throws(()=>entryRoute('https://example.org/player/?join=1'));
   assert.throws(()=>sessionLinks('https://example.org/',{...pairing,room:'invalid'}));
 });
+test('Quest launch explicitly selects automatic viewer pairing without leaking into shared links',()=>{
+  const launched=entryRoute('https://example.org/player/?launch=quest',{userAgent:iphone});
+  assert.equal(launched.role,'viewer');assert.equal(launched.autoConnect,true);
+  assert.equal(entryRoute('https://example.org/player/?role=viewer').autoConnect,false);
+  assert.equal(entryRoute('https://example.org/player/?launch=quest&controller=1').autoConnect,false);
+  assert.equal(entryRoute('https://example.org/player/?launch=other').autoConnect,false);
+  const links=sessionLinks('https://example.org/player/?launch=quest&open=123',pairing);
+  for(const link of Object.values(links))assert.equal(new URL(link).searchParams.has('launch'),false);
+  assert.throws(()=>entryRoute('https://example.org/player/?launch=quest#room=bad&secret=short'));
+});

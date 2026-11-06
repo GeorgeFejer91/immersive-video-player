@@ -26,7 +26,7 @@ if(route.role){
   // Showing interactive controls and binding their handlers happen in one task.
   $('entry').hidden=true;$('player').hidden=false;
   document.body.classList.remove('landing');document.body.dataset.page=route.role;
-  initPlayer({phone:route.role==='controller',invitation:route.pairing});
+  initPlayer({phone:route.role==='controller',invitation:route.pairing,autoConnect:route.autoConnect});
 }else{
   document.body.dataset.page='launcher';
   let links;

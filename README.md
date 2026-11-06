@@ -24,6 +24,12 @@ Jona defaults to circular-fisheye dewarping with adjustable lens angle and align
 
 Internet is required for VDO signaling and ICE, even on the same Wi-Fi. Direct peers can learn network addresses; TURN can relay encrypted traffic. Observed route and RTT remain available as body data attributes for diagnostics. No offline-LAN or service availability guarantee. [VDO SDK](https://sdk.vdo.ninja/docs/api-reference.html), [BRSP](https://github.com/GeorgeFejer91/browser-remote-sync-protocol).
 
+## Quest app launcher
+
+The [Quest launcher](quest-launcher/README.md) builds a small sideloadable APK. Its **Immersive Video Player** icon opens Meta Quest Browser directly to the viewer, starts pairing and displays a new phone QR automatically. Scan it on your phone, select **Enable** and **Connect**, then select **VR** once on the headset. That headset gesture enables video and requests immersive mode. Use the phone's **Start**, **Pause** and **Stop** controls. Browser permission prompts still apply.
+
+The APK and signing key stay local. No native renderer, WebView or background service is involved. The ordinary session page retains its explicit Connect flow. Opening `?launch=quest` is the launcher's explicit automatic-pairing entry; each launch uses fresh in-memory pairing material.
+
 ## Run and publish
 
 Requires Node 22.12+; CI uses Node 24.
