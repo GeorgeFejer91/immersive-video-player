@@ -26,7 +26,7 @@
   </main>
   <main id="player" class="app" hidden>
     <section class="screen" aria-label="Video">
-      <header id="phone-header" class="phone-header shell-header" hidden><div class="phone-heading"><h1>Immersive Video Player</h1><p id="phone-notice" class="status" role="status" aria-live="polite"></p></div><button id="headset-status" class="headset-button" aria-label="Headset disconnected" title="Headset disconnected" aria-haspopup="dialog" aria-controls="phone-dialog" aria-expanded="false" data-state="disconnected"><svg viewBox="0 0 32 24" width="32" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7 9 3h14l3 4M6 8H4l-2 3v6l3 2M26 8h2l2 3v6l-3 2M8 7h16a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-4l-4-3-4 3H8a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3Z"/><path d="M10 12h3m6 0h3"/></svg></button><span id="headset-state" class="sr-only" role="status" aria-live="polite">Headset disconnected</span></header>
+      <header id="phone-header" class="phone-header shell-header" hidden><div class="phone-heading"><h1>Immersive Video Player</h1><p id="phone-notice" class="status" role="status" aria-live="polite"></p></div><button id="show-warp" class="settings-button" aria-label="Video settings" title="Video settings" aria-haspopup="dialog" aria-controls="warp-dialog"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M9.7 2h4.6l.6 2.6 2 .9 2.3-1.3 2.3 4-1.8 1.9v2.3l1.8 1.9-2.3 4-2.3-1.3-2 .9-.6 2.6H9.7l-.6-2.6-2-.9-2.3 1.3-2.3-4 1.8-1.9v-2.3L2.5 8.3l2.3-4 2.3 1.3 2-.9Z"/><circle cx="12" cy="11.3" r="3"/></svg></button><button id="headset-status" class="headset-button" aria-label="Headset disconnected" title="Headset disconnected" aria-haspopup="dialog" aria-controls="phone-dialog" aria-expanded="false" data-state="disconnected"><svg viewBox="0 0 32 24" width="32" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7 9 3h14l3 4M6 8H4l-2 3v6l3 2M26 8h2l2 3v6l-3 2M8 7h16a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-4l-4-3-4 3H8a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3Z"/><path d="M10 12h3m6 0h3"/></svg></button><span id="headset-state" class="sr-only" role="status" aria-live="polite">Headset disconnected</span></header>
       <div id="stage" tabindex="0" aria-label="Video panorama"></div>
       <video id="video" playsinline preload="none" data-src="./media/jona.mp4" aria-hidden="true"></video>
       <div class="screen-caption"><span id="role-label">Viewer</span><span id="screen-time">00:00 / 07:47</span></div>
@@ -49,7 +49,7 @@
           </div></details>
           <details id="view-settings" name="controls" data-accordion><summary>View</summary><div class="accordion-content">
             <label class="select-row" for="projection"><span>Mode</span><select id="projection"><option value="fisheye">Fisheye</option><option value="equirect360">360°</option><option value="equirect180">180°</option><option value="flat">Flat</option></select></label>
-            <label class="range-row" for="lens"><span>Lens</span><input id="lens" type="range" min="180" max="360" step="5" value="270"><output id="lens-value">270°</output></label>
+            <label class="range-row" for="lens"><span>Lens</span><input id="lens" type="range" min="180" max="360" step="1" value="240"><output id="lens-value">240°</output></label>
             <label class="range-row" for="fov"><span>FOV</span><input id="fov" type="range" min="45" max="110" step="5" value="80"><output id="fov-value">80°</output></label>
             <label class="range-row" for="yaw"><span>Yaw</span><input id="yaw" type="range" min="-180" max="180" step="5" value="0"><output id="yaw-value">0°</output></label>
             <label class="range-row" for="pitch"><span>Pitch</span><input id="pitch" type="range" min="-90" max="90" step="5" value="0"><output id="pitch-value">0°</output></label>
@@ -60,6 +60,21 @@
     </aside>
   </main>
   <dialog id="phone-dialog" aria-label="Headset connection"></dialog>
+  <dialog id="warp-dialog" aria-label="Video warp">
+    <form method="dialog"><button>Close</button></form>
+    <label id="warp-angle" class="range-row" for="phone-lens"><span>Angle</span><input id="phone-lens" type="range" min="180" max="360" step="1" value="240"><output id="phone-lens-value">240°</output></label>
+    <fieldset id="warp-presets" class="actions" aria-label="Warp presets">
+      <button id="warp-jona" data-warp-mode="fisheye" data-warp-lens="240" aria-pressed="false">Jona 240°</button>
+      <button data-warp-mode="fisheye" data-warp-lens="180" aria-pressed="false">Fisheye 180°</button>
+      <button data-warp-mode="fisheye" data-warp-lens="270" aria-pressed="false">Fisheye 270°</button>
+      <button data-warp-mode="fisheye" data-warp-lens="360" aria-pressed="false">Fisheye 360°</button>
+      <button data-warp-mode="equirect180" aria-pressed="false">Panorama 180°</button>
+      <button data-warp-mode="equirect360" aria-pressed="false">Panorama 360°</button>
+      <button data-warp-mode="flat" aria-pressed="false">Flat</button>
+    </fieldset>
+    <p id="warp-current" class="status" hidden></p>
+    <p id="warp-fallback" class="status" hidden>Showing unwarped phone video.</p>
+  </dialog>
   <dialog id="install-help" aria-label="Install app"><form method="dialog"><button>Close</button></form><p id="install-instructions"></p><a id="shortcut-viewer" class="button-link" href="./?launch=quest" hidden>Open viewer</a></dialog>
   <dialog id="qr-dialog" aria-label="Session QR"><form method="dialog"><button>Close</button></form><div id="invitation" hidden><canvas id="qr" role="img" aria-label="Session QR"></canvas><input id="invite-link" aria-label="Controller link" readonly autocomplete="off" spellcheck="false"><button id="copy-link">Copy</button><a id="join-viewer" class="button-link" hidden>Join viewer</a></div></dialog>
   <script type="module" src="/src/main.js"></script>

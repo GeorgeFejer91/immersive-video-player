@@ -1,4 +1,5 @@
 export const MODES = ['fisheye', 'equirect360', 'equirect180', 'flat'];
+export const JONA_LENS = 240;
 export const SCOPES = ['player.transport', 'player.view'];
 const finite = (n, min, max) => Number.isFinite(n) && n >= min && n <= max;
 const shape = (v, keys) => v && Object.getPrototypeOf(v) === Object.prototype &&
@@ -18,7 +19,7 @@ export function previewMatches(state, now, video) {
 export class Player {
   constructor(duration, now = () => performance.now()) {
     this.now = now;
-    this.state = { revision: 0, duration, projection: 'fisheye', lens: 270, fov: 80,
+    this.state = { revision: 0, duration, projection: 'fisheye', lens: JONA_LENS, fov: 80,
       yaw: 0, pitch: 0, volume: 1, recenter: 0,
       anchor: { position: 0, at: now(), playing: false, generation: 0 } };
   }
@@ -47,6 +48,9 @@ export class Player {
     } else if (scope === 'player.transport' && action === 'volume') {
       if (!shape(args, ['volume']) || !finite(args.volume, 0, 1)) return reject('invalid_argument');
       change = { volume: args.volume };
+    } else if (scope === 'player.view' && action === 'lens') {
+      if (!shape(args, ['lens']) || !finite(args.lens, 180, 360)) return reject('invalid_argument');
+      change = { lens: args.lens };
     } else if (scope === 'player.view' && action === 'projection') {
       if (!shape(args, ['mode', 'lens', 'fov', 'yaw', 'pitch']) || !MODES.includes(args.mode) ||
         !finite(args.lens, 180, 360) || !finite(args.fov, 45, 110) || !finite(args.yaw, -180, 180) || !finite(args.pitch, -90, 90)) return reject('invalid_argument');

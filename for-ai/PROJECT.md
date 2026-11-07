@@ -2,7 +2,17 @@
 
 Updated 2026-11-07. This file owns the active checklist; do not create a competing task ledger.
 
-## Active implementation: controller PWA and shared playback
+## Active implementation: smartphone video warp
+
+Add a smartphone settings icon opening a top overlay with a live 1° angle slider and warp presets, plus a local dewarped preview using the existing viewer shader. Settings adjust the phone alone before pairing and the viewer-owned projection after authentication. Preserve the native decoder, playback timeline, advanced viewer alignment, VDO/BRSP bytes, and media assets. Scope: player/viewer code, phone controls and layout, browser coverage, and film/projection documentation. Initial main: dc8e591, with prior PWA evidence edits in PROJECT and VERIFICATION.
+
+- [x] Fit sampled straight edges across four bundled-film frames; rounded equidistant playback default 240°, preserving standard presets and fine viewer adjustment. Exact source lens remains unverified.
+- [x] 39 Node checks, build/asset/context gates and all 31 production-browser checks pass with RUN_NETWORK=1. Custom 253°/254° values survive paired updates and viewer alignment; top popup passes enlarged text and simulated safe areas. Independent review passes after precision/inset fixes.
+- [ ] Verify publication under the existing Pages authorization.
+
+Handoff: verified locally on main, based on dc8e591; ready for the existing authorized Pages publication. Prior PWA evidence receipts remain local and must not be absorbed into this feature commit. Next: push this verified change, verify Actions/Pages and test the HTTPS settings/paired slider. Physical phones and Quest remain unqualified.
+
+## Previous update: controller PWA and shared playback
 
 User requests an installable smartphone controller, multiple simultaneous controlling phones, synchronized local video on every connected device, and an install/Quest-shortcut option visible on entry that disappears once playback begins. Latest clarification prioritizes reliable phone control of Quest Browser rather than unlimited capacity: recover dropped connections, refresh state/clock on resume and keep another phone from locking out control. Only typed playback controls, clock samples and revisioned state cross the existing data-only VDO/BRSP connection. GitHub Pages hosts application/media assets; it is not a live state server. Keep generated invitations authenticated and private in memory. There is no arbitrary one-phone policy, but browser/network resources are finite and exact frame lock or support for literally every smartphone is not promised.
 
@@ -77,7 +87,7 @@ The 2026-11-05 user instruction authorizes implementation, public GitHub push, P
 - `src/player.js`: single viewer-owned reducer, exact allow-list and timeline anchors.
 - `src/main.js`: launcher QR and device-mode bootstrap; `src/session-entry.js`: pure role decisions and fragment-only session links.
 - `src/player-app.js`: activation, pairing, lifecycle, media, clock sampling, acknowledgements, 250 ms heartbeat and 2 second stale handling.
-- `src/viewer.js`: Three.js WebXR/head pose and ray-to-source projection. Jona is mono circular fisheye.
+- `src/viewer.js`: shared Three.js ray-to-source projection; WebXR/head pose on viewer, capped-density frame-driven phone preview with native fallback. Jona is mono circular fisheye with a fitted 240° playback default.
 - `src/remote/`: pinned BRSP core and locally patched VDO adapter; hashes in `scripts/verify-assets.mjs`.
 - `src/text-fit.js`: actual pinned Pretext measurement, readable reflow and rendered checks.
 - `public/media/jona.mp4`: full-length web encode below 100 MiB; provenance in `public/media-provenance.json`.

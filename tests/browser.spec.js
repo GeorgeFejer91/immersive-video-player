@@ -243,7 +243,7 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await phone.emulateMedia({reducedMotion:'reduce'});
   expect(await phone.locator('#headset-status').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
   await phone.emulateMedia({reducedMotion:'no-preference'});
-  expect(await phone.locator('#stage canvas').count()).toBe(0);
+  await expect(phone.getByRole('region',{name:'Jona panorama'})).toBeVisible();
   for(const p of [viewer,phone])expect(await p.evaluate(()=>window.__peers.some(pc=>pc.localDescription?.sdp.includes('m=application'))&&window.__peers.every(pc=>!pc.getSenders().length&&!pc.getReceivers().length&&!/m=(audio|video)/.test(pc.localDescription?.sdp||'')))).toBe(true);
   await expect(phone.locator('#play')).toBeEnabled();
   const playBounds=await phone.locator('#play').boundingBox();expect(playBounds.y+playBounds.height).toBeLessThan(844);
@@ -260,8 +260,6 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   },{timeout:5000}).toBeLessThan(.35);
   await expect(phone.locator('#pause')).toBeEnabled();await phone.locator('#pause').click();
   await expect(viewer.locator('body')).toHaveAttribute('data-playing','false');
-  // Viewer settings remain local; the phone exposes only transport controls.
-  await expect(phone.locator('#view-settings')).toBeHidden();
   await viewer.locator('#seek').fill('100');await viewer.locator('#seek').dispatchEvent('change');
   await expect.poll(()=>viewer.locator('video').evaluate(v=>v.currentTime)).toBeGreaterThan(99);
   await expect.poll(()=>phone.locator('video').evaluate(v=>v.currentTime)).toBeGreaterThan(99);
@@ -271,15 +269,56 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
     await expect.poll(()=>p.locator('video').evaluate(v=>v.currentTime)).toBeLessThan(.1);
   }
   await viewer.locator('#view-settings summary').click();
+  await expect(viewer.locator('#lens')).toHaveValue('240');
+  const beforeAlignment=await viewer.locator('body').getAttribute('data-revision');
+  await viewer.locator('#yaw').evaluate(el=>{
+    el.value='15';el.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await expect(viewer.locator('body')).not.toHaveAttribute('data-revision',beforeAlignment);
+  await expect(phone.locator('body')).toHaveAttribute('data-revision',await viewer.locator('body').getAttribute('data-revision'));
+  const warp=phone.getByRole('button',{name:'Video settings',exact:true});
+  await warp.click();
+  const warpDialog=phone.getByRole('dialog',{name:'Video warp'});
+  await expect(warpDialog.getByRole('button',{name:'Jona 240°'})).toHaveAttribute('aria-pressed','true');
+  await warpDialog.getByRole('button',{name:'Fisheye 270°'}).click();
+  await expect(viewer.locator('#lens')).toHaveValue('270');
+  await expect(viewer.locator('#yaw')).toHaveValue('15');
+  await warp.click();
+  const angle=warpDialog.getByRole('slider',{name:'Angle',exact:true});
+  await angle.fill('251');
+  await angle.evaluate(el=>{
+    for(const value of [252,258,263,253]){
+      el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  });
+  await expect(viewer.locator('#lens')).toHaveValue('253');
+  await expect(viewer.locator('#yaw')).toHaveValue('15');
+  await expect(angle).toHaveValue('253');
+  await viewer.locator('#lens').focus();
+  await angle.fill('254');
+  await expect(viewer.locator('#lens-value')).toHaveText('254°');
+  await viewer.locator('#yaw').evaluate(el=>{
+    el.focus();el.value='20';el.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await expect(viewer.locator('#lens')).toHaveValue('254');
+  await expect(viewer.locator('#yaw')).toHaveValue('20');
+  await expect.poll(()=>angle.inputValue()).toBe('254');
+  await phone.keyboard.press('Escape');
+  for(const p of [viewer,phone])expect(await p.locator('video').evaluate(v=>v.paused&&v.currentTime<.1)).toBe(true);
   await viewer.locator('#projection').selectOption('equirect360');
   await expect(viewer.locator('#projection')).toHaveValue('equirect360');
+  await warp.click();
+  await expect(warpDialog.getByRole('button',{name:'Panorama 360°'})).toHaveAttribute('aria-pressed','true');
+  await phone.keyboard.press('Escape');
   // Stop's native seek must finish before deliberately blocking a subsequent play.
   await viewer.waitForFunction(()=>{const video=document.querySelector('video');return video.paused&&!video.seeking&&video.readyState>=3;});
+  await phone.waitForFunction(()=>{const video=document.querySelector('video');return video.paused&&!video.seeking&&video.readyState>=3;});
   // A blocked headset decoder must stop the shared timeline, rather than leave a false green playback state.
   await viewer.locator('#video').evaluate(v=>{v.play=()=>Promise.reject(new DOMException('Blocked','NotAllowedError'));});
   await expect(phone.locator('#play')).toBeEnabled();await phone.locator('#play').click();
   await expect(viewer.locator('#notice')).toHaveText('Enable first');
   await expect.poll(()=>phone.locator('video').evaluate(v=>v.paused),{timeout:7000}).toBe(true);
+  await phone.waitForFunction(()=>{const video=document.querySelector('video');return video.paused&&!video.seeking&&video.readyState>=3;});
   await expect(phone.locator('#play')).toBeEnabled();await phone.locator('#play').click();
   await expect(phone.locator('#phone-notice')).toHaveText('viewer not ready');
   await expect(phone.locator('#phone-notice')).toBeVisible();
@@ -296,7 +335,7 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await viewer.locator('#stop').click();await expect(phone.locator('#connection')).toContainText(/disconnected|ended|failed/i);
   await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','disconnected');
   await expect(phone.locator('#phone-dialog')).toBeHidden();
-  await expect(phone.locator('#video')).toBeVisible();
+  await expect(phone.getByRole('region',{name:'Jona panorama'})).toBeVisible();
   await expect(phone.locator('#halt')).toBeDisabled();
   await viewerContext.close();await phoneContext.close();await launcherContext.close();
 });

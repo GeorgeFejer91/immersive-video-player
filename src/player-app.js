@@ -12,9 +12,12 @@ export function initPlayer({phone=false,invitation,autoConnect=false,follower=fa
 const $ = id => document.getElementById(id);
 const follows=phone||follower;
 document.body.classList.toggle('phone',phone);
-const video=$('video'), model=new Player(467.3);
-$('video').closest('.screen').append($('install-app'));
+const video=$('video'),stage=$('stage'),screen=video.closest('.screen'),model=new Player(467.3);
+const warpPresets=[...$('warp-presets').querySelectorAll('button')];
+screen.append($('install-app'));
 let view, armed=false, state=model.snapshot(), pairing=invitation, connection, transport;
+let phonePreviewAttempted=false;
+let queuedLens,lensTimer,lastLensAt=0;
 let generation=0, heartbeat, expiry, connectDeadline, expiresAt=0, pending, samples=[], offset=0, synced=false;
 let lastStateAt=0, lastAnchor=-1, starting=false, blocked=false, wakeLock, stopped=false, lastPing=0;
 let showLaunchQr=autoConnect&&!phone;
@@ -24,7 +27,16 @@ const notice=text=>{for(const id of ['notice','phone-notice'])if($(id).textConte
 const remoteStatus=text=>{if($('connection').textContent!==text)$('connection').textContent=text;};
 const targetNow=()=>performance.now()+(follows?offset:0);
 function canControl(){return armed && (!follows || (connection?.phase==='ready' && synced && lastStateAt>0 && performance.now()-lastStateAt<2000));}
-function refreshEnabled(){ $('controls').disabled=$('phone-controls').disabled=!canControl()||Boolean(pending);updatePhoneStatus(); }
+function refreshEnabled(){
+  const disabled=!canControl()||Boolean(pending);
+  $('controls').disabled=$('phone-controls').disabled=disabled;
+  if(phone){
+    const viewDisabled=connection?.phase==='ready'&&(!canControl()||!connection.acceptedScopes.includes('player.view'));
+    $('warp-presets').disabled=viewDisabled||Boolean(pending);
+    $('phone-lens').disabled=viewDisabled||state.projection!=='fisheye';
+  }
+  updatePhoneStatus();
+}
 function updatePhoneStatus(){
   if(!phone)return;
   const ready=connection?.phase==='ready';
@@ -44,18 +56,35 @@ function updateRoleLink(){
   $('join-viewer').href=links.follower;$('join-viewer').hidden=false;
 }
 updateRoleLink();
-try { if(!phone)view=createViewer($('stage'),video); }
+try { if(!phone)view=createViewer(stage,video); }
 catch { notice('Video unavailable'); $('enter-vr').disabled=true; }
 
 if(phone){
   $('role-label').textContent='Controller';
   $('phone-header').hidden=false;$('phone-controls').hidden=false;
-  $('video').removeAttribute('aria-hidden');$('video').setAttribute('aria-label','Jona');$('video').classList.add('stretch-body');
-  $('video').closest('.screen').classList.add('stretch-shell');
+  video.removeAttribute('aria-hidden');video.setAttribute('aria-label','Jona');video.classList.add('stretch-body');
+  stage.classList.add('stretch-body');stage.setAttribute('role','region');stage.setAttribute('aria-label','Jona panorama');
+  screen.classList.add('stretch-shell');
   $('phone-controls').append($('transport'),$('seek').closest('label'));$('controls').hidden=true;$('play').textContent='Start';
   $('hide-controls').textContent='Close';$('phone-dialog').append($('panel'));
   video.muted=true; notice('');
   if(!pairing){$('paste-invitation').hidden=false;remoteStatus('Link required');}
+}
+function setPhonePreview(warped){
+  screen.dataset.preview=warped?'warped':'native';
+  video.setAttribute('aria-hidden',String(warped));
+  $('warp-fallback').hidden=warped;
+}
+function enablePhonePreview(){
+  if(!phone||phonePreviewAttempted)return;
+  phonePreviewAttempted=true;
+  try {
+    view=createViewer(stage,video,{preview:true});
+    view.update(state);
+    view.renderer.domElement.addEventListener('webglcontextlost',()=>setPhonePreview(false));
+    view.renderer.domElement.addEventListener('webglcontextrestored',()=>setPhonePreview(true));
+    setPhonePreview(true);
+  } catch { setPhonePreview(false); }
 }
 void measureTextRegions().catch(()=>{document.documentElement.dataset.pretext='unavailable';});
 // Invitation material is kept only in memory, never in URL queries, logs or storage.
@@ -72,6 +101,7 @@ async function enablePlayback(){
     const play=video.play(); await play; video.pause(); video.currentTime=original;
     armed=true;blocked=false;lastAnchor=-1;$('arm').textContent='Enabled';
     $('arm').disabled=true;notice('');
+    enablePhonePreview();
     try{void navigator.wakeLock?.request('screen').then(lock=>{wakeLock=lock;}).catch(()=>{});}catch{/* Optional; browsers may refuse. */}
     refreshEnabled();
   } catch { notice('Not ready'); }
@@ -88,12 +118,59 @@ $('show-qr').addEventListener('click',()=>$('qr-dialog').showModal());
 
 $('headset-status').addEventListener('click',()=>{$('connection-settings').open=true;$('phone-dialog').showModal();$('headset-status').setAttribute('aria-expanded','true');});
 $('phone-dialog').addEventListener('close',()=>$('headset-status').setAttribute('aria-expanded','false'));
+$('show-warp').addEventListener('click',()=>{
+  enablePhonePreview();
+  $('warp-dialog').showModal();
+});
+function clearQueuedLens(){
+  queuedLens=undefined;clearTimeout(lensTimer);lensTimer=undefined;
+}
+function scheduleLens(){
+  if(queuedLens===undefined||lensTimer||pending||!canControl()||connection?.phase!=='ready')return;
+  lensTimer=setTimeout(()=>{
+    lensTimer=undefined;
+    if(queuedLens===undefined||pending||!canControl()||connection?.phase!=='ready')return;
+    const lens=queuedLens;queuedLens=undefined;lastLensAt=performance.now();
+    issue('lens',{lens},'player.view');
+  },Math.max(0,100-(performance.now()-lastLensAt)));
+}
+$('phone-lens').addEventListener('input',()=>{
+  const lens=Number($('phone-lens').value);
+  $('phone-lens-value').textContent=lens+'°';
+  if(connection?.phase==='ready'){queuedLens=lens;scheduleLens();}
+  else renderState({...state,lens});
+});
+$('phone-lens').addEventListener('blur',()=>renderState(state));
+for(const preset of warpPresets)preset.addEventListener('click',()=>{
+  clearQueuedLens();
+  const mode=preset.dataset.warpMode;
+  const lens=Number(preset.dataset.warpLens??state.lens);
+  if(connection?.phase==='ready')issue('projection',{mode,lens,fov:state.fov,yaw:state.yaw,pitch:state.pitch},'player.view');
+  else {renderState({...state,projection:mode,lens});refreshEnabled();}
+  $('warp-dialog').close();
+});
 $('hide-controls').addEventListener('click',()=>{if(phone){$('phone-dialog').close();return;}document.body.classList.add('controls-hidden');$('show-controls').hidden=false;$('show-controls').focus();});
 $('show-controls').addEventListener('click',()=>{document.body.classList.remove('controls-hidden');$('show-controls').hidden=true;$('hide-controls').focus();});
 
 function renderState(next){
   if(follows && next.revision<state.revision)return;
   state=next; view?.update(state);
+  if(phone){
+    if(state.projection!=='fisheye')clearQueuedLens();
+    if(document.activeElement!==$('phone-lens')&&queuedLens===undefined&&pending?.action!=='lens')$('phone-lens').value=String(state.lens);
+    const angleText=$('phone-lens').value+'°';
+    if($('phone-lens-value').textContent!==angleText)$('phone-lens-value').textContent=angleText;
+    let selected=false;
+    for(const preset of warpPresets){
+      const active=preset.dataset.warpMode===state.projection&&
+        (preset.dataset.warpLens===undefined||Number(preset.dataset.warpLens)===state.lens);
+      if(preset.getAttribute('aria-pressed')!==String(active))preset.setAttribute('aria-pressed',String(active));
+      selected||=active;
+    }
+    const current=$('warp-current');
+    if(current.hidden!==selected)current.hidden=selected;
+    if(!selected&&current.textContent!==`Fisheye ${state.lens}°`)current.textContent=`Fisheye ${state.lens}°`;
+  }
   $('seek').max=String(state.duration);
   for(const [id,value] of Object.entries({projection:state.projection,lens:state.lens,fov:state.fov,yaw:state.yaw,pitch:state.pitch,volume:state.volume})){
     if(document.activeElement!==$(id))$(id).value=String(value);
@@ -111,7 +188,8 @@ function applyCommand(command){
 function issue(action,args={},scope='player.transport'){
   if(!canControl()||pending)return;
   if(!follows){const result=applyCommand({scope,action,args,expectedRevision:null});connection?.publishState(); if(!result.ok)notice(result.error.replaceAll('_',' '));return;}
-  try{const id=connection.sendCommand(scope,action,args,{expectedRevision:null});pending={id,action,sent:performance.now()};refreshEnabled();}
+  const expectedRevision=phone&&action==='projection'?state.revision:null;
+  try{const id=connection.sendCommand(scope,action,args,{expectedRevision});pending={id,action,sent:performance.now()};refreshEnabled();}
   catch {remoteStatus('Disconnected');}
 }
 $('play').addEventListener('click',()=>{ if(follows&&!synced){notice('Syncing');return;}issue('play',{previewReady:armed&&video.readyState>=3}); });
@@ -121,10 +199,12 @@ $('seek').addEventListener('change',()=>issue('seek',{position:Number($('seek').
 $('volume').addEventListener('change',()=>issue('volume',{volume:Number($('volume').value)}));
 $('recenter').addEventListener('click',()=>issue('recenter',{},'player.view'));
 for(const id of ['projection','lens','fov','yaw','pitch'])$(id).addEventListener('change',()=>issue('projection',{
-  mode:$('projection').value,lens:Number($('lens').value),fov:Number($('fov').value),yaw:Number($('yaw').value),pitch:Number($('pitch').value)
+  mode:state.projection,lens:state.lens,fov:state.fov,yaw:state.yaw,pitch:state.pitch,
+  [id==='projection'?'mode':id]:id==='projection'?$(id).value:Number($(id).value)
 },'player.view'));
 
 async function disconnect({keepPairing=false,quiet=false,recoveringTransport=false}={}){
+  clearQueuedLens();
   ++generation;clearInterval(heartbeat);clearTimeout(expiry);clearTimeout(connectDeadline);clearTimeout(retryTimer);retryTimer=undefined;heartbeat=expiry=undefined;
   pending=undefined;synced=false;samples=[];lastStateAt=0;
   const old=connection;connection=undefined;transport=undefined;
@@ -151,7 +231,7 @@ async function recoverRemote(){
   finally {recovering=false;scheduleRetry();}
 }
 function received(event){
-  try {const next=validateState(event.detail.state);lastStateAt=performance.now();renderState(next);refreshEnabled();}
+  try {const next=validateState(event.detail.state);lastStateAt=performance.now();renderState(next);refreshEnabled();scheduleLens();}
   catch {remoteStatus('Invalid state');void disconnect({quiet:true});}
 }
 async function startRemote(reuse=false){
@@ -174,7 +254,7 @@ async function startRemote(reuse=false){
     t.addEventListener('statemessage',e=>{const now=performance.now();if(now-stateWindow>1000){stateWindow=now;stateCount=0;}if(++stateCount>80)e.stopImmediatePropagation();});
   }
   const options={transport:t,sessionId:pairing.room,sharedSecret:pairing.secret,applyCommand,getState:()=>model.snapshot()};
-  const c=follows?new BRSPConnection({...options,role:'controller',requestedScopes:phone?['player.transport']:SCOPES}):new TargetGroup({...options,grantedScopes:SCOPES});
+  const c=follows?new BRSPConnection({...options,role:'controller',requestedScopes:SCOPES}):new TargetGroup({...options,grantedScopes:SCOPES});
   transport=t;connection=c;
   $('connect').disabled=true;$('stop').hidden=false;
   const active=()=>generation===current&&connection===c;
@@ -208,6 +288,7 @@ async function startRemote(reuse=false){
     } else if(!e.detail.ok)notice(e.detail.error.replaceAll('_',' '));
     else notice('');
     refreshEnabled();
+    scheduleLens();
   });
   const lost=event=>{
     if(!active())return;

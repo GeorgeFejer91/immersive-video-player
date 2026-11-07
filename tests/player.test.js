@@ -82,3 +82,26 @@ test('preview sync requires ready media, matching transport and a bounded positi
   assert.equal(previewMatches(p.state,2000,{...video,paused:false,currentTime:1.4}),true);
   assert.equal(previewMatches(p.state,2000,{...video,paused:true,currentTime:1.4}),false);
 });
+
+test('live lens adjustment preserves projection, alignment and the playback anchor',()=>{
+  const player=new Player(467.3,()=>100);
+  player.command('player.view','projection',{mode:'fisheye',lens:240,fov:95,yaw:15,pitch:-10});
+  player.command('player.transport','play',{previewReady:true},true);
+  const before=player.snapshot();
+  assert.equal(player.command('player.view','lens',{lens:253}).ok,true);
+  assert.deepEqual(player.snapshot(),{...before,revision:before.revision+1,lens:253});
+  for(const args of [{lens:179},{lens:361},{lens:NaN},{lens:250,mode:'flat'}]){
+    const state=player.snapshot();
+    assert.equal(player.command('player.view','lens',args).error,'invalid_argument');
+    assert.deepEqual(player.snapshot(),state);
+  }
+  const state=player.snapshot();
+  assert.equal(player.command('player.transport','lens',{lens:250}).ok,false);
+  assert.deepEqual(player.snapshot(),state);
+  player.command('player.view','projection',{mode:'flat',lens:253,fov:95,yaw:15,pitch:-10});
+  for(const lens of [180,360]){
+    const before=player.snapshot();
+    assert.equal(player.command('player.view','lens',{lens}).ok,true);
+    assert.deepEqual(player.snapshot(),{...before,revision:before.revision+1,lens});
+  }
+});

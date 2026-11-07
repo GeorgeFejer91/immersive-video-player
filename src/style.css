@@ -68,8 +68,12 @@ body.phone #player { display:block; height:100dvh; min-height:0; }
 body.phone .screen { height:100dvh; padding:max(6px,var(--gap),env(safe-area-inset-top)) max(6px,var(--gap),env(safe-area-inset-right)) max(6px,var(--gap),env(safe-area-inset-bottom)) max(6px,var(--gap),env(safe-area-inset-left)); }
 body.phone #stage,body.phone .screen-caption { display:none; }
 body.phone #video { position:static; display:block; width:100%; height:100%; min-height:0; opacity:1; object-fit:contain; }
+body.phone .screen[data-preview=warped] #stage { display:block; position:relative; min-width:0; min-height:0; touch-action:pinch-zoom; }
+body.phone .screen[data-preview=warped] #video { position:absolute; width:1px; height:1px; opacity:0; }
 .phone-header { display:flex; align-items:center; gap:var(--gap); }
 .phone-heading { flex:1; min-width:0; }
+.settings-button { width:44px; height:44px; flex:none; padding:8px; place-items:center; border-color:#929b92; line-height:0; }
+.settings-button:hover { background:#18211b; }
 .headset-button { width:48px; height:48px; flex:none; padding:7px; place-items:center; color:#ff817d; border-color:currentColor; line-height:0; }
 .headset-button[data-state=synced] { color:#69e59d; animation:headset-pulse 1.8s ease-in-out infinite; }
 .headset-button:hover { background:#18211b; }
@@ -79,7 +83,15 @@ body.phone #video { position:static; display:block; width:100%; height:100%; min
 #phone-controls .transport button:hover { background:#253229; }
 #phone-dialog { width:min(384px,calc(100vw - 24px)); padding:0; }
 #phone-dialog .panel { height:min(560px,calc(100dvh - 28px)); border:0; }
+#warp-dialog { --gap:6px; --range:36px; --popup-top:max(12px,env(safe-area-inset-top)); --popup-bottom:max(12px,env(safe-area-inset-bottom)); inset-block-start:var(--popup-top); inset-block-end:auto; margin-block:0; max-height:calc(100dvh - var(--popup-top) - var(--popup-bottom)); }
+#warp-angle { grid-template-columns:minmax(0,1fr) auto; margin-bottom:12px; }
+#phone-lens { grid-column:1 / -1; grid-row:2; }
+#warp-presets { min-width:0; margin:0; padding:0; border:0; }
+#warp-jona { grid-column:1 / -1; }
+#warp-presets button[aria-pressed=true] { background:#314d3b; color:white; border-color:#314d3b; }
 body.phone .screen[data-layout=flow] { height:auto; }
 body.phone .screen[data-layout=flow] #video { height:auto; min-height:140px; }
+body.phone .screen[data-layout=flow][data-preview=warped] #stage { height:clamp(140px,48dvh,480px); }
+body.phone .screen[data-layout=flow][data-preview=warped] #video { height:1px; min-height:0; }
 @keyframes headset-pulse { 0%,100% { box-shadow:0 0 0 0 #69e59d00; } 50% { box-shadow:0 0 16px 3px #69e59d66; } }
 @media (prefers-reduced-motion:reduce) { .headset-button[data-state=synced] { animation:none; } }

@@ -1,17 +1,18 @@
 import * as THREE from 'three';
+import { JONA_LENS, MODES } from './player.js';
 
 // A ray-to-source shader: the circular fisheye source is dewarped, not stretched onto equirectangular UVs.
-export function createViewer(stage, video) {
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.xr.enabled = true;
+export function createViewer(stage, video, { preview = false } = {}) {
+  const renderer = new THREE.WebGLRenderer({ antialias: !preview });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, preview ? 1 : 2));
+  renderer.xr.enabled = !preview;
   stage.append(renderer.domElement);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(80, 1, .01, 100);
   const rig = new THREE.Group(); rig.add(camera); scene.add(rig);
   const texture = new THREE.VideoTexture(video);
   texture.colorSpace = THREE.SRGBColorSpace;
-  const uniforms = { film: { value: texture }, mode: { value: 0 }, lens: { value: 270 * Math.PI / 180 },
+  const uniforms = { film: { value: texture }, mode: { value: 0 }, lens: { value: THREE.MathUtils.degToRad(JONA_LENS) },
     yaw: { value: 0 }, pitch: { value: 0 } };
   const material = new THREE.ShaderMaterial({ side: THREE.BackSide, uniforms,
     vertexShader: `varying vec3 ray; void main(){ ray=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
@@ -35,14 +36,26 @@ export function createViewer(stage, video) {
     }` });
   const sphere = new THREE.Mesh(new THREE.SphereGeometry(10, 64, 40), material); scene.add(sphere);
   let longitude = 0, latitude = 0, drag, xrBase = 0, lastRecenter = 0;
-  const resize = () => { const r=stage.getBoundingClientRect(); renderer.setSize(r.width,r.height); camera.aspect=r.width/r.height; camera.updateProjectionMatrix(); };
+  let dirty = true, lastFrame = -1, lastView;
+  const frameKey = 'requestVideoFrameCallback' in video ? () => texture.version : () => video.currentTime;
+  const resize = () => {
+    const {width,height}=stage.getBoundingClientRect();
+    if(!width||!height)return;
+    renderer.setSize(width,height,false);
+    camera.aspect=width/height;camera.updateProjectionMatrix();dirty=true;
+  };
   const observer = new ResizeObserver(resize); observer.observe(stage);
   stage.addEventListener('pointerdown', e => { drag={ x:e.clientX,y:e.clientY,lon:longitude,lat:latitude }; stage.setPointerCapture(e.pointerId); });
-  stage.addEventListener('pointermove', e => { if(drag){longitude=drag.lon-(e.clientX-drag.x)*.003;latitude=THREE.MathUtils.clamp(drag.lat+(e.clientY-drag.y)*.003,-1.4,1.4);} });
+  stage.addEventListener('pointermove', e => { if(drag){longitude=drag.lon-(e.clientX-drag.x)*.003;latitude=THREE.MathUtils.clamp(drag.lat+(e.clientY-drag.y)*.003,-1.4,1.4);dirty=true;} });
   stage.addEventListener('pointerup', () => { drag=undefined; });
   stage.addEventListener('pointercancel', () => { drag=undefined; });
-  stage.addEventListener('keydown', e => { if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return; e.preventDefault(); longitude+=(e.key==='ArrowLeft'?.08:e.key==='ArrowRight'?-.08:0); latitude=THREE.MathUtils.clamp(latitude+(e.key==='ArrowUp'?-.08:e.key==='ArrowDown'?.08:0),-1.4,1.4); });
+  stage.addEventListener('keydown', e => { if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return; e.preventDefault(); longitude+=(e.key==='ArrowLeft'?.08:e.key==='ArrowRight'?-.08:0); latitude=THREE.MathUtils.clamp(latitude+(e.key==='ArrowUp'?-.08:e.key==='ArrowDown'?.08:0),-1.4,1.4);dirty=true; });
   renderer.setAnimationLoop(() => {
+    if(preview){
+      const frame=frameKey();
+      if(document.hidden||video.readyState<2||(!dirty&&frame===lastFrame))return;
+      dirty=false;lastFrame=frame;
+    }
     if (!renderer.xr.isPresenting) camera.quaternion.setFromEuler(new THREE.Euler(-latitude, longitude, 0, 'YXZ'));
     // Keep the sphere centered at the eyes even when the wearer walks.
     if(renderer.xr.isPresenting){renderer.xr.updateCamera(camera);rig.updateWorldMatrix(true,false);sphere.position.copy(renderer.xr.getCamera().position).applyMatrix4(rig.matrixWorld);}
@@ -56,7 +69,17 @@ export function createViewer(stage, video) {
   }
   return {
     renderer,
-    update(state) { uniforms.mode.value=['fisheye','equirect360','equirect180','flat'].indexOf(state.projection); uniforms.lens.value=THREE.MathUtils.degToRad(state.lens); uniforms.yaw.value=THREE.MathUtils.degToRad(state.yaw); uniforms.pitch.value=THREE.MathUtils.degToRad(state.pitch); if(camera.fov!==state.fov){camera.fov=state.fov;camera.updateProjectionMatrix();} if(state.recenter!==lastRecenter){lastRecenter=state.recenter;recenter();} },
+    update({projection,lens,fov,yaw,pitch,recenter:serial}) {
+      const nextView=`${projection}:${lens}:${fov}:${yaw}:${pitch}:${serial}`;
+      if(nextView===lastView)return;
+      lastView=nextView;dirty=true;
+      uniforms.mode.value=MODES.indexOf(projection);
+      uniforms.lens.value=THREE.MathUtils.degToRad(lens);
+      uniforms.yaw.value=THREE.MathUtils.degToRad(yaw);
+      uniforms.pitch.value=THREE.MathUtils.degToRad(pitch);
+      if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix();}
+      if(serial!==lastRecenter){lastRecenter=serial;recenter();}
+    },
     async enterVR() { if(!navigator.xr || !await navigator.xr.isSessionSupported('immersive-vr')) throw new Error('Open this page in a WebXR headset browser to enter VR.');
       const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] }); await renderer.xr.setSession(session); },
     dispose() { observer.disconnect();renderer.setAnimationLoop(null);renderer.dispose();material.dispose();sphere.geometry.dispose();texture.dispose(); }
