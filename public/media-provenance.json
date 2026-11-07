@@ -8,5 +8,11 @@
   "sha256": "cc2f0c97487756862aaa21ab8662a1be6cb864a4eb8429c3dd30c43ddf1f53ad",
   "encoding": "Full-length 1920x1920, 30 fps H.264/yuv420p at 1200k, AAC 96k, fast-start; metadata removed.",
   "projection": "Mono circular fisheye. Recommended 240 degree equidistant playback setting based on straight-edge fits across four frames; exact source lens calibration is unknown.",
-  "rights": "Video is not covered by the third-party software licenses. No downstream reuse license is granted here."
+  "rights": "Video is not covered by the third-party software licenses. No downstream reuse license is granted here.",
+  "sourceQuality": {
+    "durationSeconds": 467.306667,
+    "sizeBytes": 684344780,
+    "sha256": "da7cee8dc45b9ee2f6a61b8babe0a8367d0ef8173527a745d9c836c7e3d4bf89",
+    "encoding": "Original 2880x2880, 60 fps H.264/yuv420p and AAC, fast-start remux with source metadata removed. The compressed audio and video streams are unchanged."
+  }
 }

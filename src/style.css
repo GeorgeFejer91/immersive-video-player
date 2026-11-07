@@ -54,6 +54,7 @@ body.controls-hidden .panel,body.controls-hidden .screen-caption { display:none;
 dialog { width:min(360px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); padding:12px; border:1px solid #b8bdb5; background:#f3f2ec; color:inherit; overflow:auto; }
 dialog::backdrop { background:#0008; }
 dialog form { display:flex; justify-content:flex-end; margin-bottom:12px; }
+#qr-dialog form { flex-wrap:wrap; gap:8px; }
 #invitation { display:grid; gap:12px; }
 #qr { display:block; width:min(100%,280px); height:auto; margin:auto; }
 .stretch-shell[data-layout=flow] { height:auto; min-height:100dvh; grid-template-rows:auto auto auto; }

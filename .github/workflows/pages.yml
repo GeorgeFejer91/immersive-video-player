@@ -21,6 +21,13 @@ jobs:
       - run: npm ci --no-fund --no-audit
       - run: node scripts/verify-assets.mjs
       - run: npm test
+      - name: Fetch source-quality Jona
+        if: github.ref == 'refs/heads/main'
+        run: |
+          curl --fail --location --retry 3 --max-time 300 \
+            https://github.com/GeorgeFejer91/immersive-video-player/releases/download/jona-source-v1/jona-full.mp4 \
+            --output "$RUNNER_TEMP/jona-full.mp4"
+          echo "JONA_SOURCE_MEDIA=$RUNNER_TEMP/jona-full.mp4" >> "$GITHUB_ENV"
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser

@@ -22,7 +22,7 @@ The phone preview is silent; audio plays on the viewer. Playback pauses if the v
 
 The first viewer is authoritative. A high-entropy invitation stays in the URL fragment and is removed from visible history on each device. Device hints choose an interface; explicit role links override them. They do not authenticate a peer or grant commands. Actual WebXR support is checked at runtime. BRSP/1 proves both peers possess the pairing secret; phones negotiate playback and projection scopes and commands are acknowledged. Pinned VDO.Ninja SDK 1.5.5 handles signaling and a separate duplex data-only WebRTC connection for each invited device. Only controls, state and clock samples cross those connections. No camera, microphone, screen capture or video broadcast is involved.
 
-Both devices fetch and decode the same bundled MP4. The phone dewarps it using the viewer's projection shader and falls back to native video without WebGL; it can still adjust the paired viewer. The phone estimates viewer clock offset, receives a playback anchor 500 ms ahead and corrects preview drift. This is approximate synchronization. State older than two seconds disables remote phone commands.
+Both devices fetch and decode the same MP4. The live build uses Jona's original 2880×2880, 60 fps video and audio streams. A local build without the source-quality asset uses the bundled 1920×1920 preview. The phone dewarps it using the viewer's projection shader and falls back to native video without WebGL; it can still adjust the paired viewer. The phone estimates viewer clock offset, receives a playback anchor 500 ms ahead and corrects preview drift. This is approximate synchronization. State older than two seconds disables remote phone commands.
 
 The 240° setting fits straight edges in several Jona scenes. The exact camera lens is unverified. The viewer's **View** panel offers fine lens and alignment adjustment. WebXR sets the headset FOV; the FOV slider affects screens outside VR. [Calibration, verification and limits](for-ai/VERIFICATION.md).
 
@@ -36,13 +36,13 @@ On Quest, open [the automatic viewer entry](https://georgefejer91.github.io/imme
 
 ## Optional APK launcher
 
-[Download the optional APK directly](https://georgefejer91.github.io/immersive-video-player/downloads/ImmersiveVideoPlayer-Quest.apk), then sideload it using Meta Quest Developer Hub, SideQuest or ADB. The [installation guide](quest-launcher/README.md) covers setup and rebuilding. Its **Immersive Video Player** icon opens Meta Quest Browser directly to the viewer, starts pairing and displays a new phone QR automatically. Scan it on your phone, select **Enable** and **Connect**, then select **VR** once on the headset. That headset gesture enables video and requests immersive mode. Use the phone's **Start**, **Pause** and **Stop** controls. Browser permission prompts still apply.
+[Download the optional APK directly](https://georgefejer91.github.io/immersive-video-player/downloads/ImmersiveVideoPlayer-Quest.apk), then sideload it using Meta Quest Developer Hub, SideQuest or ADB. The [installation guide](quest-launcher/README.md) covers setup and rebuilding. Its **Immersive Video Player** icon opens Meta Quest Browser directly to the viewer, starts pairing and displays a new phone QR automatically. Scan it on your phone, then select **Enable** and **Connect** there. In the headset, **Enter VR** on the pairing screen or **VR** in Connection enables video and opens immersive mode with one headset gesture. Use the phone's **Start**, **Pause** and **Stop** controls. Browser permission prompts still apply.
 
-Only the reviewed signed launcher APK is published; its signing key stays private. Downloading does not install it automatically. No native renderer, WebView or background service is involved. The ordinary session page retains its explicit Connect flow. Opening `?launch=quest` is the launcher's explicit automatic-pairing entry; each launch uses fresh in-memory pairing material.
+Only the reviewed signed launcher APK is published; its signing key stays private. Downloading does not install it automatically. No native renderer, WebView or background service is involved. The ordinary session page retains its explicit Connect flow. A regular Quest Browser tab requires a local gesture for immersive entry. Automatic entry from the app icon requires a signed and origin-verified immersive WebXR PWA. Opening `?launch=quest` is the launcher's explicit automatic-pairing entry; each launch uses fresh in-memory pairing material.
 
 ## Run and publish
 
-Requires Node 22.12+; CI uses Node 24.
+Requires Node 22.12+. CI uses Node 24. The Pages workflow downloads the source-quality Jona release asset, verifies its SHA-256, and places it at the same media URL. For a local build with that asset, set the JONA_SOURCE_MEDIA environment variable to the MP4 path before building.
 
 ```sh
 npm ci

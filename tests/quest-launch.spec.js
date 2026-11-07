@@ -8,6 +8,10 @@ test('Quest app entry starts pairing and shows a fresh phone QR without arming m
   await expect(page.locator('#connect')).toBeDisabled();
   await expect(page.locator('#arm')).toBeEnabled();
   await expect(page.locator('#play')).toBeDisabled();
+  if(process.env.JONA_SOURCE_MEDIA){
+    await page.waitForFunction(()=>document.querySelector('video').videoWidth>0);
+    expect(await page.locator('#video').evaluate(video=>[video.videoWidth,video.videoHeight])).toEqual([2880,2880]);
+  }
   const first=await page.locator('#invite-link').inputValue();
   expect(new URL(first).search).toBe('?controller=1');
   expect(new URL(first).hash).toContain('secret=');
@@ -33,13 +37,24 @@ test('Quest app entry starts pairing and shows a fresh phone QR without arming m
 });
 
 test('Quest VR gesture arms playback even if immersive entry is unavailable',async({page})=>{
-  await page.addInitScript(()=>{Object.defineProperty(navigator,'xr',{value:{isSessionSupported:async()=>false}});});
+  await page.addInitScript(()=>{
+    window.xrAttempts=[];
+    Object.defineProperty(navigator,'xr',{value:{
+      isSessionSupported:async()=>true,
+      requestSession:async mode=>{
+        window.xrAttempts.push({mode,active:navigator.userActivation.isActive});
+        throw new DOMException('Immersive mode unavailable','NotSupportedError');
+      }
+    }});
+  });
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
   await page.goto('./?launch=quest');
   await expect(page.locator('#qr-dialog')).toBeVisible();
-  await page.locator('#qr-dialog button').first().click();
+  expect(await page.evaluate(()=>window.xrAttempts)).toEqual([]);
   await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
-  await page.locator('#enter-vr').click();
+  await page.getByRole('dialog',{name:'Session QR'}).getByRole('button',{name:'Enter VR'}).click({timeout:2500});
+  expect(await page.evaluate(()=>window.xrAttempts)).toEqual([{mode:'immersive-vr',active:true}]);
+  await expect(page.locator('#qr-dialog')).toBeHidden();
   await expect(page.locator('#arm')).toBeDisabled();
   await expect(page.locator('#play')).toBeEnabled();
   await expect(page.locator('#notice')).toHaveText('VR unavailable');

@@ -107,12 +107,22 @@ async function enablePlayback(){
   } catch { notice('Not ready'); }
 }
 $('arm').addEventListener('click',()=>{void enablePlayback();});
-$('enter-vr').addEventListener('click',async()=>{
+async function enterImmersive(){
   const enabling=autoConnect&&!phone&&!armed?enablePlayback():Promise.resolve();
-  // Start both requests inside the gesture; awaiting media first can lose XR activation.
+  // Request XR and media during the same headset action.
   const entering=view?view.enterVR().then(()=>true,()=>false):Promise.resolve(false);
   await enabling;
   if(!await entering)notice('VR unavailable');
+}
+$('enter-vr').addEventListener('click',enterImmersive);
+if(autoConnect&&!phone&&view&&navigator.xr?.isSessionSupported){
+  void navigator.xr.isSessionSupported('immersive-vr').then(supported=>{
+    $('launch-vr').hidden=!supported;
+  }).catch(()=>{});
+}
+$('launch-vr').addEventListener('click',()=>{
+  $('qr-dialog').close();
+  void enterImmersive();
 });
 $('show-qr').addEventListener('click',()=>$('qr-dialog').showModal());
 

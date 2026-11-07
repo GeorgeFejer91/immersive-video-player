@@ -1,7 +1,7 @@
 {
   "name": "immersive-video-player", "version": "1.0.0", "private": true, "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1", "build": "vite build && node scripts/build-sw.mjs", "preview": "vite preview --host 127.0.0.1",
+    "dev": "vite --host 127.0.0.1", "build": "vite build && node scripts/stage-media.mjs && node scripts/build-sw.mjs", "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/*.test.js", "test:browser": "playwright test", "check": "npm test && npm run build"
   },
   "dependencies": { "@chenglou/pretext": "1.0.0", "qrcode": "1.5.4", "three": "0.187.0" },

@@ -2,7 +2,16 @@
 
 Updated 2026-11-07. This file owns the active checklist; do not create a competing task ledger.
 
-## Active implementation: smartphone video warp
+## Active update: source-quality Jona and Quest VR entry
+
+Serve the original 2880×2880, 60 fps film and audio streams at the existing MP4 route in the published build. Keep the checked-in preview for local builds, publish only the authorized film, and hash-check the fast-start remux before staging it into the Pages artifact. The Quest launcher keeps automatic pairing and offers **Enter VR** in the pairing dialog, using one local gesture for media enable and the immersive request.
+
+- [x] Original H.264 and AAC streams match the metadata-stripped fast-start remux byte for byte.
+- [x] Verified the one-gesture route and native 2880×2880 decode in Chromium. A physical Quest Browser decoded 64 frames from an original-stream sample.
+- [ ] Verify the published MP4 byte ranges and live deployment.
+- [ ] A normal Browser tab still requires a gesture. True launch-icon entry requires an installed immersive WebXR PWA and signed Digital Asset Links at the HTTPS origin root. The present project site cannot publish that root file from its subpath. The account root Pages repository does not exist.
+
+## Previous update: smartphone video warp
 
 Add a smartphone settings icon opening a top overlay with a live 1° angle slider and warp presets, plus a local dewarped preview using the existing viewer shader. Settings adjust the phone alone before pairing and the viewer-owned projection after authentication. Preserve the native decoder, playback timeline, advanced viewer alignment, VDO/BRSP bytes, and media assets. Scope: player/viewer code, phone controls and layout, browser coverage, and film/projection documentation. Initial main: dc8e591, with prior PWA evidence edits in PROJECT and VERIFICATION.
 

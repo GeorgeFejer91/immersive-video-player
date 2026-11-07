@@ -2,6 +2,14 @@
 
 Updated 2026-11-07. Evidence is scoped to the named surface, not a universal product/hardware claim.
 
+## Source-quality Jona and Quest launch gesture
+
+Local PASS: the 684,344,780-byte fast-start remux retains the original H.264 and AAC stream hashes. Source dimensions are 2880×2880 at 60 fps. The build rejects the 1920×1920 preview if offered in place of the verified source asset. The complete source-quality Pages payload is 685,679,860 bytes before compression.
+
+The Quest-launch regression failed first on the missing Enter VR action. After implementation, a supported WebXR mock records exactly one immersive session request with transient activation during that action. The regular tab never requests immersive VR on page load. The fallback enables local video and keeps the established pairing flow. On an isolated preview port, all 39 unit and 27 deterministic browser checks passed, including native 2880×2880 media metadata. The focused public VDO pairing and Start/Stop regression also passed using the full-resolution preview.
+
+Physical Quest 3: a muted original-stream sample advanced past one second and decoded 64 frames at 2880×2880 in Meta Quest Browser. This was a temporary decoder probe using the existing paused tab. The probe did not navigate it or require a flag change. Temporary USB debug routes were removed. Live hosting and the new gesture's actual immersive session remain separate qualification.
+
 ## Smartphone video warp — 2026-11-07
 
 Jona analysis: ffprobe confirms a 1920×1920, 30 fps H.264 source with no spherical/lens calibration tags. The frames show a single circular image. Compared 180°/270°/360° perspective views at 120, 215 and 335 seconds. A subsequent custom-angle fit uses five manually guided straight edges (station rail sides, room jamb/door and bedroom mirror) across frames at 50/120/215/335 seconds. For each candidate equidistant lens angle, map sampled pixels to unit rays, fit their best great-circle plane using SVD, normalize RMS angular residual by that edge's endpoint angular span, then pool equal edge weights. Pooled residuals (as a percentage of the edge angular span) are 0.295% at 240°, versus 0.718% at 180°, 0.480% at 270° and 1.666% at 360°. The minimum is approximately 239.5°; use the rounded 240° playback setting. Assumed-center perturbations of five pixels in the 768 px analysis frames give approximately 236–243°. This supports a 240° playback preset within the existing shader family, not an exact lens identification. Private extracted frames and point/fit details stay in ignored local output; no additional film derivatives ship.
