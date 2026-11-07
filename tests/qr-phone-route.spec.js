@@ -1,9 +1,53 @@
 import {test,expect} from '@playwright/test';
 
-test('shared QR link opens phone connection controls directly without a role chooser',async({browser,page})=>{
+const quest='Mozilla/5.0 (Linux; Android 12; Quest 3) OculusBrowser/39.2 Mobile VR Safari/537.36';
+
+test('one public address connects desktop, phone and a second Quest to the same playback',async({browser,baseURL})=>{
+  test.skip(process.env.RUN_NETWORK!=='1','Opt-in: public VDO service is an external dependency.');
+  test.setTimeout(120000);
+  const address=new URL(baseURL).href;
+  const contexts=[];
+  async function open(userAgent){
+    const context=await browser.newContext({userAgent,viewport:{width:800,height:480},deviceScaleFactor:.5});
+    contexts.push(context);
+    const page=await context.newPage();
+    await page.goto(address);
+    return page;
+  }
+  try{
+    const host=await open(quest);
+    await expect(host.locator('body')).toHaveAttribute('data-page','viewer');
+    await expect(host.locator('#invite-link')).toHaveValue(address);
+    const desktop=await open();
+    await desktop.getByRole('button',{name:'Connect',exact:true}).click();
+    await expect(desktop.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
+    const phone=await open('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile Safari/604.1');
+    await phone.getByRole('button',{name:'Connect',exact:true}).click();
+    await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
+    const follower=await open(quest);
+    await expect(follower.locator('#connection')).toHaveText('Shared viewer',{timeout:25000});
+    await follower.locator('#enter-vr').click();
+    await expect(follower.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
+    await expect(host.locator('body')).toHaveAttribute('data-peers','3');
+    await host.locator('#enter-vr').click();
+    await host.waitForFunction(()=>{
+      const video=document.querySelector('video');
+      return video.paused&&!video.seeking&&video.readyState>=3;
+    });
+    await desktop.locator('#play').click();
+    for(const page of [host,desktop,phone,follower]){
+      await expect(page.locator('body')).toHaveAttribute('data-playing','true');
+      expect(page.url()).toBe(address);
+    }
+    await phone.locator('#halt').click();
+    for(const page of [host,desktop,phone,follower])await expect(page.locator('body')).toHaveAttribute('data-playing','false');
+  }finally{await Promise.all(contexts.map(context=>context.close()));}
+});
+
+test('shared public URL opens phone connection controls directly without a role chooser',async({browser,page})=>{
   await page.goto('./');
-  const link=await page.locator('#entry-link').inputValue();
-  expect(new URL(link).searchParams.get('join')).toBe('1');
+  const link=page.url();
+  expect(new URL(link).search).toBe('');
   const phones=[
     ['iPhone Safari','Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'],
     ['iPhone Chrome','Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 CriOS/143.0.0.0 Mobile/15E148 Safari/604.1'],
@@ -19,10 +63,10 @@ test('shared QR link opens phone connection controls directly without a role cho
       try{
         const phone=await context.newPage();await phone.goto(link);
         await expect(phone.locator('body')).toHaveAttribute('data-page','controller');
-        await expect(phone.locator('#entry')).toBeHidden();
+        await expect(phone.locator('#player')).toBeVisible();
         await expect(phone.getByRole('dialog',{name:'Headset connection'})).toBeVisible();
         await expect(phone.locator('#connect')).toBeVisible();
-        await expect(phone.locator('#paste-invitation')).toBeHidden();
+        await expect(phone.locator('#arm')).toBeHidden();
         expect(new URL(phone.url()).hash).toBe('');
       }finally{await context.close();}
     });

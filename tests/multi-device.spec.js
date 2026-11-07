@@ -11,7 +11,8 @@ test('multiple phones and an additional viewer control one synchronized video wi
   test.setTimeout(180000);
   const contexts=[],devices=[];
   async function device(options={}){
-    const context=await browser.newContext({viewport:{width:800,height:480},deviceScaleFactor:.5,...options});contexts.push(context);
+    const {follower,...contextOptions}=options;
+    const context=await browser.newContext({viewport:{width:800,height:480},deviceScaleFactor:.5,...contextOptions});contexts.push(context);
     await context.addInitScript(()=>{
       const Peer=window.RTCPeerConnection;window.__peers=[];
       window.RTCPeerConnection=class extends Peer{constructor(...args){super(...args);window.__peers.push(this);}};
@@ -26,21 +27,22 @@ test('multiple phones and an additional viewer control one synchronized video wi
   }
   async function enable(page){
     await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
-    await page.locator('#arm').click();await expect(page.locator('#arm')).toBeDisabled();
+    await page.locator('#enter-vr').click();
     await page.waitForFunction(()=>{const video=document.querySelector('video');return document.body.dataset.playing==='false'&&!video.seeking&&video.readyState>=3;});
   }
   async function join(link,options={}){
-    const page=await device(options);await page.goto(link);await enable(page);await page.locator('#connect').click();
+    const page=await device(options);await page.goto(link);
+    await page.locator(options.follower?'#enter-vr':'#connect').click();
     await expect(page.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});return page;
   }
   try {
     const host=await device();await host.goto(new URL('?launch=quest',process.env.TEST_URL||'http://127.0.0.1:4174/').href);
-    await expect(host.locator('#qr-dialog')).toBeVisible();
-    const link=await host.locator('#invite-link').inputValue(),viewerLink=await host.locator('#join-viewer').getAttribute('href');
-    await host.locator('#qr-dialog button').first().click();await enable(host);
+    await expect(host.locator('#show-qr')).toBeVisible();
+    const link=await host.locator('#invite-link').inputValue();
+    await enable(host);
     const phones=[];
     for(const userAgent of ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile Safari/604.1','Mozilla/5.0 (Linux; Android 16) Chrome/143 Mobile Safari/537.36','Mozilla/5.0 (Linux; Android 15) SamsungBrowser/28 Mobile Safari/537.36'])phones.push(await join(link,{userAgent,viewport:{width:390,height:844}}));
-    const follower=await join(viewerLink);
+    const follower=await join(link,{follower:true,userAgent:'OculusBrowser/39.2 Quest 3'});
     await expect(host.locator('body')).toHaveAttribute('data-peers','4');
     await phones[0].locator('#play').click();
     for(const page of [host,...phones,follower]){
@@ -93,10 +95,12 @@ test('a new and a reconnected smartphone join an already playing timeline withou
     const context=await browser.newContext({serviceWorkers:'allow',deviceScaleFactor:.5,viewport:phone?{width:390,height:844}:{width:800,height:480}});contexts.push(context);
     await context.addInitScript(()=>{const Peer=window.RTCPeerConnection;window.__peers=[];window.RTCPeerConnection=class extends Peer{constructor(...args){super(...args);window.__peers.push(this);}};});
     const page=await context.newPage();pages.push(page);await page.goto(url);
-    if(!phone)await page.locator('#qr-dialog button').first().click();
-    await page.waitForFunction(()=>document.querySelector('video').readyState>=3);await page.locator('#arm').click();
-    await page.waitForFunction(()=>{const video=document.querySelector('video');return document.getElementById('arm').disabled&&!video.seeking&&video.readyState>=3;});
+    await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
     if(phone){await page.locator('#connect').click();await expect(page.locator('#headset-status')).toHaveAttribute('data-state','synced',{timeout:45000});}
+    else {
+      await page.locator('#enter-vr').click();
+      await page.waitForFunction(()=>{const video=document.querySelector('video');return !video.seeking&&video.readyState>=3;});
+    }
     return page;
   }
   async function synchronized(){
@@ -124,5 +128,13 @@ test('a new and a reconnected smartphone join an already playing timeline withou
     await first.locator('#pause').click();
     for(const page of pages)await expect(page.locator('body')).toHaveAttribute('data-playing','false');
     await expect(late.locator('#play')).toBeEnabled();
+  } catch(error) {
+    console.log('Late-join media state',await Promise.all(pages.map(page=>page.evaluate(()=>{
+      const video=document.querySelector('video');
+      return {time:video.currentTime,paused:video.paused,ready:video.readyState,seeking:video.seeking,
+        clock:document.body.dataset.clock,revision:document.body.dataset.revision,
+        notice:document.getElementById('notice').textContent,status:document.getElementById('connection').textContent};
+    }))));
+    throw error;
   } finally {for(const context of contexts)await context.close();}
 });

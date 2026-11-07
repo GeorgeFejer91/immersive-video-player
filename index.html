@@ -12,18 +12,7 @@
   <title>Immersive Video Player</title>
   <script src="./vendor/vdoninja/1.5.5/vdoninja-sdk.min.js" defer></script>
 </head>
-<body class="landing">
-  <main id="entry" class="entry stretch-shell" data-layout="bounded">
-    <header class="shell-header"><h1>Immersive Video Player</h1><p id="entry-status" class="status" role="status" aria-live="polite"></p></header>
-    <section id="entry-invitation" class="entry-body stretch-body">
-      <div class="qr-space"><canvas id="entry-qr" role="img" aria-label="Session QR"></canvas></div>
-      <details id="entry-options"><summary>Session</summary><div class="utility-content">
-        <input id="entry-link" aria-label="Session link" readonly autocomplete="off" spellcheck="false">
-        <div class="actions"><button id="copy-session">Copy link</button><button id="copy-headset">Copy viewer</button></div>
-      </div></details>
-    </section>
-    <footer class="shell-footer"><a id="open-viewer" class="button-link primary fixed-action">Viewer</a><a id="open-controller" class="button-link fixed-action">Controller</a><button id="new-session" class="fixed-action">New</button><button id="install-app" class="fixed-action" aria-haspopup="dialog" aria-controls="install-help">Install app</button></footer>
-  </main>
+<body>
   <main id="player" class="app" hidden>
     <section class="screen" aria-label="Video">
       <header id="phone-header" class="phone-header shell-header" hidden><div class="phone-heading"><h1>Immersive Video Player</h1><p id="phone-notice" class="status" role="status" aria-live="polite"></p></div><button id="show-warp" class="settings-button" aria-label="Video settings" title="Video settings" aria-haspopup="dialog" aria-controls="warp-dialog"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M9.7 2h4.6l.6 2.6 2 .9 2.3-1.3 2.3 4-1.8 1.9v2.3l1.8 1.9-2.3 4-2.3-1.3-2 .9-.6 2.6H9.7l-.6-2.6-2-.9-2.3 1.3-2.3-4 1.8-1.9v-2.3L2.5 8.3l2.3-4 2.3 1.3 2-.9Z"/><circle cx="12" cy="11.3" r="3"/></svg></button><button id="headset-status" class="headset-button" aria-label="Headset disconnected" title="Headset disconnected" aria-haspopup="dialog" aria-controls="phone-dialog" aria-expanded="false" data-state="disconnected"><svg viewBox="0 0 32 24" width="32" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7 9 3h14l3 4M6 8H4l-2 3v6l3 2M26 8h2l2 3v6l-3 2M8 7h16a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-4l-4-3-4 3H8a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3Z"/><path d="M10 12h3m6 0h3"/></svg></button><span id="headset-state" class="sr-only" role="status" aria-live="polite">Headset disconnected</span></header>
@@ -32,13 +21,13 @@
       <div class="screen-caption"><span id="role-label">Viewer</span><span id="screen-time">00:00 / 07:47</span></div>
       <button id="show-controls" class="screen-toggle" hidden>Controls</button>
       <fieldset id="phone-controls" aria-label="Playback controls" hidden disabled></fieldset>
+      <button id="install-app" class="fixed-action" aria-haspopup="dialog" aria-controls="install-help">Install app</button>
     </section>
     <aside id="panel" class="panel stretch-shell" data-layout="bounded" aria-label="Controls">
       <header class="shell-header"><h1>Immersive Video Player</h1><p id="connection" class="status" role="status" aria-live="polite">Offline</p><p id="notice" class="status" role="status" aria-live="polite"></p></header>
       <div class="panel-body stretch-body">
         <details id="connection-settings" name="controls" data-accordion open><summary>Connection</summary><div class="accordion-content">
           <div class="actions"><button id="arm" class="primary fixed-action">Enable</button><button id="connect" class="fixed-action">Connect</button><button id="enter-vr" class="fixed-action">VR</button><button id="stop" class="fixed-action" hidden>Disconnect</button><button id="show-qr" hidden>QR</button></div>
-          <div id="paste-invitation" hidden><input id="pasted-link" aria-label="Session link" type="url" placeholder="Session link" autocomplete="off" spellcheck="false"><button id="use-link">Join</button></div>
         </div></details>
         <fieldset id="controls" aria-label="Playback controls" disabled>
           <details id="playback-settings" name="controls" data-accordion><summary>Playback</summary><div class="accordion-content">
@@ -56,7 +45,7 @@
           </div></details>
         </fieldset>
       </div>
-      <footer class="shell-footer"><a id="switch-mode" class="button-link fixed-action" hidden></a><a class="button-link fixed-action" href="./">New</a><button id="hide-controls" class="fixed-action">Hide</button></footer>
+      <footer class="shell-footer"><button id="hide-controls" class="fixed-action">Hide</button></footer>
     </aside>
   </main>
   <dialog id="phone-dialog" aria-label="Headset connection"></dialog>
@@ -75,8 +64,8 @@
     <p id="warp-current" class="status" hidden></p>
     <p id="warp-fallback" class="status" hidden>Showing unwarped phone video.</p>
   </dialog>
-  <dialog id="install-help" aria-label="Install app"><form method="dialog"><button>Close</button></form><p id="install-instructions"></p><a id="shortcut-viewer" class="button-link" href="./?launch=quest" hidden>Open viewer</a></dialog>
-  <dialog id="qr-dialog" aria-label="Session QR"><form method="dialog"><button>Close</button><button id="launch-vr" class="primary" type="button" hidden>Enter VR</button></form><div id="invitation" hidden><canvas id="qr" role="img" aria-label="Session QR"></canvas><input id="invite-link" aria-label="Controller link" readonly autocomplete="off" spellcheck="false"><button id="copy-link">Copy</button><a id="join-viewer" class="button-link" hidden>Join viewer</a></div></dialog>
+  <dialog id="install-help" aria-label="Install app"><form method="dialog"><button>Close</button></form><p id="install-instructions"></p></dialog>
+  <dialog id="qr-dialog" aria-label="Session QR"><form method="dialog"><button>Close</button></form><div id="invitation" hidden><canvas id="qr" role="img" aria-label="Session QR"></canvas><input id="invite-link" aria-label="Shared player link" readonly autocomplete="off" spellcheck="false"><button id="copy-link">Copy</button></div></dialog>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

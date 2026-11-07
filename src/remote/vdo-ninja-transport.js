@@ -82,6 +82,7 @@ export class VdoNinjaTransport extends EventTarget {
     this.role = role;
     this.room = normalizeRoom(room);
     this.sharedSecret = sharedSecret;
+    this.expectedTarget = role === "controller" && streamId ? normalizeRoom(streamId) : "";
     this.streamId = streamId
       ? normalizeRoom(streamId)
       : `${VDO_BRSP_STREAM_PREFIX}${randomToken(12)}`.replace(/[^A-Za-z0-9_]/gu, "_");
@@ -218,6 +219,13 @@ export class VdoNinjaTransport extends EventTarget {
   }
 
   installSdkListeners(sdk, generation) {
+    this.listen(sdk, generation, "alert", (event) => {
+      if (this.role !== "target") return;
+      const { message, raw } = event.detail ?? {};
+      if (raw?.code === "STREAMID_IN_USE" || message?.includes("Stream ID is already in use")) {
+        this.dispatchEvent(new Event("targetconflict"));
+      }
+    });
     this.listen(sdk, generation, "listing", (event) => this.addListing(event.detail));
     this.listen(sdk, generation, "videoaddedtoroom", (event) => this.addSource(event.detail));
     this.listen(sdk, generation, "userLeft", (event) => this.removePeerOrSource(event.detail));
@@ -247,7 +255,7 @@ export class VdoNinjaTransport extends EventTarget {
   addSource(value, { deferSelection = false } = {}) {
     if (this.role !== "controller") return;
     const item = sourceItem(value);
-    if (!item.streamId.startsWith(VDO_BRSP_STREAM_PREFIX)) return;
+    if (!item.streamId.startsWith(VDO_BRSP_STREAM_PREFIX) || (this.expectedTarget && item.streamId !== this.expectedTarget)) return;
     this.sources.set(item.streamId, item);
     this.emitStatus(`Discovered ${item.label || item.streamId}.`);
     if (this.discoveryReady && !deferSelection) void this.selectOnlyTarget().catch(() => {});

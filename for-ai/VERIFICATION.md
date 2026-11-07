@@ -2,6 +2,12 @@
 
 Updated 2026-11-07. Evidence is scoped to the named surface, not a universal product/hardware claim.
 
+## One public playback URL — 2026-11-07
+
+Local PASS: 38 Node tests, build and exact asset pins, 20 deterministic Chromium checks, and five opt-in public VDO checks. One address opened the controller on desktop and phone and the immersive view on two Quest-mode contexts. The second Quest followed the first after the VDO stream-ID claim was rejected. Start from desktop and Stop from phone propagated to all four. Existing multi-phone control, host recovery, approximate 350 ms late-join/reconnect, native media gating, QR keyboard focus, enlarged labels, and offline PWA routing also passed. The late-reconnect check was intermittent in an earlier run and passed on the integrated build with its existing timing bound. These checks used local Chromium contexts and public signaling.
+
+The host holds the current timeline in memory. Opening or reloading the site on a Quest can create a new host after the old one closes. The rendezvous value is public and is scoped by site URL. The transport remains data-only, and the verified source-quality Pages staging from the preceding change remains in use.
+
 ## Source-quality Jona and Quest launch gesture
 
 Local PASS: the 684,344,780-byte fast-start remux retains the original H.264 and AAC stream hashes. Source dimensions are 2880×2880 at 60 fps. The build rejects the 1920×1920 preview if offered in place of the verified source asset. The complete source-quality Pages payload is 685,679,860 bytes before compression.

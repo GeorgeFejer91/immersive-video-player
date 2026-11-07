@@ -2,9 +2,16 @@
 
 Updated 2026-11-07. This file owns the active checklist; do not create a competing task ledger.
 
+## Active implementation: one public playback URL
+
+2026-11-07. The user requests one URL and one session for desktop browsers, phones and Quest. Anyone who opens the public URL may connect and control playback. The root opens controller controls on desktop/phone and immersive viewing on Quest. The Quest holds one fixed VDO target ID. If the signaling service rejects a duplicate target, the additional Quest joins as a follower. A new host starts when its Quest opens or reloads the URL. Previous URL aliases still route to the same room, and invitation fragments are discarded. Supersedes private invitation creation, the role chooser and session expiration.
+
+- [x] Reuse the existing ordered playback authority and data-only transport. Collapse controller activation into Connect, use VR for Quest activation and keep one stable share link.
+- [x] Verified 38 Node checks, build, exact asset pins, 20 deterministic Chromium checks and five public VDO scenarios. The same URL handled desktop, phone and two Quest-mode browser contexts with one host and shared Start/Stop. Publication evidence is tracked by the commit's Pages deployment and the workspace validation ledger.
+
 ## Active update: source-quality Jona and Quest VR entry
 
-Serve the original 2880×2880, 60 fps film and audio streams at the existing MP4 route in the published build. Keep the checked-in preview for local builds, publish only the authorized film, and hash-check the fast-start remux before staging it into the Pages artifact. The Quest launcher keeps automatic pairing and offers **Enter VR** in the pairing dialog, using one local gesture for media enable and the immersive request.
+Serve the original 2880×2880, 60 fps film and audio streams at the existing MP4 route in the published build. Keep the checked-in preview for local builds, publish only the authorized film, and hash-check the fast-start remux before staging it into the Pages artifact. The shared Quest viewer keeps **VR** as one local gesture for media enable and the immersive request.
 
 - [x] Original H.264 and AAC streams match the metadata-stripped fast-start remux byte for byte.
 - [x] Verified the one-gesture route and native 2880×2880 decode in Chromium. A physical Quest Browser decoded 64 frames from an original-stream sample.
@@ -94,7 +101,7 @@ The 2026-11-05 user instruction authorizes implementation, public GitHub push, P
 ## Architecture
 
 - `src/player.js`: single viewer-owned reducer, exact allow-list and timeline anchors.
-- `src/main.js`: launcher QR and device-mode bootstrap; `src/session-entry.js`: pure role decisions and fragment-only session links.
+- `src/main.js`: device-mode bootstrap; `src/session-entry.js`: role selection and public rendezvous identifiers.
 - `src/player-app.js`: activation, pairing, lifecycle, media, clock sampling, acknowledgements, 250 ms heartbeat and 2 second stale handling.
 - `src/viewer.js`: shared Three.js ray-to-source projection; WebXR/head pose on viewer, capped-density frame-driven phone preview with native fallback. Jona is mono circular fisheye with a fitted 240° playback default.
 - `src/remote/`: pinned BRSP core and locally patched VDO adapter; hashes in `scripts/verify-assets.mjs`.

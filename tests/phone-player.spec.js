@@ -38,13 +38,13 @@ test('phone is a local video player with transport and an accessible headset con
 
 test('phone dewarps Jona at 240° and switches lens presets on the same paused frame',async({page})=>{
   await page.setViewportSize({width:390,height:844});
-  await page.goto('./?controller=1');
+  await page.goto('./');
   await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
-  await page.locator('#arm').click();
-  await expect(page.locator('#arm')).toBeDisabled();
   await page.keyboard.press('Escape');
   const warp=page.getByRole('button',{name:'Video settings',exact:true});
   await expect(warp).toBeVisible();
+  await warp.click();
+  await page.keyboard.press('Escape');
   const panorama=page.getByRole('region',{name:'Jona panorama'});
   await expect(panorama).toBeVisible();
   const video=page.locator('#video');

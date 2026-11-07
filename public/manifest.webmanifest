@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Immersive Video Player",
   "short_name": "Video Control",
-  "start_url": "./?controller=1",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f3f2ec",

@@ -1,5 +1,9 @@
 # Decision log
 
+## D-0012 — One public playback room
+
+2026-11-07, Accepted. The user explicitly chooses join from the public URL and the same URL for phones, desktop and Quest. A fixed VDO discovery room and target ID address one active Quest authority. A duplicate Quest target follows when signaling rejects its claim. Controllers use the same URL and one Connect gesture. The public rendezvous value provides protocol binding without private access control. Retain the ordered playback reducer, clock sampling, typed commands, peer isolation and data-only transport. Supersedes fresh invitations, per-invitation expiry and the launcher role chooser.
+
 ## D-0011 — Shared phone warp and a fitted Jona preset
 
 2026-11-07, Accepted. User requests smartphone video warping like the original Unity player, explicitly permits a custom angle, and specifies a settings icon opening an overlay with a dynamic slider. Supersedes D-0007's no-phone-WebGL and transport-only scope choices. Reuse the native decoder and existing ray-to-source shader for a capped-density phone preview; native video remains the WebGL failure/context-loss fallback. The phone's top-positioned native dialog provides a 180–360° angle slider in 1° steps, Jona 240°, fisheye 180/270/360, equirectangular 180/360 and Flat. Before pairing it changes only the local preview; authenticated phones request the existing player.view scope and the original viewer remains the authority. Full projection presets use a revision precondition. The validated lens-only action preserves concurrent alignment/mode/anchor changes; slider requests coalesce behind acknowledgments at no more than ten per second and retain the final value. Disconnect/preset/mode changes discard obsolete queued angles. Advanced viewer settings use the same 1° precision. Playback and the pinned BRSP/VDO/media bytes are unchanged.

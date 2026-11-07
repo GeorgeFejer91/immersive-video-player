@@ -7,7 +7,7 @@ test('controller has a valid subpath-safe manifest, real icons and an offline sh
   expect(manifestAddress).toBeTruthy();
   const manifestResponse=await context.request.get(new URL(manifestAddress,page.url()).href);
   const manifest=await manifestResponse.json();
-  expect(manifest.display).toBe('standalone');expect(manifest.start_url).toBe('./?controller=1');expect(manifest.scope).toBe('./');
+  expect(manifest.display).toBe('standalone');expect(manifest.start_url).toBe('./');expect(manifest.scope).toBe('./');
   for(const icon of manifest.icons){
     const response=await context.request.get(new URL(icon.src,manifestResponse.url()).href),bytes=await response.body();
     const size=Number(icon.sizes.split('x')[0]);expect(bytes.readUInt32BE(16)).toBe(size);expect(bytes.readUInt32BE(20)).toBe(size);
@@ -44,7 +44,6 @@ test('install action appears on entry, explains Quest library creation and hides
   await page.locator('#install-app').click();
   await expect(page.locator('#install-help')).toBeVisible();
   await expect(page.locator('#install-instructions')).toContainText('Add this page to your library');
-  await expect(page.locator('#shortcut-viewer')).toHaveAttribute('href','./?launch=quest');
   await page.keyboard.press('Escape');await expect(page.locator('#install-app')).toBeFocused();
   await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
   await page.locator('#arm').click();await expect(page.locator('#arm')).toBeDisabled();

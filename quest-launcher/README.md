@@ -1,6 +1,6 @@
 # Quest launcher
 
-A small sideloadable app icon named **Immersive Video Player**. Opening it sends the published player URL to Meta Quest Browser through the [documented Horizon OS browser deep link](https://developers.meta.com/vr/documentation/spatial-sdk/ps-system-deep-linking/). Each launch requests a fresh page and pairing QR. No Android WebView, native renderer, background service, boot receiver or app permissions are needed. It is an app launcher, not an Android home-screen AppWidget.
+A small sideloadable app icon named **Immersive Video Player**. Opening it sends the published player URL to Meta Quest Browser through the [documented Horizon OS browser deep link](https://developers.meta.com/vr/documentation/spatial-sdk/ps-system-deep-linking/). Each launch opens the shared playback room. No Android WebView, native renderer, background service, boot receiver or app permissions are needed. It is an app launcher, not an Android home-screen AppWidget.
 
 ## Install on Quest 3
 
@@ -15,9 +15,9 @@ adb devices -l
 adb -s <your-quest-serial> install -r <path-to-ImmersiveVideoPlayer-Quest.apk>
 ```
 
-In the headset, find **Immersive Video Player** under **Library → Unknown Sources** and open it. Browser opens directly to the viewer, starts pairing and displays its QR. Scan the QR with your phone; on the phone select **Enable**, then **Connect**. Close the headset QR if it is still open and select **VR** once. That gesture enables video and requests immersive mode; accept any browser permission prompt. Use **Start**, **Pause** and **Stop** on your phone. The QR closes automatically when the phone authenticates. QR can be reopened from Connection.
+In the headset, find **Immersive Video Player** under **Library → Unknown Sources** and open it. Tap **VR** in Quest Browser to enable video and request immersive mode. On a phone or desktop, open [the same player URL](https://georgefejer91.github.io/immersive-video-player/) and tap **Connect**. The viewer's **QR** button shares that URL. Use **Start**, **Pause**, or **Stop** from any connected controller.
 
-The regular browser requires a local gesture for media and immersive WebXR. A launcher cannot transfer its click into an ordinary browser document. See [Meta's WebXR activation requirements](https://developers.meta.com/vr/documentation/web/pwa-webxr-gs/). Starting the phone before enabling the headset does not bypass that gate. Internet is required; pairing lasts 30 minutes. Relaunching creates a new invitation, so pair the phone again. Existing tabs/sessions can be closed using their **Disconnect** control.
+Quest Browser requires a local gesture for media and immersive WebXR. The launcher opens the viewer, and **VR** supplies the browser gesture. Internet access is required for synchronization.
 
 ## Build on Windows
 

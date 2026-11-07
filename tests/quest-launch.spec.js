@@ -1,39 +1,33 @@
 import { test, expect } from '@playwright/test';
 
-test('Quest app entry starts pairing and shows a fresh phone QR without arming media',async({page})=>{
+test('Quest opens the shared room and offers the same public QR after reconnecting',async({page})=>{
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
   await page.goto('./?launch=quest');
   await expect(page.locator('body')).toHaveAttribute('data-page','viewer');
-  await expect(page.locator('#qr-dialog')).toBeVisible();
-  await expect(page.locator('#connect')).toBeDisabled();
-  await expect(page.locator('#arm')).toBeEnabled();
   await expect(page.locator('#play')).toBeDisabled();
-  if(process.env.JONA_SOURCE_MEDIA){
-    await page.waitForFunction(()=>document.querySelector('video').videoWidth>0);
-    expect(await page.locator('#video').evaluate(video=>[video.videoWidth,video.videoHeight])).toEqual([2880,2880]);
-  }
-  const first=await page.locator('#invite-link').inputValue();
-  expect(new URL(first).search).toBe('?controller=1');
-  expect(new URL(first).hash).toContain('secret=');
-  expect(new URL(page.url()).hash).toBe('');
+  await expect(page.locator('#arm')).toBeHidden();
+  await expect(page.locator('#connect')).toBeHidden();
+  await expect(page.locator('#show-qr')).toBeVisible();
+  await page.locator('#show-qr').click();
+  const dialog=page.getByRole('dialog',{name:'Session QR'});
+  await expect(dialog).toBeVisible();
+  const address=new URL('.',page.url()).href;
+  await expect(page.locator('#invite-link')).toHaveValue(address);
   expect(await page.locator('#video').evaluate(v=>v.paused)).toBe(true);
   await expect(page.locator('html')).toHaveAttribute('data-pretext','measured');
   for(const [width,height] of [[320,560],[844,390],[1280,720],[1920,1080]]){
     await page.setViewportSize({width,height});
     await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-    await expect(page.locator('#qr-dialog button').first()).toBeInViewport();
+    await expect(dialog.getByRole('button',{name:'Close'})).toBeInViewport();
   }
   await page.screenshot({path:test.info().outputPath('quest-pairing.png')});
-  await page.locator('#qr-dialog button').first().click();
+  await page.keyboard.press('Escape');
   await expect(page.locator('#show-qr')).toBeFocused();
   await page.locator('#stop').click();
-  await expect(page.locator('#invitation')).toBeHidden();
+  await expect(page.locator('#connect')).toBeVisible();
   await page.locator('#connect').click();
-  await expect(page.locator('#invite-link')).not.toHaveValue(first);
+  await expect(page.locator('#invite-link')).toHaveValue(address);
   await page.locator('#stop').click();
-  await page.reload();
-  await expect(page.locator('#qr-dialog')).toBeVisible();
-  await expect(page.locator('#invite-link')).not.toHaveValue(first);
 });
 
 test('Quest VR gesture arms playback even if immersive entry is unavailable',async({page})=>{
@@ -49,20 +43,18 @@ test('Quest VR gesture arms playback even if immersive entry is unavailable',asy
   });
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
   await page.goto('./?launch=quest');
-  await expect(page.locator('#qr-dialog')).toBeVisible();
   expect(await page.evaluate(()=>window.xrAttempts)).toEqual([]);
   await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
-  await page.getByRole('dialog',{name:'Session QR'}).getByRole('button',{name:'Enter VR'}).click({timeout:2500});
+  await page.locator('#enter-vr').click({timeout:2500});
   expect(await page.evaluate(()=>window.xrAttempts)).toEqual([{mode:'immersive-vr',active:true}]);
-  await expect(page.locator('#qr-dialog')).toBeHidden();
-  await expect(page.locator('#arm')).toBeDisabled();
+  await expect(page.locator('#arm')).toBeHidden();
   await expect(page.locator('#play')).toBeEnabled();
   await expect(page.locator('#notice')).toHaveText('VR unavailable');
   expect(await page.locator('#video').evaluate(v=>v.paused)).toBe(true);
   await page.locator('#stop').click();
 });
 
-test('Quest auto-pairing retries the same invitation after signaling failure and Disconnect cancels retries',async({page})=>{
+test('Quest auto-pairing retries the shared room after signaling failure and Disconnect cancels retries',async({page})=>{
   await page.addInitScript(()=>{
     window.__attempts=[];
     class OfflineSdk extends EventTarget{
@@ -73,15 +65,10 @@ test('Quest auto-pairing retries the same invitation after signaling failure and
     Object.defineProperty(window,'VDONinjaSDK',{configurable:true,get:()=>OfflineSdk,set:()=>{}});
   });
   await page.goto('./?launch=quest');
-  await expect(page.locator('#qr-dialog')).toBeVisible();
-  const link=await page.locator('#invite-link').inputValue();
   await expect(page.locator('#connection')).toHaveText('Reconnecting');
   await expect.poll(()=>page.evaluate(()=>window.__attempts.length)).toBeGreaterThanOrEqual(2);
   expect(await page.evaluate(()=>new Set(window.__attempts).size)).toBe(1);
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#show-qr')).toBeFocused();
-  await expect(page.locator('#invite-link')).toHaveValue(link);
-  await expect(page.locator('#arm')).toBeEnabled();
+  await expect(page.locator('#arm')).toBeHidden();
   // Cancel a queued retry explicitly, then prove it cannot silently reopen a session.
   await page.locator('#stop').click();
   const attempts=await page.evaluate(()=>window.__attempts.length);
@@ -97,21 +84,20 @@ test('Quest app entry pairs a phone over public VDO before the local VR gesture'
   try {
     const base=process.env.TEST_URL||'http://127.0.0.1:4174/';
     await viewer.goto(new URL('?launch=quest',base).href);
-    await expect(viewer.locator('#qr-dialog')).toBeVisible();
+    await expect(viewer.locator('#show-qr')).toBeVisible();
     await phone.goto(await viewer.locator('#invite-link').inputValue());
     await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
-    await phone.locator('#arm').click();await phone.locator('#connect').click();
+    await phone.locator('#connect').click();
     await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
-    await expect(viewer.locator('#qr-dialog')).toBeHidden();
     await expect(viewer.locator('#enter-vr')).toBeVisible();
-    await expect(viewer.locator('#arm')).toBeEnabled();
+    await expect(viewer.locator('#arm')).toBeHidden();
     await expect(phone.locator('#play')).toBeEnabled();
     await phone.locator('#play').click();
     await expect(phone.locator('#phone-notice')).toHaveText('viewer not ready');
     expect(await viewer.locator('#video').evaluate(v=>v.paused)).toBe(true);
     await viewer.waitForFunction(()=>document.querySelector('video').readyState>=3);
     await viewer.locator('#enter-vr').click();
-    await expect(viewer.locator('#arm')).toBeDisabled();
+    await expect(viewer.locator('#arm')).toBeHidden();
     await viewer.waitForFunction(()=>{
       const video=document.querySelector('#video');
       return document.body.dataset.playing==='false'&&video.paused&&!video.seeking&&video.readyState>=3;

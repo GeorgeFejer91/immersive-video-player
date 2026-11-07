@@ -59,8 +59,6 @@ export async function measureTextRegions(){
         for(const group of groups)if(group.open)group.querySelector('.accordion-content').style.height=`${available}px`;
       }
     }
-    const qr=document.querySelector('.qr-space');
-    if(qr?.getClientRects().length){const r=qr.getBoundingClientRect();qr.style.setProperty('--qr-side',`${Math.floor(Math.min(r.width,r.height,420))}px`);}
     for(const shell of visible){
       const body=shell.querySelector('.stretch-body');
       const regions=[shell,body,...shell.querySelectorAll('[open]>.accordion-content')].filter(Boolean);
@@ -71,7 +69,7 @@ export async function measureTextRegions(){
     document.documentElement.dataset.pretext='measured';
   }
   function queue(){if(!frame)frame=requestAnimationFrame(measure);}
-  const resize=new ResizeObserver(queue);shells.forEach(el=>resize.observe(el));document.querySelectorAll('.stretch-body,.qr-space').forEach(el=>resize.observe(el));
+  const resize=new ResizeObserver(queue);shells.forEach(el=>resize.observe(el));document.querySelectorAll('.stretch-body').forEach(el=>resize.observe(el));
   const mutation=new MutationObserver(queue);mutation.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['open','hidden']});
   document.addEventListener('toggle',queue,true);window.addEventListener('resize',queue);queue();
   return()=>{resize.disconnect();mutation.disconnect();document.removeEventListener('toggle',queue,true);window.removeEventListener('resize',queue);cancelAnimationFrame(frame);};

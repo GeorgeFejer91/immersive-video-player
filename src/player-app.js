@@ -1,26 +1,22 @@
-import QRCode from 'qrcode';
-import { Player, positionAt, clockOffset, validateState, parseInvite, previewMatches, SCOPES } from './player.js';
-import { BRSPConnection, randomToken } from './remote/brsp.js';
-import { VdoNinjaTransport, generateVdoRoomId } from './remote/vdo-ninja-transport.js';
+import { Player, positionAt, clockOffset, validateState, previewMatches, SCOPES } from './player.js';
+import { BRSPConnection } from './remote/brsp.js';
+import { VdoNinjaTransport } from './remote/vdo-ninja-transport.js';
 import { createViewer } from './viewer.js';
 import { measureTextRegions } from './text-fit.js';
-import { sessionLinks } from './session-entry.js';
 import { TargetGroup } from './remote/target-group.js';
 import { markPlaybackStarted } from './install-app.js';
 
-export function initPlayer({phone=false,invitation,autoConnect=false,follower=false}={}) {
+export function initPlayer({phone,autoConnect,session}) {
 const $ = id => document.getElementById(id);
-const follows=phone||follower;
+let follows=phone;
 document.body.classList.toggle('phone',phone);
 const video=$('video'),stage=$('stage'),screen=video.closest('.screen'),model=new Player(467.3);
 const warpPresets=[...$('warp-presets').querySelectorAll('button')];
-screen.append($('install-app'));
-let view, armed=false, state=model.snapshot(), pairing=invitation, connection, transport;
+let view, armed=false, state=model.snapshot(), connection, transport;
 let phonePreviewAttempted=false;
 let queuedLens,lensTimer,lastLensAt=0;
-let generation=0, heartbeat, expiry, connectDeadline, expiresAt=0, pending, samples=[], offset=0, synced=false;
+let generation=0, heartbeat, connectDeadline, pending, samples=[], offset=0, synced=false;
 let lastStateAt=0, lastAnchor=-1, starting=false, blocked=false, wakeLock, stopped=false, lastPing=0;
-let showLaunchQr=autoConnect&&!phone;
 let remoteWanted=autoConnect,retryTimer,retryAttempt=0,recovering=false,hiddenAt=0;
 const format=n=>`${String(Math.floor(Math.max(0,n)/60)).padStart(2,'0')}:${String(Math.floor(Math.max(0,n)%60)).padStart(2,'0')}`;
 const notice=text=>{for(const id of ['notice','phone-notice'])if($(id).textContent!==text)$(id).textContent=text;};
@@ -46,16 +42,7 @@ function updatePhoneStatus(){
   if(button.dataset.state===status)return;
   button.dataset.state=status;button.setAttribute('aria-label',label);button.title=label;$('headset-state').textContent=label;
 }
-function updateRoleLink(){
-  const link=$('switch-mode');
-  if(!pairing){link.hidden=true;link.removeAttribute('href');$('show-qr').hidden=true;$('join-viewer').hidden=true;$('join-viewer').removeAttribute('href');return;}
-  const links=sessionLinks(location.href,pairing);
-  link.href=phone?links.follower:links.controller;
-  link.textContent=phone?'Viewer':'Controller';
-  link.hidden=false;
-  $('join-viewer').href=links.follower;$('join-viewer').hidden=false;
-}
-updateRoleLink();
+$('arm').hidden=phone||autoConnect;
 try { if(!phone)view=createViewer(stage,video); }
 catch { notice('Video unavailable'); $('enter-vr').disabled=true; }
 
@@ -68,7 +55,6 @@ if(phone){
   $('phone-controls').append($('transport'),$('seek').closest('label'));$('controls').hidden=true;$('play').textContent='Start';
   $('hide-controls').textContent='Close';$('phone-dialog').append($('panel'));
   video.muted=true; notice('');
-  if(!pairing){$('paste-invitation').hidden=false;remoteStatus('Link required');}
 }
 function setPhonePreview(warped){
   screen.dataset.preview=warped?'warped':'native';
@@ -87,13 +73,6 @@ function enablePhonePreview(){
   } catch { setPhonePreview(false); }
 }
 void measureTextRegions().catch(()=>{document.documentElement.dataset.pretext='unavailable';});
-// Invitation material is kept only in memory, never in URL queries, logs or storage.
-if(location.hash) history.replaceState(null,'',location.pathname+location.search);
-$('use-link').addEventListener('click',()=>{
-  try {const u=new URL($('pasted-link').value); if(u.origin!==location.origin||u.pathname!==location.pathname)throw new Error(); pairing=parseInvite(u.hash); $('pasted-link').value='';$('paste-invitation').hidden=true;updateRoleLink();remoteStatus('Ready');}
-  catch {remoteStatus('Invalid link');}
-});
-
 async function enablePlayback(){
   const original=video.currentTime;
   try {
@@ -101,6 +80,7 @@ async function enablePlayback(){
     const play=video.play(); await play; video.pause(); video.currentTime=original;
     armed=true;blocked=false;lastAnchor=-1;$('arm').textContent='Enabled';
     $('arm').disabled=true;notice('');
+    if(phone||autoConnect)$('arm').hidden=true;
     enablePhonePreview();
     try{void navigator.wakeLock?.request('screen').then(lock=>{wakeLock=lock;}).catch(()=>{});}catch{/* Optional; browsers may refuse. */}
     refreshEnabled();
@@ -112,19 +92,19 @@ async function enterImmersive(){
   // Request XR and media during the same headset action.
   const entering=view?view.enterVR().then(()=>true,()=>false):Promise.resolve(false);
   await enabling;
+  if(follows)scheduleRetry();
   if(!await entering)notice('VR unavailable');
 }
 $('enter-vr').addEventListener('click',enterImmersive);
-if(autoConnect&&!phone&&view&&navigator.xr?.isSessionSupported){
-  void navigator.xr.isSessionSupported('immersive-vr').then(supported=>{
-    $('launch-vr').hidden=!supported;
-  }).catch(()=>{});
-}
-$('launch-vr').addEventListener('click',()=>{
-  $('qr-dialog').close();
-  void enterImmersive();
+$('show-qr').addEventListener('click',async()=>{
+  $('qr-dialog').showModal();
+  try {
+    const {default:QRCode}=await import('qrcode');
+    const canvas=$('qr');
+    await QRCode.toCanvas(canvas,$('invite-link').value,{width:232,margin:2,errorCorrectionLevel:'M'});
+    canvas.style.removeProperty('width');canvas.style.removeProperty('height');
+  } catch {remoteStatus('QR unavailable');}
 });
-$('show-qr').addEventListener('click',()=>$('qr-dialog').showModal());
 
 $('headset-status').addEventListener('click',()=>{$('connection-settings').open=true;$('phone-dialog').showModal();$('headset-status').setAttribute('aria-expanded','true');});
 $('phone-dialog').addEventListener('close',()=>$('headset-status').setAttribute('aria-expanded','false'));
@@ -213,61 +193,67 @@ for(const id of ['projection','lens','fov','yaw','pitch'])$(id).addEventListener
   [id==='projection'?'mode':id]:id==='projection'?$(id).value:Number($(id).value)
 },'player.view'));
 
-async function disconnect({keepPairing=false,quiet=false,recoveringTransport=false}={}){
+async function disconnect({quiet=false,recoveringTransport=false}={}){
   clearQueuedLens();
-  ++generation;clearInterval(heartbeat);clearTimeout(expiry);clearTimeout(connectDeadline);clearTimeout(retryTimer);retryTimer=undefined;heartbeat=expiry=undefined;
+  ++generation;clearInterval(heartbeat);clearTimeout(connectDeadline);clearTimeout(retryTimer);retryTimer=undefined;heartbeat=undefined;
   pending=undefined;synced=false;samples=[];lastStateAt=0;
   const old=connection;connection=undefined;transport=undefined;
   if(!follows){localPause();document.body.dataset.peers='0';}else {video.pause();state={...state,anchor:{...state.anchor,playing:false}};}
-  if(!keepPairing){pairing=undefined;expiresAt=0;$('invite-link').value='';$('qr').getContext('2d').clearRect(0,0,$('qr').width,$('qr').height);$('invitation').hidden=true;$('qr-dialog').close();}
-  updateRoleLink();
-  $('connect').disabled=false;$('stop').hidden=!(keepPairing&&remoteWanted&&!stopped);refreshEnabled();
+  $('invite-link').value='';$('invitation').hidden=true;$('qr-dialog').close();$('show-qr').hidden=true;
+  const restoreConnect=document.activeElement===$('stop');
+  $('connect').disabled=false;$('connect').hidden=false;
+  $('stop').hidden=!(remoteWanted&&!stopped);refreshEnabled();
+  if(restoreConnect&&$('stop').hidden)$('connect').focus();
   if(!quiet)remoteStatus('Disconnected');
   await old?.close({notify:!recoveringTransport});
 }
 function scheduleRetry(){
-  if(retryTimer||recovering||transport||!remoteWanted||stopped||!pairing||!navigator.onLine||document.hidden||(follows&&!armed))return;
-  if(expiresAt&&performance.now()>=expiresAt){remoteWanted=false;void disconnect();remoteStatus('Expired');return;}
+  if(retryTimer||recovering||transport||!remoteWanted||stopped||!navigator.onLine||document.hidden||(follows&&!armed))return;
+  $('connect').hidden=true;
   remoteStatus('Reconnecting');
   retryTimer=setTimeout(()=>{
     retryTimer=undefined;
-    if(!stopped&&remoteWanted&&navigator.onLine&&!document.hidden)void startRemote(true);
+    if(!stopped&&remoteWanted&&navigator.onLine&&!document.hidden)void startRemote();
   },Math.min(15000,1000*2**Math.min(retryAttempt++,4)));
 }
 async function recoverRemote(){
   if(recovering||stopped||!remoteWanted)return;
   recovering=true;
-  try {await disconnect({keepPairing:true,quiet:true,recoveringTransport:true});}
+  try {await disconnect({quiet:true,recoveringTransport:true});}
   finally {recovering=false;scheduleRetry();}
 }
 function received(event){
   try {const next=validateState(event.detail.state);lastStateAt=performance.now();renderState(next);refreshEnabled();scheduleLens();}
   catch {remoteStatus('Invalid state');void disconnect({quiet:true});}
 }
-async function startRemote(reuse=false){
+async function startRemote(){
   if(transport||recovering)return;
   if(follows&&!armed){notice('Enable first');return;}
-  if(follows&&!pairing){$('paste-invitation').hidden=false;remoteStatus('Link required');return;}
-  if(!follows&&!reuse){
-    if(!pairing)pairing={room:generateVdoRoomId(),secret:randomToken(32)};
-    if(!expiresAt)expiresAt=performance.now()+30*60*1000;
-  }
-  if(follows&&!expiresAt)expiresAt=performance.now()+30*60*1000;
-  updateRoleLink();
   const current=++generation;
   if(follows){state=model.snapshot();lastAnchor=-1;lastStateAt=0;synced=false;samples=[];}
-  const t=new VdoNinjaTransport({role:follows?'controller':'target',room:pairing.room,sharedSecret:pairing.secret,label:'Immersive video viewer'});
+  const t=new VdoNinjaTransport({role:follows?'controller':'target',room:session.room,sharedSecret:session.secret,streamId:session.streamId,label:'Immersive video viewer'});
   let controlWindow=performance.now(),controlCount=0,stateWindow=controlWindow,stateCount=0;
   // Bound inbound work before the protocol's async receive queue, including authenticated floods.
   if(follows){
     t.addEventListener('controlmessage',e=>{const now=performance.now();if(now-controlWindow>1000){controlWindow=now;controlCount=0;}if(++controlCount>40){e.stopImmediatePropagation();if(transport===t){remoteStatus('Disconnected');void disconnect({quiet:true});}}});
     t.addEventListener('statemessage',e=>{const now=performance.now();if(now-stateWindow>1000){stateWindow=now;stateCount=0;}if(++stateCount>80)e.stopImmediatePropagation();});
   }
-  const options={transport:t,sessionId:pairing.room,sharedSecret:pairing.secret,applyCommand,getState:()=>model.snapshot()};
+  const options={transport:t,sessionId:session.room,sharedSecret:session.secret,applyCommand,getState:()=>model.snapshot()};
   const c=follows?new BRSPConnection({...options,role:'controller',requestedScopes:SCOPES}):new TargetGroup({...options,grantedScopes:SCOPES});
   transport=t;connection=c;
-  $('connect').disabled=true;$('stop').hidden=false;
+  const restoreStop=document.activeElement===$('connect');
+  $('connect').disabled=true;$('connect').hidden=true;$('stop').hidden=false;
+  if(restoreStop)$('stop').focus();
   const active=()=>generation===current&&connection===c;
+  if(!follows)t.addEventListener('targetconflict',async()=>{
+    if(!active()||recovering)return;
+    recovering=true;
+    try{await disconnect({quiet:true,recoveringTransport:true});}
+    finally{follows=true;recovering=false;}
+    if(stopped)return;
+    remoteStatus('Shared viewer');
+    scheduleRetry();
+  });
   t.addEventListener('status',e=>{if(active())remoteStatus(e.detail.error?'Connection failed':({connecting:'Connecting',discoverable:'Waiting',discovering:'Waiting','connecting-peer':'Connecting','peer-open':'Connecting'})[e.detail.phase]||'Connecting');});
   t.addEventListener('quality',e=>{if(active()){document.body.dataset.route=e.detail.route;document.body.dataset.rtt=String(e.detail.rttMs??'unknown');}});
   c.addEventListener('state',e=>{if(active())received(e);});c.addEventListener('snapshot',e=>{if(active())received(e);});
@@ -275,10 +261,7 @@ async function startRemote(reuse=false){
     if(!active())return;clearTimeout(connectDeadline);retryAttempt=0;
     remoteStatus(follows?'Syncing':'Connected');
     if(phone)$('phone-dialog').close();
-    else {
-      if(autoConnect)$('qr-dialog').close();
-      if(!autoConnect||armed)$('playback-settings').open=true;
-    }
+    else if(!autoConnect||armed)$('playback-settings').open=true;
     if(follows){pending=undefined;sendClockPing();}else c.publishState();
     refreshEnabled();
   });
@@ -300,23 +283,14 @@ async function startRemote(reuse=false){
     refreshEnabled();
     scheduleLens();
   });
-  const lost=event=>{
-    if(!active())return;
-    if(follows){
-      if(event.detail.reason==='Peer ended the session.'){
-        remoteWanted=false;void disconnect({keepPairing:true,quiet:true});remoteStatus('Disconnected');
-      }else void recoverRemote();
-    }
-  };
-  c.addEventListener('peerclose',lost);
-  c.addEventListener('protocolerror',()=>{if(active()){remoteWanted=false;remoteStatus('Pairing failed');void disconnect({keepPairing:true,quiet:true});}});
+  c.addEventListener('peerclose',()=>{if(active()&&follows)void recoverRemote();});
+  c.addEventListener('protocolerror',()=>{if(active()){remoteWanted=false;remoteStatus('Pairing failed');void disconnect({quiet:true});}});
   function sendClockPing(){
     if(!active()||pending||c.phase!=='ready')return;
     const sent=performance.now(),id=c.sendCommand('player.transport','ping',{sentAt:sent});
     pending={id,action:'ping',sent};lastPing=sent;refreshEnabled();
   }
   connectDeadline=setTimeout(()=>{if(active()&&c.phase!=='ready'){if(follows)void recoverRemote();else remoteStatus('Waiting');}},20000);
-  expiry=setTimeout(()=>{if(active()){remoteWanted=false;void disconnect();remoteStatus('Expired');}},Math.max(1,expiresAt-performance.now()));
   heartbeat=setInterval(()=>{
     if(!active())return;
     if(!follows)c.publishState();
@@ -329,17 +303,29 @@ async function startRemote(reuse=false){
     refreshEnabled();
   },250);
   if(!follows){
-    const url=new URL(location.href);url.search='?controller=1';url.hash=new URLSearchParams(pairing).toString();
+    const url=new URL('.',location.href);
     $('invite-link').value=url.href;$('invitation').hidden=false;
-    await QRCode.toCanvas($('qr'),url.href,{width:232,margin:2,errorCorrectionLevel:'M'});
-    if(!active())return;
-    $('qr').style.removeProperty('width');$('qr').style.removeProperty('height');$('show-qr').hidden=false;
-    if(showLaunchQr){showLaunchQr=false;$('show-qr').focus();$('qr-dialog').showModal();}
+    $('show-qr').hidden=false;
   }
   try{await t.start();if(active()&&t.phase==='error')throw new Error();}
-  catch {if(active()){await disconnect({keepPairing:true,quiet:true});remoteStatus('Connection failed');if(follows||autoConnect)scheduleRetry();}}
+  catch {
+    if(!active())return;
+    if(!follows&&!autoConnect)remoteWanted=false;
+    await disconnect({quiet:true});
+    remoteStatus('Connection failed');
+    scheduleRetry();
+  }
 }
-$('connect').addEventListener('click',()=>{remoteWanted=true;stopped=false;retryAttempt=0;clearTimeout(retryTimer);retryTimer=undefined;void startRemote();});
+$('connect').addEventListener('click',async()=>{
+  const button=$('connect');
+  if(follows&&!armed){
+    button.disabled=true;
+    await enablePlayback();
+    button.disabled=false;
+    if(!armed)return;
+  }
+  remoteWanted=true;stopped=false;retryAttempt=0;clearTimeout(retryTimer);retryTimer=undefined;void startRemote();
+});
 $('stop').addEventListener('click',()=>{stopped=true;remoteWanted=false;void disconnect();});
 $('copy-link').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('invite-link').value);remoteStatus('Copied');}catch{$('invite-link').select();remoteStatus('Copy link');}});
 
@@ -358,7 +344,7 @@ function syncMedia(){
       const session=generation,anchor=state.anchor.generation;starting=true;
       video.play().catch(()=>{
         if(session!==generation||anchor!==state.anchor.generation||!state.anchor.playing)return;
-        blocked=true;armed=false;$('arm').disabled=false;
+        blocked=true;armed=false;$('arm').disabled=false;$('arm').hidden=false;
         if(!follows)localPause();
         notice('Enable first');refreshEnabled();
       }).finally(()=>{starting=false;});
