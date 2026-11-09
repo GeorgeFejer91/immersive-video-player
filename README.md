@@ -6,7 +6,7 @@ Open the link in Quest Browser and tap **VR**. Open the same link on a phone or 
 
 The shared room pairs one Quest viewer with one phone or desktop controller. An extra controller waits until the slot is free. If another Quest already hosts, close that viewer before reopening the page on the Quest that should host next. The viewer listens again when the controller leaves. The controller reconnects after network interruptions. After choosing Disconnect, tap **Connect** to start again.
 
-Use **Recenter view** in the viewer browser, paired controller, or installed app. In VR it sets the forward heading to the direction the wearer is facing. The glowing headset icon is a controller shortcut for the same action. The player remembers the browser view and the VR heading separately. To disconnect, open **Video settings**, then **Connection**. Video settings also let you select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. Drag the preview to look around. The controller preview is silent.
+Use **Recenter view** in the viewer browser, paired controller, or installed app. In VR, look where you want the center to be, including up or down, then press the button. The glowing headset icon is a controller shortcut for the same action. The player remembers the browser view and the VR center separately. To disconnect, open **Video settings**, then **Connection**. Video settings also let you select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. Drag the preview to look around. The controller preview is silent.
 
 ## How it works
 

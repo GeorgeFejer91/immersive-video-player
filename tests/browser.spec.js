@@ -67,7 +67,7 @@ test('seeking a playing video preserves its playing state through transient nati
   await page.locator('#pause').click();await expect(page.locator('body')).toHaveAttribute('data-playing','false');
 });
 
-test('ending a VR session preserves the browser view until Recenter view is pressed',async({page})=>{
+test('manual recenter aligns both VR axes and preserves the browser view on exit',async({page})=>{
   await page.addInitScript(()=>{
     const gl=WebGL2RenderingContext.prototype,locations=new WeakSet();
     const getLocation=gl.getUniformLocation,setMatrix=gl.uniformMatrix4fv;
@@ -77,17 +77,30 @@ test('ending a VR session preserves the browser view until Recenter view is pres
       return location;
     };
     gl.uniformMatrix4fv=function(location,transpose,data,...rest){
-      if(locations.has(location))window.pan=data[2];
+      if(locations.has(location))window.viewAxes=[data[2],data[6],data[1],data[10]];
       return setMatrix.call(this,location,transpose,data,...rest);
     };
     gl.makeXRCompatible=async()=>{};
     window.XRWebGLBinding=undefined;
-    window.XRWebGLLayer=class {framebufferWidth=320;framebufferHeight=240;};
+    window.XRWebGLLayer=class {
+      framebuffer=null;
+      framebufferWidth=320;
+      framebufferHeight=240;
+      getViewport(){return {x:0,y:0,width:this.framebufferWidth,height:this.framebufferHeight};}
+    };
+    window.xrPitch=28;
+    const projectionMatrix=new DOMMatrix().toFloat32Array();
     class Session extends EventTarget {
       updateRenderState(){}
       async requestReferenceSpace(){return {};}
-      requestAnimationFrame(){window.xrStarted=true;return 1;}
-      cancelAnimationFrame(){}
+      requestAnimationFrame(callback){
+        return window.requestAnimationFrame(time=>{
+          const pose=new DOMMatrix().rotateAxisAngleSelf(0,1,0,34)
+            .rotateAxisAngleSelf(1,0,0,window.xrPitch).rotateAxisAngleSelf(0,0,1,12);
+          callback(time,{getViewerPose:()=>({views:[{transform:{matrix:pose.toFloat32Array()},projectionMatrix}]})});
+        });
+      }
+      cancelAnimationFrame(id){window.cancelAnimationFrame(id);}
       async end(){this.dispatchEvent(new Event('end'));}
     }
     Object.defineProperty(navigator,'xr',{value:Object.assign(new EventTarget(),{
@@ -95,22 +108,32 @@ test('ending a VR session preserves the browser view until Recenter view is pres
     })});
   });
   await page.goto('./?role=viewer');
-  const pan=()=>page.evaluate(()=>Math.abs(window.pan));
+  const pan=()=>page.evaluate(()=>Math.abs(window.viewAxes?.[0]));
+  const centerOffset=()=>page.evaluate(()=>Math.hypot(...window.viewAxes.slice(0,2)));
   const stage=page.locator('#stage');
   await expect(stage.locator('canvas')).toBeVisible();
-  await expect.poll(()=>page.evaluate(()=>typeof window.pan)).toBe('number');
+  await expect.poll(()=>page.evaluate(()=>window.viewAxes?.length)).toBe(4);
   await stage.focus();
   await expect(stage).toBeFocused();
   await stage.press('ArrowRight');
   await expect.poll(pan).toBeGreaterThan(.05);
   await page.locator('#enter-vr').click();
-  await page.waitForFunction(()=>window.xrStarted,undefined,{timeout:5000});
+  const recenter=page.getByRole('button',{name:'Recenter view',exact:true});
+  for(const pitch of [28,-89.99]){
+    await page.evaluate(pitch=>{window.xrPitch=pitch;},pitch);
+    await expect.poll(centerOffset).toBeGreaterThan(.25);
+    await recenter.press('Enter');
+    await expect.poll(centerOffset).toBeLessThan(.002);
+    const [roll,forward]=await page.evaluate(()=>window.viewAxes.slice(2));
+    expect(roll).toBeCloseTo(-Math.sin(12*Math.PI/180),3);
+    expect(forward).toBeCloseTo(1,3);
+  }
   await page.evaluate(async()=>{
     await window.xrSession.end();
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   });
   expect(await pan()).toBeGreaterThan(.05);
-  await page.getByRole('button',{name:'Recenter view',exact:true}).press('Enter');
+  await recenter.press('Enter');
   await expect.poll(pan).toBe(0);
 });
 

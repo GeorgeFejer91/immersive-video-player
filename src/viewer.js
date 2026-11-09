@@ -35,7 +35,8 @@ export function createViewer(stage, video, { preview = false } = {}) {
       #include <colorspace_fragment>
     }` });
   const sphere = new THREE.Mesh(new THREE.SphereGeometry(10, 64, 40), material); scene.add(sphere);
-  let longitude = 0, latitude = 0, drag, xrYaw = 0;
+  let longitude = 0, latitude = 0, drag;
+  const xrCenter = new THREE.Quaternion(), flatCenter = new THREE.Quaternion();
   let dirty = true, lastFrame = -1, lastView;
   const frameKey = 'requestVideoFrameCallback' in video ? () => texture.version : () => video.currentTime;
   const resize = () => {
@@ -57,8 +58,8 @@ export function createViewer(stage, video, { preview = false } = {}) {
       dirty=false;lastFrame=frame;
     }
     const immersive=renderer.xr.isPresenting;
-    const rigYaw=immersive?xrYaw:0;
-    if(rig.rotation.y!==rigYaw)rig.rotation.y=rigYaw;
+    const center=immersive?xrCenter:flatCenter;
+    if(!rig.quaternion.equals(center))rig.quaternion.copy(center);
     if(!immersive)camera.quaternion.setFromEuler(new THREE.Euler(-latitude, longitude, 0, 'YXZ'));
     // Keep the sphere centered at the eyes even when the wearer walks.
     if(immersive){rig.updateWorldMatrix(true,false);renderer.xr.updateCamera(camera);sphere.position.copy(renderer.xr.getCamera().position).applyMatrix4(rig.matrixWorld);}
@@ -68,7 +69,13 @@ export function createViewer(stage, video, { preview = false } = {}) {
   return {
     renderer,
     recenter() {
-      if(renderer.xr.isPresenting)xrYaw=-new THREE.Euler().setFromQuaternion(renderer.xr.getCamera().quaternion,'YXZ').y;
+      if(renderer.xr.isPresenting){
+        // The look direction gives yaw and pitch without folding in head roll near vertical.
+        const forward=new THREE.Vector3(0,0,-1).applyQuaternion(renderer.xr.getCamera().quaternion);
+        const yaw=Math.atan2(-forward.x,-forward.z);
+        const pitch=Math.atan2(forward.y,Math.hypot(forward.x,forward.z));
+        xrCenter.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ')).invert();
+      }
       else {longitude=0;latitude=0;drag=undefined;}
       dirty=true;
     },
