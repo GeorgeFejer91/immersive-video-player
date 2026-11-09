@@ -8,7 +8,7 @@ Every player layout shows **Transmit beacon** and **Scan beacon**. Transmit publ
 
 - [x] Replace code entry and manual selection with automatic scanning and local approval.
 - [x] 41 Node and 26 Chromium checks passed, including public WebRTC in both directions, approval gating, cancellation, reconnect, playback, and layout.
-- [ ] Publish and verify the live build.
+- [x] Published dd6bf59 through Actions 42671169797 and Pages deployment 7662466026. Exact HTTPS assets and six focused browser checks passed.
 - [ ] Qualify pairing and remote exit on the physical Quest. Immersive entry still requires a local gesture.
 
 ## Active goal: physical Quest playback and recenter
