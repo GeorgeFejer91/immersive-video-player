@@ -14,15 +14,17 @@ const video=$('video'),stage=$('stage'),screen=video.closest('.screen'),model=ne
 const warpPresets=[...$('warp-presets').querySelectorAll('button')];
 let view, armed=false, state=model.snapshot(), connection, transport;
 let phonePreviewAttempted=false, enabling=false, viewerOccupied=false;
-let queuedLens,lensTimer,lastLensAt=0;
+let queuedLens,lensTimer,lastLensAt=0,recenterAfterPing=false;
 let generation=0, heartbeat, connectDeadline, pending, samples=[], offset=0, synced=false;
 let lastStateAt=0, lastAnchor=-1, starting=false, blocked=false, wakeLock, stopped=false, lastPing=0;
 let remoteWanted=autoConnect,retryTimer,retryAttempt=0,recovering=false,hiddenAt=0;
 const format=n=>`${String(Math.floor(Math.max(0,n)/60)).padStart(2,'0')}:${String(Math.floor(Math.max(0,n)%60)).padStart(2,'0')}`;
 const notice=text=>{for(const id of ['notice','phone-notice'])if($(id).textContent!==text)$(id).textContent=text;};
+const commandNotice=error=>({viewer_needs_vr:'Tap VR on the headset',viewer_buffering:'Headset is buffering'})[error]??error.replaceAll('_',' ');
 const remoteStatus=text=>{if($('connection').textContent!==text)$('connection').textContent=text;};
 const targetNow=()=>performance.now()+(follows?offset:0);
 function canControl(){return !viewerOccupied && (phone||armed) && (!follows || (connection?.phase==='ready' && synced && lastStateAt>0 && performance.now()-lastStateAt<2000));}
+function canRecenter(){return phone&&canControl()&&connection.acceptedScopes.includes('player.view');}
 function refreshEnabled(){
   const available=canControl();
   const disabled=!available||Boolean(pending);
@@ -43,8 +45,20 @@ function updatePhoneStatus(){
   const matched=ready&&canControl()&&!document.hidden&&(!pending||pending.action==='ping')&&previewMatches(state,targetNow(),video);
   const status=matched?'synced':ready?'syncing':'disconnected';
   const button=$('headset-status'),label=`Headset ${status}`;
-  if(button.dataset.state===status)return;
-  button.dataset.state=status;button.setAttribute('aria-label',label);button.title=label;$('headset-state').textContent=label;
+  const recenter=canRecenter();
+  const actionLabel=recenter?'Recenter headset':label;
+  const busy=recenter&&pending&&pending.action!=='ping';
+  if(busy&&!button.hasAttribute('aria-disabled'))button.setAttribute('aria-disabled','true');
+  else if(!busy&&button.hasAttribute('aria-disabled'))button.removeAttribute('aria-disabled');
+  if(button.dataset.state===status&&button.title===actionLabel)return;
+  button.dataset.state=status;button.setAttribute('aria-label',actionLabel);button.title=actionLabel;
+  if(recenter){
+    for(const attribute of ['aria-haspopup','aria-controls','aria-expanded'])button.removeAttribute(attribute);
+  } else {
+    button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','phone-dialog');
+    button.setAttribute('aria-expanded',String($('phone-dialog').open));
+  }
+  if($('headset-state').textContent!==label)$('headset-state').textContent=label;
 }
 $('arm').hidden=phone||autoConnect;
 try { if(!phone)view=createViewer(stage,video); }
@@ -117,12 +131,23 @@ $('show-qr').addEventListener('click',async()=>{
   } catch {remoteStatus('QR unavailable');}
 });
 
-$('headset-status').addEventListener('click',()=>{$('connection-settings').open=true;$('phone-dialog').showModal();$('headset-status').setAttribute('aria-expanded','true');});
-$('phone-dialog').addEventListener('close',()=>$('headset-status').setAttribute('aria-expanded','false'));
+function showConnection(){
+  $('connection-settings').open=true;$('phone-dialog').showModal();
+  if($('headset-status').hasAttribute('aria-expanded'))$('headset-status').setAttribute('aria-expanded','true');
+}
+$('headset-status').addEventListener('click',()=>{
+  if(!canRecenter()){showConnection();return;}
+  if(pending?.action==='ping')recenterAfterPing=true;
+  else issue('recenter',{},'player.view');
+});
+$('phone-dialog').addEventListener('close',()=>{
+  if($('headset-status').hasAttribute('aria-expanded'))$('headset-status').setAttribute('aria-expanded','false');
+});
 $('show-warp').addEventListener('click',()=>{
   enablePhonePreview();
   $('warp-dialog').showModal();
 });
+$('open-connection').addEventListener('click',()=>{$('warp-dialog').close();showConnection();});
 function clearQueuedLens(){
   queuedLens=undefined;clearTimeout(lensTimer);lensTimer=undefined;
 }
@@ -183,13 +208,14 @@ function localPause(){ model.command('player.transport','pause',{},true);renderS
 function applyCommand(command){
   if(command.expectedRevision!==null && command.expectedRevision!==model.state.revision) return {ok:false,revision:model.state.revision,result:null,error:'revision_conflict'};
   const outcome=model.command(command.scope,command.action,command.args,armed&&video.readyState>=3);
-  if(outcome.ok){renderState(model.snapshot());}
+  if(outcome.ok)renderState(model.snapshot());
+  else if(outcome.error==='viewer_not_ready')outcome.error=armed||enabling?'viewer_buffering':'viewer_needs_vr';
   return outcome;
 }
 function issue(action,args={},scope='player.transport'){
   if(!canControl()||pending)return;
   if(phone&&enabling&&(action==='pause'||action==='stop'||action==='seek'))video.pause();
-  if(!follows){const result=applyCommand({scope,action,args,expectedRevision:null});connection?.publishState(); if(!result.ok)notice(result.error.replaceAll('_',' '));return;}
+  if(!follows){const result=applyCommand({scope,action,args,expectedRevision:null});connection?.publishState(); if(!result.ok)notice(commandNotice(result.error));return;}
   const expectedRevision=phone&&action==='projection'?state.revision:null;
   try{const id=connection.sendCommand(scope,action,args,{expectedRevision});pending={id,action,sent:performance.now()};refreshEnabled();}
   catch {remoteStatus('Disconnected');}
@@ -218,7 +244,7 @@ for(const id of ['projection','lens','fov','yaw','pitch'])$(id).addEventListener
 async function disconnect({quiet=false,recoveringTransport=false}={}){
   clearQueuedLens();
   ++generation;clearInterval(heartbeat);clearTimeout(connectDeadline);clearTimeout(retryTimer);retryTimer=undefined;heartbeat=undefined;
-  pending=undefined;synced=false;samples=[];lastStateAt=0;
+  pending=undefined;synced=false;samples=[];lastStateAt=0;recenterAfterPing=false;
   const old=connection;connection=undefined;transport=undefined;
   if(!follows){localPause();document.body.dataset.peers='0';}else {video.pause();state={...state,anchor:{...state.anchor,playing:false}};}
   $('invite-link').value='';$('invitation').hidden=true;$('qr-dialog').close();$('show-qr').hidden=true;
@@ -313,9 +339,10 @@ async function startRemote(){
       samples.push({sent,received:receivedAt,target:result.receivedAt});if(samples.length>8)samples.shift();
       offset=clockOffset(samples);synced=true;remoteStatus('Connected');
       if(samples.length<4)setTimeout(()=>{if(active())sendClockPing();},100);
-    } else if(!e.detail.ok)notice(e.detail.error.replaceAll('_',' '));
+    } else if(!e.detail.ok)notice(commandNotice(e.detail.error));
     else notice('');
     refreshEnabled();
+    if(recenterAfterPing){recenterAfterPing=false;issue('recenter',{},'player.view');}
     scheduleLens();
   });
   c.addEventListener('peerclose',()=>{if(active()&&follows)void recoverRemote();});
@@ -407,7 +434,12 @@ video.addEventListener('waiting',()=>{
   }
 });
 video.addEventListener('error',()=>notice('Video unavailable'));
-video.addEventListener('playing',()=>{if((phone||armed)&&state.anchor.playing)markPlaybackStarted();});
+video.addEventListener('playing',()=>{
+  if((phone||armed)&&state.anchor.playing){
+    if($('notice').textContent==='Buffering')notice('');
+    markPlaybackStarted();
+  }
+});
 video.addEventListener('loadedmetadata',()=>{if(!follows&&Number.isFinite(video.duration)){model.state.duration=video.duration;renderState(model.snapshot());}});
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){hiddenAt=performance.now();if(follows)video.pause();else if(state.anchor.playing&&!view?.renderer.xr.isPresenting){localPause();notice('Paused');}}

@@ -154,7 +154,13 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await expect(phone.locator('#connect')).toBeHidden();
   await expect(phone.locator('#headset-status')).toBeFocused();
   await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','synced');
-  await expect(phone.locator('#headset-status')).toHaveAccessibleName('Headset synced');
+  await expect(phone.locator('#headset-status')).toHaveAccessibleName('Recenter headset');
+  await expect(phone.locator('#headset-state')).toHaveText('Headset synced');
+  const recenterRevision=Number(await viewer.locator('body').getAttribute('data-revision'));
+  await phone.getByRole('button',{name:'Recenter headset'}).click();
+  await expect(viewer.locator('body')).toHaveAttribute('data-revision',String(recenterRevision+1));
+  await expect(phone.locator('#phone-dialog')).toBeHidden();
+  await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','synced');
   expect(await phone.locator('#headset-status').evaluate(el=>getComputedStyle(el).animationName)).toBe('headset-pulse');
   await phone.emulateMedia({reducedMotion:'reduce'});
   expect(await phone.locator('#headset-status').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
@@ -236,9 +242,10 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await expect.poll(()=>phone.locator('video').evaluate(v=>v.paused),{timeout:7000}).toBe(true);
   await phone.waitForFunction(()=>{const video=document.querySelector('video');return video.paused&&!video.seeking&&video.readyState>=3;});
   await expect(phone.locator('#play')).toBeEnabled();await phone.locator('#play').click();
-  await expect(phone.locator('#phone-notice')).toHaveText('viewer not ready');
+  await expect(phone.locator('#phone-notice')).toHaveText('Tap VR on the headset');
   await expect(phone.locator('#phone-notice')).toBeVisible();
-  await phone.locator('#headset-status').click();
+  await phone.getByRole('button',{name:'Video settings',exact:true}).click();
+  await phone.getByRole('button',{name:'Connection',exact:true}).click();
   await phone.locator('#stop').click();
   await expect(viewer.locator('#connection')).toContainText(/waiting|announced/i,{timeout:20000});
   await phone.close();phone=await phoneContext.newPage();

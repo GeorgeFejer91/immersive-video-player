@@ -6,7 +6,7 @@ Open the link in Quest Browser and tap **VR**. Open the same link on a phone or 
 
 The shared room pairs one Quest viewer with one phone or desktop controller. An extra controller waits until the slot is free. If another Quest already hosts, close that viewer before reopening the page on the Quest that should host next. The viewer listens again when the controller leaves. The controller reconnects after network interruptions. After choosing Disconnect, tap **Connect** to start again.
 
-The headset icon shows connection status and opens connection controls. Tap **Video settings** on the controller to select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. The paired controller adjusts the shared projection. Drag the preview to look around. The controller preview is silent.
+Tap the glowing headset icon to recenter the paired Quest view. To disconnect, open **Video settings**, then **Connection**. Video settings also let you select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. The paired controller adjusts the shared projection. Drag the preview to look around. The controller preview is silent.
 
 ## How it works
 

@@ -2,6 +2,14 @@
 
 Updated 2026-11-09. This file owns the active checklist; do not create a competing task ledger.
 
+## Active goal: physical Quest playback and recenter
+
+The controller distinguishes a viewer that needs its local **VR** gesture from an armed viewer that needs more media buffered. The glowing headset button sends the existing recenter action to the paired Quest. Connection controls remain available under **Video settings**.
+
+- [x] Reproduce and distinguish the Start readiness outcomes.
+- [x] Observe the paired desktop Start advance and decode video in a physical Quest immersive session, and Stop pause and reset it.
+- [ ] Confirm the updated Pages build and repeat playback and recenter checks on the physical Quest.
+
 ## Connect request and automatic viewer listener
 
 2026-11-09. The Quest publishes and listens on entry. The controller's header Connect button starts the existing one-to-one handshake and can restart a stalled attempt. The controller keeps discovering and retrying after that action. Hide Connect once the pair has fresh state and clock sync. An explicit Disconnect stops the controller until another Connect. The viewer releases its slot when the controller leaves and restores signaling when a waiting listener's SDK retries are exhausted.

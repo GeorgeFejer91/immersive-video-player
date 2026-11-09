@@ -2,6 +2,12 @@
 
 Updated 2026-11-09. Evidence is scoped to the named surface, not a universal product/hardware claim.
 
+## Physical Quest playback and recenter
+
+Baseline on the live site: desktop Brave sent Start while the physical Quest 3 was in Meta Quest Browser's immersive activity. Video advanced past 13 seconds and decoded 787 frames. Stop paused the same video and reset its current time to 0 while the viewer stayed immersive and paired. The viewer's old Buffering notice remained visible even during successful playback.
+
+38 Node checks, exact asset pins, context check, source-quality production build, and all 26 production browser checks passed. The browser suite exercised premature Start, insufficient viewer buffer, paired recenter through a viewer revision change, and Start/Stop over the real public VDO route. The Quest still uses its local **VR** gesture to enter immersive playback.
+
 ## Connect request and automatic viewer listener
 
 38 Node tests, exact asset pins, context check, and production build passed. The source-quality browser suite passed 25 cases. Its handoff fixture still expected a new controller to join before Connect. After adding the press, three focused checks passed, including that real public VDO handoff and controller focus after Connect disappears. Verified the early controller, one active pair, slot handoff, playback, recovery after either side loses its connection, and viewer reannouncement after simulated SDK retry exhaustion. Phone reflow, enlarged text, and keyboard entry passed in Chromium. The local adapter pin covers the retry-exhaustion event forwarding.

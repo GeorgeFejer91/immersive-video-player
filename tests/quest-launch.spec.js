@@ -163,7 +163,7 @@ test('Quest app entry pairs a phone over public VDO before the local VR gesture'
       video.pause=()=>{warming?.();media.pause.call(video);};
     });
     await phone.locator('#play').click();
-    await expect(phone.locator('#phone-notice')).toHaveText('viewer not ready');
+    await expect(phone.locator('#phone-notice')).toHaveText('Tap VR on the headset');
     expect(await viewer.locator('#video').evaluate(v=>v.paused)).toBe(true);
     await viewer.waitForFunction(()=>document.querySelector('video').readyState>=3);
     await viewer.locator('#enter-vr').click();
@@ -172,6 +172,10 @@ test('Quest app entry pairs a phone over public VDO before the local VR gesture'
       const video=document.querySelector('#video');
       return document.body.dataset.playing==='false'&&video.paused&&!video.seeking&&video.readyState>=3;
     });
+    await viewer.locator('#video').evaluate(video=>Object.defineProperty(video,'readyState',{configurable:true,get:()=>2}));
+    await phone.locator('#play').click();
+    await expect(phone.locator('#phone-notice')).toHaveText('Headset is buffering');
+    await viewer.locator('#video').evaluate(video=>Reflect.deleteProperty(video,'readyState'));
     await phone.locator('#play').click();
     for(const p of [viewer,phone])await expect(p.locator('body')).toHaveAttribute('data-playing','true',{timeout:10000});
     await expect(phone.locator('#halt')).toBeEnabled();await phone.locator('#halt').click();

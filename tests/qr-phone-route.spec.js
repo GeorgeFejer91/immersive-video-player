@@ -45,7 +45,8 @@ test('one public address pairs one viewer and one controller, then hands off the
     await expect(phone.locator('#halt')).toBeDisabled();
     await desktop.locator('#halt').click();
     for(const page of [host,desktop])await expect(page.locator('body')).toHaveAttribute('data-playing','false');
-    await desktop.locator('#headset-status').click();
+    await desktop.getByRole('button',{name:'Video settings',exact:true}).click();
+    await desktop.getByRole('button',{name:'Connection',exact:true}).click();
     await desktop.locator('#stop').click();
     await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
     await expect(host.locator('body')).toHaveAttribute('data-peers','1');
