@@ -8,7 +8,8 @@ The controller distinguishes a viewer that needs its local **VR** gesture from a
 
 - [x] Reproduce and distinguish the Start readiness outcomes.
 - [x] Observe the paired desktop Start advance and decode video in a physical Quest immersive session, and Stop pause and reset it.
-- [ ] Confirm the updated Pages build and repeat playback and recenter checks on the physical Quest.
+- [x] Confirm the updated Pages build and the controller on the public URL.
+- [ ] Repeat Start, frame advancement, Stop, and recenter on the physical Quest using the published build. Resume when the authorized Quest is reachable.
 
 ## Connect request and automatic viewer listener
 
