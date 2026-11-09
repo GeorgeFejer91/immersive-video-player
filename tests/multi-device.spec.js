@@ -32,7 +32,7 @@ test('multiple phones and an additional viewer control one synchronized video wi
   }
   async function join(link,options={}){
     const page=await device(options);await page.goto(link);
-    await page.locator(options.follower?'#enter-vr':'#connect').click();
+    if(options.follower)await page.locator('#enter-vr').click();
     await expect(page.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});return page;
   }
   try {
@@ -96,7 +96,7 @@ test('a new and a reconnected smartphone join an already playing timeline withou
     await context.addInitScript(()=>{const Peer=window.RTCPeerConnection;window.__peers=[];window.RTCPeerConnection=class extends Peer{constructor(...args){super(...args);window.__peers.push(this);}};});
     const page=await context.newPage();pages.push(page);await page.goto(url);
     await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
-    if(phone){await page.locator('#connect').click();await expect(page.locator('#headset-status')).toHaveAttribute('data-state','synced',{timeout:45000});}
+    if(phone)await expect(page.locator('#headset-status')).toHaveAttribute('data-state','synced',{timeout:45000});
     else {
       await page.locator('#enter-vr').click();
       await page.waitForFunction(()=>{const video=document.querySelector('video');return !video.seeking&&video.readyState>=3;});

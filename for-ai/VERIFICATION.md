@@ -1,6 +1,12 @@
 # Verification record
 
-Updated 2026-11-07. Evidence is scoped to the named surface, not a universal product/hardware claim.
+Updated 2026-11-09. Evidence is scoped to the named surface, not a universal product/hardware claim.
+
+## Automatic browser controller pairing
+
+38 Node tests, asset pins, context check and production build passed. With the staged source-quality film, 24 of 25 browser scenarios passed. The real public VDO checks covered a desktop opened before its Quest viewer, automatic phone joining, multiple controllers, reconnection after a dropped connection, and Start/Stop. A simulated cold controller decoder warmed on the first Start action. Deterministic checks verified controller signaling before input, a hidden Connect control, Disconnect, and a fresh attempt after reload. Quest VR entry still uses a local gesture.
+
+The source-quality mid-playback late-join stress case paused when the viewer reported Buffering. The same case reproduced on deployed baseline 39be0a6 with the same source film. Both runs paired and synchronized state. The updated build passed the same stress case with the checked-in preview. Uninterrupted source-quality playback under this same-machine stress remains open. Physical-phone pairing is a separate qualification.
 
 ## One public playback URL — 2026-11-07
 

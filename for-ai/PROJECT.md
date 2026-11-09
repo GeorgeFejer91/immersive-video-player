@@ -1,8 +1,16 @@
 # Project contract
 
-Updated 2026-11-07. This file owns the active checklist; do not create a competing task ledger.
+Updated 2026-11-09. This file owns the active checklist; do not create a competing task ledger.
 
-## Active implementation: one public playback URL
+## Automatic browser controller pairing
+
+2026-11-09. Opening the shared URL on a phone or desktop starts joining the Quest viewer immediately. The controller shows playback controls on entry and enables them after the handshake and fresh clock/state synchronization. Controllers already waiting join when a viewer arrives. Reconnect after transport interruption using the existing retry path. Keep an explicit Disconnect action in the headset status dialog. Reloading after Disconnect starts a new attempt. Start remains a playback action and the Quest's VR button remains the immersive entry.
+
+- [x] Verify entry and automatic joining, including opening a controller before the Quest viewer.
+- [x] Verify Start, Pause, Stop and reconnection through the existing data-only shared room.
+- Release acceptance requires the matching Pages deployment and a live HTTPS controller entry check. The workspace validation ledger records that evidence.
+
+## Previous release: one public playback URL
 
 2026-11-07. The user requests one URL and one session for desktop browsers, phones and Quest. Anyone who opens the public URL may connect and control playback. The root opens controller controls on desktop/phone and immersive viewing on Quest. The Quest holds one fixed VDO target ID. If the signaling service rejects a duplicate target, the additional Quest joins as a follower. A new host starts when its Quest opens or reloads the URL. Previous URL aliases still route to the same room, and invitation fragments are discarded. Supersedes private invitation creation, the role chooser and session expiration.
 

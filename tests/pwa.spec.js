@@ -1,6 +1,10 @@
 import { test,expect } from '@playwright/test';
 
 test.use({serviceWorkers:'allow'});
+test.beforeEach(async({page})=>{
+  await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
+});
+
 test('controller has a valid subpath-safe manifest, real icons and an offline shell without cached media or invitations',async({page,context})=>{
   await page.goto('./?controller=1');
   const manifestAddress=await page.locator('link[rel=manifest]').getAttribute('href');
@@ -56,7 +60,7 @@ test('install action appears on entry, explains Quest library creation and hides
 
 test('install invokes a supplied browser prompt inside the user gesture',async({page})=>{
   await page.goto('./?controller=1');
-  await page.locator('#phone-dialog button#hide-controls').click();
+  await expect(page.locator('#phone-dialog')).toBeHidden();
   await page.evaluate(()=>{
     const event=new Event('beforeinstallprompt',{cancelable:true});
     event.prompt=async()=>{window.__installGesture=navigator.userActivation.isActive;return {outcome:'accepted'};};
@@ -73,7 +77,7 @@ test('iPhone install help and bounded install labels remain readable',async({pag
     Object.defineProperty(navigator,'userAgent',{value:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile Safari/604.1'});
     window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();event.stopImmediatePropagation();},{capture:true});
   });
-  await page.goto('./?controller=1');await expect(page.locator('#phone-dialog')).toBeVisible();await page.keyboard.press('Escape');
+  await page.goto('./?controller=1');await expect(page.locator('#phone-dialog')).toBeHidden();
   await page.locator('#install-app').click();
   await expect(page.locator('#install-instructions')).toContainText('Share, then Add to Home Screen');
   await page.keyboard.press('Escape');await expect(page.locator('#install-app')).toBeFocused();

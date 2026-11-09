@@ -10,9 +10,9 @@ export function entryRoute(address,{userAgent=''}={}){
   const params=new URL(address).searchParams;
   const launch=params.get('launch')==='quest';
   const role=params.get('role');
-  if(role==='controller'||params.get('controller')==='1')return {phone:true,autoConnect:false};
+  if(role==='controller'||params.get('controller')==='1')return {phone:true,autoConnect:true};
   if(launch)return {phone:false,autoConnect:true};
   if(role==='viewer')return {phone:false,autoConnect:false};
   const quest=/OculusBrowser|Meta Quest|Mobile VR|\bQuest\b/i.test(userAgent);
-  return {phone:!quest,autoConnect:quest};
+  return {phone:!quest,autoConnect:true};
 }

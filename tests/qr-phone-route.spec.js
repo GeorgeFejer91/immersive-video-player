@@ -15,14 +15,14 @@ test('one public address connects desktop, phone and a second Quest to the same 
     return page;
   }
   try{
+    const desktop=await open();
+    await expect(desktop.locator('#connection')).toHaveText('Waiting',{timeout:20000});
+    await expect(desktop.locator('#play')).toBeDisabled();
     const host=await open(quest);
     await expect(host.locator('body')).toHaveAttribute('data-page','viewer');
     await expect(host.locator('#invite-link')).toHaveValue(address);
-    const desktop=await open();
-    await desktop.getByRole('button',{name:'Connect',exact:true}).click();
     await expect(desktop.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
     const phone=await open('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile Safari/604.1');
-    await phone.getByRole('button',{name:'Connect',exact:true}).click();
     await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
     const follower=await open(quest);
     await expect(follower.locator('#connection')).toHaveText('Shared viewer',{timeout:25000});
@@ -44,7 +44,8 @@ test('one public address connects desktop, phone and a second Quest to the same 
   }finally{await Promise.all(contexts.map(context=>context.close()));}
 });
 
-test('shared public URL opens phone connection controls directly without a role chooser',async({browser,page})=>{
+test('shared public URL opens phone playback controls without a pairing dialog',async({browser,page})=>{
+  await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
   await page.goto('./');
   const link=page.url();
   expect(new URL(link).search).toBe('');
@@ -61,11 +62,13 @@ test('shared public URL opens phone connection controls directly without a role 
       const context=await browser.newContext({userAgent,hasTouch:true,viewport:{width:390,height:844}});
       if(name.startsWith('iPad'))await context.addInitScript(()=>Object.defineProperty(navigator,'maxTouchPoints',{get:()=>5}));
       try{
+        await context.routeWebSocket('wss://wss.vdo.ninja',()=>{});
         const phone=await context.newPage();await phone.goto(link);
         await expect(phone.locator('body')).toHaveAttribute('data-page','controller');
         await expect(phone.locator('#player')).toBeVisible();
-        await expect(phone.getByRole('dialog',{name:'Headset connection'})).toBeVisible();
-        await expect(phone.locator('#connect')).toBeVisible();
+        await expect(phone.getByRole('dialog',{name:'Headset connection'})).toBeHidden();
+        await expect(phone.locator('#phone-controls')).toBeVisible();
+        await expect(phone.locator('#connect')).toBeHidden();
         await expect(phone.locator('#arm')).toBeHidden();
         expect(new URL(phone.url()).hash).toBe('');
       }finally{await context.close();}

@@ -1,13 +1,14 @@
 import {test,expect} from '@playwright/test';
 
+test.beforeEach(async({page})=>{
+  await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
+});
+
 test('phone is a local video player with transport and an accessible headset connection button',async({page})=>{
-  const sockets=[];page.on('websocket',ws=>sockets.push(ws.url()));
   await page.goto('./?controller=1');
   const settings=page.getByRole('dialog',{name:'Headset connection'});
-  await expect(settings).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(settings).toBeHidden();
   const headset=page.locator('#headset-status');
-  await expect(headset).toBeFocused();
   await expect(headset).toHaveAttribute('data-state','disconnected');
   await expect(headset).toHaveAccessibleName('Headset disconnected');
   await expect(page.locator('#video')).toBeVisible();
@@ -16,7 +17,7 @@ test('phone is a local video player with transport and an accessible headset con
   for(const id of ['play','pause','halt'])await expect(page.locator('#'+id)).toBeDisabled();
   expect(await page.locator('#stage canvas').count()).toBe(0);
   expect(await page.locator('#video').evaluate(v=>!v.controls&&v.muted&&new URL(v.currentSrc||v.src).pathname.endsWith('/media/jona.mp4'))).toBe(true);
-  expect(sockets.filter(url=>url.includes('vdo.ninja'))).toEqual([]);
+  await expect(page.locator('#connect')).toBeHidden();
   expect((await page.locator('body').innerText()).trim().split(/\s+/).length).toBeLessThanOrEqual(13);
   for(const [width,height] of [[320,560],[390,844],[640,390],[844,390],[1280,720]]){
     await page.setViewportSize({width,height});await page.waitForTimeout(150);
@@ -108,8 +109,7 @@ test('phone falls back to native video when WebGL is unavailable',async({page})=
     };
   });
   await page.goto('./?controller=1');
-  await expect(page.getByRole('dialog',{name:'Headset connection'})).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog',{name:'Headset connection'})).toBeHidden();
   await page.getByRole('button',{name:'Video settings',exact:true}).click();
   const settings=page.getByRole('dialog',{name:'Video warp'});
   await expect(settings.getByText('Showing unwarped phone video.')).toBeVisible();

@@ -13,7 +13,7 @@ document.body.classList.toggle('phone',phone);
 const video=$('video'),stage=$('stage'),screen=video.closest('.screen'),model=new Player(467.3);
 const warpPresets=[...$('warp-presets').querySelectorAll('button')];
 let view, armed=false, state=model.snapshot(), connection, transport;
-let phonePreviewAttempted=false;
+let phonePreviewAttempted=false, enabling=false;
 let queuedLens,lensTimer,lastLensAt=0;
 let generation=0, heartbeat, connectDeadline, pending, samples=[], offset=0, synced=false;
 let lastStateAt=0, lastAnchor=-1, starting=false, blocked=false, wakeLock, stopped=false, lastPing=0;
@@ -22,7 +22,7 @@ const format=n=>`${String(Math.floor(Math.max(0,n)/60)).padStart(2,'0')}:${Strin
 const notice=text=>{for(const id of ['notice','phone-notice'])if($(id).textContent!==text)$(id).textContent=text;};
 const remoteStatus=text=>{if($('connection').textContent!==text)$('connection').textContent=text;};
 const targetNow=()=>performance.now()+(follows?offset:0);
-function canControl(){return armed && (!follows || (connection?.phase==='ready' && synced && lastStateAt>0 && performance.now()-lastStateAt<2000));}
+function canControl(){return (phone||armed) && (!follows || (connection?.phase==='ready' && synced && lastStateAt>0 && performance.now()-lastStateAt<2000));}
 function refreshEnabled(){
   const disabled=!canControl()||Boolean(pending);
   $('controls').disabled=$('phone-controls').disabled=disabled;
@@ -74,6 +74,8 @@ function enablePhonePreview(){
 }
 void measureTextRegions().catch(()=>{document.documentElement.dataset.pretext='unavailable';});
 async function enablePlayback(){
+  if(enabling)return false;
+  enabling=true;
   const original=video.currentTime;
   try {
     // Call play during the actual gesture; waiting on signaling first loses activation.
@@ -84,7 +86,11 @@ async function enablePlayback(){
     enablePhonePreview();
     try{void navigator.wakeLock?.request('screen').then(lock=>{wakeLock=lock;}).catch(()=>{});}catch{/* Optional; browsers may refuse. */}
     refreshEnabled();
-  } catch { notice('Not ready'); }
+    return true;
+  } catch (error) {
+    if(error?.name!=='AbortError')notice('Not ready');
+    return false;
+  } finally { enabling=false; }
 }
 $('arm').addEventListener('click',()=>{void enablePlayback();});
 async function enterImmersive(){
@@ -177,12 +183,23 @@ function applyCommand(command){
 }
 function issue(action,args={},scope='player.transport'){
   if(!canControl()||pending)return;
+  if(phone&&enabling&&(action==='pause'||action==='stop'||action==='seek'))video.pause();
   if(!follows){const result=applyCommand({scope,action,args,expectedRevision:null});connection?.publishState(); if(!result.ok)notice(result.error.replaceAll('_',' '));return;}
   const expectedRevision=phone&&action==='projection'?state.revision:null;
   try{const id=connection.sendCommand(scope,action,args,{expectedRevision});pending={id,action,sent:performance.now()};refreshEnabled();}
   catch {remoteStatus('Disconnected');}
 }
-$('play').addEventListener('click',()=>{ if(follows&&!synced){notice('Syncing');return;}issue('play',{previewReady:armed&&video.readyState>=3}); });
+$('play').addEventListener('click',async()=>{
+  if(!canControl()||pending||enabling)return;
+  const current=generation;
+  let previewReady=video.readyState>=3;
+  if(phone&&!armed&&video.paused){
+    // Successful play warms the decoder before Enable restores the paused frame.
+    previewReady=await enablePlayback();
+    if(!previewReady)return;
+  }
+  if(current===generation)issue('play',{previewReady});
+});
 $('pause').addEventListener('click',()=>issue('pause'));
 $('halt').addEventListener('click',()=>issue('stop'));
 $('seek').addEventListener('change',()=>issue('seek',{position:Number($('seek').value)}));
@@ -201,14 +218,14 @@ async function disconnect({quiet=false,recoveringTransport=false}={}){
   if(!follows){localPause();document.body.dataset.peers='0';}else {video.pause();state={...state,anchor:{...state.anchor,playing:false}};}
   $('invite-link').value='';$('invitation').hidden=true;$('qr-dialog').close();$('show-qr').hidden=true;
   const restoreConnect=document.activeElement===$('stop');
-  $('connect').disabled=false;$('connect').hidden=false;
+  $('connect').disabled=false;$('connect').hidden=phone;
   $('stop').hidden=!(remoteWanted&&!stopped);refreshEnabled();
-  if(restoreConnect&&$('stop').hidden)$('connect').focus();
+  if(restoreConnect&&$('stop').hidden)$(phone?'hide-controls':'connect').focus();
   if(!quiet)remoteStatus('Disconnected');
   await old?.close({notify:!recoveringTransport});
 }
 function scheduleRetry(){
-  if(retryTimer||recovering||transport||!remoteWanted||stopped||!navigator.onLine||document.hidden||(follows&&!armed))return;
+  if(retryTimer||recovering||transport||!remoteWanted||stopped||!navigator.onLine||document.hidden||(follows&&!phone&&!armed))return;
   $('connect').hidden=true;
   remoteStatus('Reconnecting');
   retryTimer=setTimeout(()=>{
@@ -228,7 +245,7 @@ function received(event){
 }
 async function startRemote(){
   if(transport||recovering)return;
-  if(follows&&!armed){notice('Enable first');return;}
+  if(follows&&!phone&&!armed){notice('Enable first');return;}
   const current=++generation;
   if(follows){state=model.snapshot();lastAnchor=-1;lastStateAt=0;synced=false;samples=[];}
   const t=new VdoNinjaTransport({role:follows?'controller':'target',room:session.room,sharedSecret:session.secret,streamId:session.streamId,label:'Immersive video viewer'});
@@ -260,7 +277,7 @@ async function startRemote(){
   c.addEventListener('ready',()=>{
     if(!active())return;clearTimeout(connectDeadline);retryAttempt=0;
     remoteStatus(follows?'Syncing':'Connected');
-    if(phone)$('phone-dialog').close();
+    if(phone)enablePhonePreview();
     else if(!autoConnect||armed)$('playback-settings').open=true;
     if(follows){pending=undefined;sendClockPing();}else c.publishState();
     refreshEnabled();
@@ -284,9 +301,16 @@ async function startRemote(){
     scheduleLens();
   });
   c.addEventListener('peerclose',()=>{if(active()&&follows)void recoverRemote();});
-  c.addEventListener('protocolerror',()=>{if(active()){remoteWanted=false;remoteStatus('Pairing failed');void disconnect({quiet:true});}});
+  c.addEventListener('protocolerror',event=>{
+    if(!active())return;
+    // The pinned protocol reports a failed reliable-lane send through this event too.
+    if(follows&&event.detail.message==='Reliable control lane is unavailable or backpressured.'){
+      void recoverRemote();return;
+    }
+    remoteWanted=false;remoteStatus('Pairing failed');void disconnect({quiet:true});
+  });
   function sendClockPing(){
-    if(!active()||pending||c.phase!=='ready')return;
+    if(!active()||pending||c.phase!=='ready'||(phone&&synced&&enabling))return;
     const sent=performance.now(),id=c.sendCommand('player.transport','ping',{sentAt:sent});
     pending={id,action:'ping',sent};lastPing=sent;refreshEnabled();
   }
@@ -331,7 +355,7 @@ $('copy-link').addEventListener('click',async()=>{try{await navigator.clipboard.
 
 function syncMedia(){
   updatePhoneStatus();
-  if(!armed)return;
+  if(enabling||(!phone&&!armed))return;
   const now=targetNow(),stale=follows&&(!synced||connection?.phase!=='ready'||performance.now()-lastStateAt>2000);
   const desired=positionAt(state,now),future=state.anchor.playing&&now<state.anchor.at;
   if(state.anchor.generation!==lastAnchor){video.pause();video.currentTime=desired;lastAnchor=state.anchor.generation;}
@@ -346,7 +370,7 @@ function syncMedia(){
         if(session!==generation||anchor!==state.anchor.generation||!state.anchor.playing)return;
         blocked=true;armed=false;$('arm').disabled=false;$('arm').hidden=false;
         if(!follows)localPause();
-        notice('Enable first');refreshEnabled();
+        notice(phone?'Preview blocked':'Enable first');refreshEnabled();
       }).finally(()=>{starting=false;});
     }
   }
@@ -367,7 +391,7 @@ video.addEventListener('waiting',()=>{
   }
 });
 video.addEventListener('error',()=>notice('Video unavailable'));
-video.addEventListener('playing',()=>{if(armed&&state.anchor.playing)markPlaybackStarted();});
+video.addEventListener('playing',()=>{if((phone||armed)&&state.anchor.playing)markPlaybackStarted();});
 video.addEventListener('loadedmetadata',()=>{if(!follows&&Number.isFinite(video.duration)){model.state.duration=video.duration;renderState(model.snapshot());}});
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){hiddenAt=performance.now();if(follows)video.pause();else if(state.anchor.playing&&!view?.renderer.xr.isPresenting){localPause();notice('Paused');}}
@@ -383,6 +407,6 @@ window.addEventListener('pagehide',()=>{stopped=true;remoteWanted=false;clearInt
 window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 renderState(state);
 video.preload='auto';video.src=video.dataset.src;video.load();
-if(phone){$('headset-status').focus();$('headset-status').click();}
-else if(autoConnect)void startRemote();
+refreshEnabled();
+if(autoConnect)void startRemote();
 }

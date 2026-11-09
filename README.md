@@ -2,9 +2,9 @@
 
 Watch **Jona** together from [the same player URL](https://georgefejer91.github.io/immersive-video-player/) on Quest, phone, and desktop.
 
-Open the link in Quest Browser and tap **VR**. Open the same link on a phone or desktop and tap **Connect**. All connected devices share **Start**, **Pause**, **Stop**, and the playback position. Stop resets the video for everyone. The Quest's **QR** button shares the same public link.
+Open the link in Quest Browser and tap **VR**. Open the same link on a phone or desktop to join automatically. Playback controls become available when the viewer connects and synchronizes. All connected devices share **Start**, **Pause**, **Stop**, and the playback position. Stop resets the video for everyone. The Quest's **QR** button shares the same public link.
 
-The first connected Quest hosts playback. Additional Quest browsers follow its timeline. Keep the hosting Quest open during playback. If it closes, open or reload the link on the Quest that should host next. Phones and desktop browsers reconnect automatically after an interruption.
+The first connected Quest hosts playback. Additional Quest browsers follow its timeline. Keep the hosting Quest open during playback. If it closes, open or reload the link on the Quest that should host next. Phones and desktop browsers join when a viewer becomes available and reconnect after network interruptions. After choosing Disconnect, reload the page to join again.
 
 The headset icon shows connection status and opens connection controls. Tap **Video settings** on the controller to select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. Connected controllers adjust the shared projection. Drag the preview to look around. The controller preview is silent.
 

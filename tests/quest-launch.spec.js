@@ -87,11 +87,28 @@ test('Quest app entry pairs a phone over public VDO before the local VR gesture'
     await expect(viewer.locator('#show-qr')).toBeVisible();
     await phone.goto(await viewer.locator('#invite-link').inputValue());
     await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
-    await phone.locator('#connect').click();
     await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
     await expect(viewer.locator('#enter-vr')).toBeVisible();
     await expect(viewer.locator('#arm')).toBeHidden();
     await expect(phone.locator('#play')).toBeEnabled();
+    // Model a browser that needs a Start gesture and time to buffer its preview.
+    await phone.locator('#video').evaluate(video=>{
+      const media=HTMLMediaElement.prototype;
+      const paused=Object.getOwnPropertyDescriptor(media,'paused').get;
+      const readyState=Object.getOwnPropertyDescriptor(media,'readyState').get;
+      let cold=true, warming;
+      Object.defineProperties(video,{
+        paused:{get:()=>warming?false:paused.call(video)},
+        readyState:{get:()=>cold?2:readyState.call(video)},
+      });
+      video.play=()=>!cold?media.play.call(video):new Promise((resolve,reject)=>{
+        const timer=setTimeout(()=>{
+          cold=false;warming=undefined;media.play.call(video).then(resolve,reject);
+        },300);
+        warming=()=>{clearTimeout(timer);warming=undefined;reject(new DOMException('Interrupted','AbortError'));};
+      });
+      video.pause=()=>{warming?.();media.pause.call(video);};
+    });
     await phone.locator('#play').click();
     await expect(phone.locator('#phone-notice')).toHaveText('viewer not ready');
     expect(await viewer.locator('#video').evaluate(v=>v.paused)).toBe(true);
