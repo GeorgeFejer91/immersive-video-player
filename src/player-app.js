@@ -24,10 +24,14 @@ const remoteStatus=text=>{if($('connection').textContent!==text)$('connection').
 const targetNow=()=>performance.now()+(follows?offset:0);
 function canControl(){return !viewerOccupied && (phone||armed) && (!follows || (connection?.phase==='ready' && synced && lastStateAt>0 && performance.now()-lastStateAt<2000));}
 function refreshEnabled(){
-  const disabled=!canControl()||Boolean(pending);
+  const available=canControl();
+  const disabled=!available||Boolean(pending);
   $('controls').disabled=$('phone-controls').disabled=disabled;
   if(phone){
-    const viewDisabled=connection?.phase==='ready'&&(!canControl()||!connection.acceptedScopes.includes('player.view'));
+    const connect=$('connect'),restoreFocus=available&&document.activeElement===connect;
+    if(connect.hidden!==available)connect.hidden=available;
+    if(restoreFocus)$('headset-status').focus();
+    const viewDisabled=connection?.phase==='ready'&&(!available||!connection.acceptedScopes.includes('player.view'));
     $('warp-presets').disabled=viewDisabled||Boolean(pending);
     $('phone-lens').disabled=viewDisabled||state.projection!=='fisheye';
   }
@@ -48,6 +52,7 @@ catch { notice('Video unavailable'); $('enter-vr').disabled=true; }
 
 if(phone){
   $('role-label').textContent='Controller';
+  $('phone-header').insertBefore($('connect'),$('headset-status'));
   $('phone-header').hidden=false;$('phone-controls').hidden=false;
   video.removeAttribute('aria-hidden');video.setAttribute('aria-label','Jona');video.classList.add('stretch-body');
   stage.classList.add('stretch-body');stage.setAttribute('role','region');stage.setAttribute('aria-label','Jona panorama');
@@ -218,26 +223,30 @@ async function disconnect({quiet=false,recoveringTransport=false}={}){
   if(!follows){localPause();document.body.dataset.peers='0';}else {video.pause();state={...state,anchor:{...state.anchor,playing:false}};}
   $('invite-link').value='';$('invitation').hidden=true;$('qr-dialog').close();$('show-qr').hidden=true;
   const restoreConnect=document.activeElement===$('stop');
-  $('connect').disabled=false;$('connect').hidden=phone||viewerOccupied;
+  if(!phone){$('connect').disabled=false;$('connect').hidden=viewerOccupied;}
   $('stop').hidden=!(remoteWanted&&!stopped);refreshEnabled();
-  if(restoreConnect&&$('stop').hidden)$($('connect').hidden?'hide-controls':'connect').focus();
+  if(restoreConnect&&$('stop').hidden)$(phone||viewerOccupied?'hide-controls':'connect').focus();
   if(!quiet)remoteStatus('Disconnected');
   await old?.close({notify:!recoveringTransport});
 }
 function scheduleRetry(){
   if(retryTimer||recovering||transport||!remoteWanted||stopped||!navigator.onLine||document.hidden)return;
-  $('connect').hidden=true;
+  if(!phone)$('connect').hidden=true;
   remoteStatus('Reconnecting');
   retryTimer=setTimeout(()=>{
     retryTimer=undefined;
     if(!stopped&&remoteWanted&&navigator.onLine&&!document.hidden)void startRemote();
   },Math.min(15000,1000*2**Math.min(retryAttempt++,4)));
 }
-async function recoverRemote(){
+async function recoverRemote({immediate=false}={}){
   if(recovering||stopped||!remoteWanted)return;
   recovering=true;
   try {await disconnect({quiet:true,recoveringTransport:true});}
-  finally {recovering=false;scheduleRetry();}
+  finally {
+    recovering=false;
+    if(immediate&&remoteWanted&&!stopped&&navigator.onLine&&!document.hidden)void startRemote();
+    else scheduleRetry();
+  }
 }
 function received(event){
   try {const next=validateState(event.detail.state);lastStateAt=performance.now();renderState(next);refreshEnabled();scheduleLens();}
@@ -257,10 +266,19 @@ async function startRemote(){
   const options={transport:t,sessionId:session.room,sharedSecret:session.secret,applyCommand,getState:()=>model.snapshot()};
   const c=follows?new BRSPConnection({...options,role:'controller',requestedScopes:SCOPES}):new TargetGroup({...options,grantedScopes:SCOPES});
   transport=t;connection=c;
-  const restoreStop=document.activeElement===$('connect');
-  $('connect').disabled=true;$('connect').hidden=true;$('stop').hidden=false;
-  if(restoreStop)$('stop').focus();
+  $('stop').hidden=false;
+  if(!phone){
+    const restoreStop=document.activeElement===$('connect');
+    $('connect').disabled=true;$('connect').hidden=true;
+    if(restoreStop)$('stop').focus();
+  }
+  let signalingFailed=false;
   const active=()=>generation===current&&connection===c;
+  t.addEventListener('signalingfailed',()=>{
+    if(!active())return;
+    signalingFailed=true;
+    if(c.phase!=='ready')void recoverRemote();
+  });
   if(!follows)t.addEventListener('targetconflict',()=>{
     if(!active())return;
     viewerOccupied=true;remoteWanted=false;
@@ -284,6 +302,7 @@ async function startRemote(){
   if(!follows)c.addEventListener('peercount',event=>{
     if(!active())return;document.body.dataset.peers=String(event.detail.count);
     remoteStatus(event.detail.count?'Connected':'Waiting');
+    if(!event.detail.count&&signalingFailed)void recoverRemote();
   });
   c.addEventListener('commandapplied',e=>{
     if(!active()||pending?.id!==e.detail.commandId)return;
@@ -336,14 +355,16 @@ async function startRemote(){
   catch {
     if(!active())return;
     if(!follows&&!autoConnect)remoteWanted=false;
-    await disconnect({quiet:true});
     remoteStatus('Connection failed');
+    await disconnect({quiet:true});
     scheduleRetry();
   }
 }
 $('connect').addEventListener('click',()=>{
-  if(viewerOccupied)return;
-  remoteWanted=true;stopped=false;retryAttempt=0;clearTimeout(retryTimer);retryTimer=undefined;void startRemote();
+  if(viewerOccupied||recovering||(phone&&canControl()))return;
+  remoteWanted=true;stopped=false;retryAttempt=0;clearTimeout(retryTimer);retryTimer=undefined;
+  if(transport)void recoverRemote({immediate:true});
+  else void startRemote();
 });
 $('stop').addEventListener('click',()=>{stopped=true;remoteWanted=false;void disconnect();});
 $('copy-link').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('invite-link').value);remoteStatus('Copied');}catch{$('invite-link').select();remoteStatus('Copy link');}});

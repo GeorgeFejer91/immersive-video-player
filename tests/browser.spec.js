@@ -85,27 +85,33 @@ test('rendered labels reflow at phone widths, landscape, desktop, large type and
   await expect(page.locator('#connect')).toHaveAttribute('data-text-fit','wrapped');
 });
 
-test('controller starts joining the shared room on entry without a gesture',async({page})=>{
+test('controller Connect starts the handshake, retries it, and reconnects after Disconnect',async({page})=>{
   let attempts=0;
   await page.clock.install();
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{attempts++;});
   await page.goto('./?controller=1#room=obsolete');
   expect(new URL(page.url()).hash).toBe('');
-  await expect.poll(()=>attempts).toBe(1);
   await expect(page.locator('#phone-dialog')).toBeHidden();
   await expect(page.locator('#phone-controls')).toBeVisible();
   await expect(page.locator('#play')).toBeDisabled();
   await expect(page.locator('#arm')).toBeHidden();
-  await expect(page.locator('#connect')).toBeHidden();
+  expect(attempts).toBe(0);
+  const connect=page.getByRole('button',{name:'Connect',exact:true});
+  await expect(connect).toBeVisible();
+  await connect.focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(()=>attempts).toBe(1);
+  await connect.click();
+  await expect.poll(()=>attempts).toBe(2);
   expect(await page.locator('#video').evaluate(video=>video.paused)).toBe(true);
   await page.locator('#headset-status').click();
   await page.locator('#stop').click();
-  await expect(page.locator('#connect')).toBeHidden();
   await expect(page.locator('#hide-controls')).toBeFocused();
   await page.clock.fastForward(21000);
-  expect(attempts).toBe(1);
-  await page.reload();
-  await expect.poll(()=>attempts).toBe(2);
+  expect(attempts).toBe(2);
+  await page.keyboard.press('Escape');
+  await connect.click();
+  await expect.poll(()=>attempts).toBe(3);
 });
 
 test('Disconnect wins while signaling is unavailable and closes the share controls',async({page})=>{
@@ -142,8 +148,11 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await expect(viewer.locator('#invite-link')).toHaveValue(link);
   await phone.goto(link);await expect(phone.locator('body')).toHaveAttribute('data-page','controller');
   await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
+  await phone.locator('#connect').click();
   await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
   await expect(phone.locator('#phone-dialog')).not.toBeVisible();
+  await expect(phone.locator('#connect')).toBeHidden();
+  await expect(phone.locator('#headset-status')).toBeFocused();
   await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','synced');
   await expect(phone.locator('#headset-status')).toHaveAccessibleName('Headset synced');
   expect(await phone.locator('#headset-status').evaluate(el=>getComputedStyle(el).animationName)).toBe('headset-pulse');
@@ -234,6 +243,7 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await expect(viewer.locator('#connection')).toContainText(/waiting|announced/i,{timeout:20000});
   await phone.close();phone=await phoneContext.newPage();
   await phone.goto(link);await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
+  await phone.locator('#connect').click();
   await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
   await phone.waitForTimeout(2200);
   console.log(JSON.stringify({route:await phone.locator('body').getAttribute('data-route'),rtt:await phone.locator('body').getAttribute('data-rtt'),observedPreviewDriftSeconds:observedDrift,rawDriftSeconds:rawDrift,samplingGapSeconds:samplingGap}));
@@ -241,6 +251,7 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await viewer.locator('#stop').click();await expect(phone.locator('#connection')).toContainText(/reconnecting|waiting/i);
   await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','disconnected');
   await expect(phone.locator('#phone-dialog')).toBeHidden();
+  await expect(phone.locator('#connect')).toBeVisible();
   await expect(phone.getByRole('region',{name:'Jona panorama'})).toBeVisible();
   await expect(phone.locator('#halt')).toBeDisabled();
   await viewerContext.close();await phoneContext.close();

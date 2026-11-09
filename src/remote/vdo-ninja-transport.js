@@ -226,6 +226,7 @@ export class VdoNinjaTransport extends EventTarget {
         this.dispatchEvent(new Event("targetconflict"));
       }
     });
+    this.listen(sdk, generation, "reconnectFailed", () => this.dispatchEvent(new Event("signalingfailed")));
     this.listen(sdk, generation, "listing", (event) => this.addListing(event.detail));
     this.listen(sdk, generation, "videoaddedtoroom", (event) => this.addSource(event.detail));
     this.listen(sdk, generation, "userLeft", (event) => this.removePeerOrSource(event.detail));

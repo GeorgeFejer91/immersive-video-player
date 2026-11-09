@@ -2,7 +2,11 @@
 
 Updated 2026-11-09. This file owns the active checklist; do not create a competing task ledger.
 
-## One automatic viewer and controller pair
+## Connect request and automatic viewer listener
+
+2026-11-09. The Quest publishes and listens on entry. The controller's header Connect button starts the existing one-to-one handshake and can restart a stalled attempt. The controller keeps discovering and retrying after that action. Hide Connect once the pair has fresh state and clock sync. An explicit Disconnect stops the controller until another Connect. The viewer releases its slot when the controller leaves and restores signaling when a waiting listener's SDK retries are exhausted.
+
+## Previous release: one automatic viewer and controller pair
 
 2026-11-09. One Quest viewer owns the shared timeline. The viewer admits one external controller and releases the slot on disconnect or authentication timeout. Extra controllers wait and retry. A second Quest sees Viewer in use and can reopen the page when the viewer slot is free. The same public URL and existing BRSP/VDO handshake establish the pair automatically. The hosting Quest still uses VR to enter immersive playback.
 

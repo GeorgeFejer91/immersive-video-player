@@ -7,15 +7,15 @@ const quest='Mozilla/5.0 (Linux; Android 12; Quest 3) OculusBrowser/39.2 Mobile 
 const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile Safari/604.1';
 
 test('one public URL opens the controller on desktop and phone and the viewer on Quest',()=>{
-  assert.deepEqual(entryRoute(base),{phone:true,autoConnect:true});
-  assert.deepEqual(entryRoute(base,{userAgent:iphone}),{phone:true,autoConnect:true});
+  assert.deepEqual(entryRoute(base),{phone:true,autoConnect:false});
+  assert.deepEqual(entryRoute(base,{userAgent:iphone}),{phone:true,autoConnect:false});
   assert.deepEqual(entryRoute(base,{userAgent:quest}),{phone:false,autoConnect:true});
 });
 
 test('legacy role aliases still route devices without using the invitation fragment',()=>{
   assert.deepEqual(entryRoute(base+'?launch=quest#old-invitation'),{phone:false,autoConnect:true});
   assert.deepEqual(entryRoute(base+'?role=viewer'),{phone:false,autoConnect:false});
-  assert.deepEqual(entryRoute(base+'?controller=1#old-invitation',{userAgent:quest}),{phone:true,autoConnect:true});
+  assert.deepEqual(entryRoute(base+'?controller=1#old-invitation',{userAgent:quest}),{phone:true,autoConnect:false});
   assert.deepEqual(entryRoute(base+'?join=1#invalid'),entryRoute(base));
 });
 

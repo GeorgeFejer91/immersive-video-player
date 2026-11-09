@@ -2,9 +2,9 @@
 
 Watch **Jona** together from [the same player URL](https://georgefejer91.github.io/immersive-video-player/) on Quest, phone, and desktop.
 
-Open the link in Quest Browser and tap **VR**. Open the same link on a phone or desktop to join automatically. Playback controls become available when the viewer connects and synchronizes. The pair shares **Start**, **Pause**, **Stop**, and the playback position. Stop resets the video on both devices. The Quest's **QR** button shares the same public link.
+Open the link in Quest Browser and tap **VR**. Open the same link on a phone or desktop and tap **Connect**. The Quest listens as soon as its page opens, and the controller waits for it if needed. Playback controls become available when the viewer connects and synchronizes. The pair shares **Start**, **Pause**, **Stop**, and the playback position. Stop resets the video on both devices. The Quest's **QR** button shares the same public link.
 
-The shared room pairs one Quest viewer with one phone or desktop controller. An extra controller waits until the slot is free. If another Quest already hosts, close that viewer before reopening the page on the Quest that should host next. The controller reconnects after network interruptions. After choosing Disconnect, reload the page to join again.
+The shared room pairs one Quest viewer with one phone or desktop controller. An extra controller waits until the slot is free. If another Quest already hosts, close that viewer before reopening the page on the Quest that should host next. The viewer listens again when the controller leaves. The controller reconnects after network interruptions. After choosing Disconnect, tap **Connect** to start again.
 
 The headset icon shows connection status and opens connection controls. Tap **Video settings** on the controller to select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. The paired controller adjusts the shared projection. Drag the preview to look around. The controller preview is silent.
 

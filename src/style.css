@@ -68,6 +68,8 @@ body.phone .screen[data-preview=warped] #stage { display:block; position:relativ
 body.phone .screen[data-preview=warped] #video { position:absolute; width:1px; height:1px; opacity:0; }
 .phone-header { display:flex; align-items:center; gap:var(--gap); }
 .phone-heading { flex:1; min-width:0; }
+.phone-header #connect { flex:0 1 auto; max-width:45%; border-color:#929b92; }
+.phone-header #connect:hover { background:#18211b; }
 .settings-button { width:44px; height:44px; flex:none; padding:8px; place-items:center; border-color:#929b92; line-height:0; }
 .settings-button:hover { background:#18211b; }
 .headset-button { width:48px; height:48px; flex:none; padding:7px; place-items:center; color:#ff817d; border-color:currentColor; line-height:0; }

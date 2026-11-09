@@ -16,6 +16,7 @@ test('one public address pairs one viewer and one controller, then hands off the
   }
   try{
     const desktop=await open();
+    await desktop.locator('#connect').click();
     await expect(desktop.locator('#connection')).toHaveText('Waiting',{timeout:20000});
     await expect(desktop.locator('#play')).toBeDisabled();
     const host=await open(quest);
@@ -23,6 +24,7 @@ test('one public address pairs one viewer and one controller, then hands off the
     await expect(host.locator('#invite-link')).toHaveValue(address);
     await expect(desktop.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
     const phone=await open('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile Safari/604.1');
+    await phone.locator('#connect').click();
     await expect(phone.locator('#connection')).toHaveText('Reconnecting',{timeout:25000});
     await expect(phone.locator('#play')).toBeDisabled();
     const extraViewer=await open(quest);
@@ -83,7 +85,7 @@ test('shared public URL opens phone playback controls without a pairing dialog',
         await expect(phone.locator('#player')).toBeVisible();
         await expect(phone.getByRole('dialog',{name:'Headset connection'})).toBeHidden();
         await expect(phone.locator('#phone-controls')).toBeVisible();
-        await expect(phone.locator('#connect')).toBeHidden();
+        await expect(phone.locator('#phone-header #connect')).toBeVisible();
         await expect(phone.locator('#arm')).toBeHidden();
         expect(new URL(phone.url()).hash).toBe('');
       }finally{await context.close();}

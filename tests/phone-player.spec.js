@@ -17,8 +17,9 @@ test('phone is a local video player with transport and an accessible headset con
   for(const id of ['play','pause','halt'])await expect(page.locator('#'+id)).toBeDisabled();
   expect(await page.locator('#stage canvas').count()).toBe(0);
   expect(await page.locator('#video').evaluate(v=>!v.controls&&v.muted&&new URL(v.currentSrc||v.src).pathname.endsWith('/media/jona.mp4'))).toBe(true);
-  await expect(page.locator('#connect')).toBeHidden();
-  expect((await page.locator('body').innerText()).trim().split(/\s+/).length).toBeLessThanOrEqual(13);
+  const connect=page.locator('#phone-header #connect');
+  await expect(connect).toBeVisible();
+  expect((await page.locator('body').innerText()).trim().split(/\s+/).length).toBeLessThanOrEqual(14);
   for(const [width,height] of [[320,560],[390,844],[640,390],[844,390],[1280,720]]){
     await page.setViewportSize({width,height});await page.waitForTimeout(150);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
@@ -34,6 +35,7 @@ test('phone is a local video player with transport and an accessible headset con
   await page.locator('#play').evaluate(el=>el.textContent='Wiedergabe starten');await page.waitForTimeout(200);
   expect(await page.locator('.screen').evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(32);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  expect(await connect.evaluate(el=>el.scrollWidth<=el.clientWidth+2&&el.scrollHeight<=el.clientHeight+2)).toBe(true);
   expect(await page.locator('#phone-controls button').evaluateAll(els=>els.every(el=>el.scrollWidth<=el.clientWidth+2&&el.scrollHeight<=el.clientHeight+2))).toBe(true);
 });
 

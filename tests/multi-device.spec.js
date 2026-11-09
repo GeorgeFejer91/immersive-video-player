@@ -14,7 +14,10 @@ test('the controller reconnects to an already playing viewer without changing it
     await context.addInitScript(()=>{const Peer=window.RTCPeerConnection;window.__peers=[];window.RTCPeerConnection=class extends Peer{constructor(...args){super(...args);window.__peers.push(this);}};});
     const page=await context.newPage();pages.push(page);await page.goto(url);
     await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
-    if(phone)await expect(page.locator('#headset-status')).toHaveAttribute('data-state','synced',{timeout:45000});
+    if(phone){
+      await page.locator('#connect').click();
+      await expect(page.locator('#headset-status')).toHaveAttribute('data-state','synced',{timeout:45000});
+    }
     else {
       await page.locator('#enter-vr').click();
       await page.waitForFunction(()=>{const video=document.querySelector('video');return !video.seeking&&video.readyState>=3;});

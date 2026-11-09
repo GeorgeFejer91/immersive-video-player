@@ -105,6 +105,29 @@ test('Quest auto-pairing retries the shared room after signaling failure and Dis
   await expect(page.locator('#show-qr')).toBeHidden();
 });
 
+test('the viewer reopens its listener when signaling retries are exhausted',async({page})=>{
+  await page.addInitScript(()=>{
+    window.announcements=0;
+    class ListenerSdk extends EventTarget{
+      async connect(){}
+      async joinRoom(){}
+      async announce(){
+        window.announcements++;
+        window.signalLost=()=>this.dispatchEvent(new Event('reconnectFailed'));
+      }
+      async disconnect(){}
+    }
+    Object.defineProperty(window,'VDONinjaSDK',{configurable:true,get:()=>ListenerSdk,set:()=>{}});
+  });
+  await page.goto('./?launch=quest');
+  await expect.poll(()=>page.evaluate(()=>window.announcements)).toBe(1);
+  await expect(page.locator('#connection')).toHaveText('Waiting');
+  await page.evaluate(()=>window.signalLost());
+  await expect(page.locator('#connection')).toHaveText('Reconnecting');
+  await expect.poll(()=>page.evaluate(()=>window.announcements)).toBe(2);
+  await expect(page.locator('#connection')).toHaveText('Waiting');
+});
+
 test('Quest app entry pairs a phone over public VDO before the local VR gesture',async({browser})=>{
   test.skip(process.env.RUN_NETWORK!=='1','Opt-in: public VDO service is an external dependency.');
   test.setTimeout(120000);
@@ -116,6 +139,7 @@ test('Quest app entry pairs a phone over public VDO before the local VR gesture'
     await expect(viewer.locator('#show-qr')).toBeVisible();
     await phone.goto(await viewer.locator('#invite-link').inputValue());
     await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
+    await phone.locator('#connect').click();
     await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
     await expect(viewer.locator('#enter-vr')).toBeVisible();
     await expect(viewer.locator('#arm')).toBeHidden();

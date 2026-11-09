@@ -2,6 +2,10 @@
 
 Updated 2026-11-09. Evidence is scoped to the named surface, not a universal product/hardware claim.
 
+## Connect request and automatic viewer listener
+
+38 Node tests, exact asset pins, context check, and production build passed. The source-quality browser suite passed 25 cases. Its handoff fixture still expected a new controller to join before Connect. After adding the press, three focused checks passed, including that real public VDO handoff and controller focus after Connect disappears. Verified the early controller, one active pair, slot handoff, playback, recovery after either side loses its connection, and viewer reannouncement after simulated SDK retry exhaustion. Phone reflow, enlarged text, and keyboard entry passed in Chromium. The local adapter pin covers the retry-exhaustion event forwarding.
+
 ## One automatic viewer and controller pair
 
 38 Node tests, exact asset pins, context check, and production build passed. The 24-scenario source-quality suite passed, then seven focused checks passed after the duplicate XR fix. Real VDO exercised an early controller, the active pair's playback commands, an extra viewer and controller, automatic controller handoff, and recovery after either endpoint's connection drops. A mocked collision during an outstanding XR request verified cleanup. The browser checks used Chromium with Quest and phone modes.
