@@ -40,6 +40,7 @@ export class TargetGroup extends EventTarget {
   get phase(){return this.closed?'closed':this.size?'ready':'waiting-for-peer';}
   addPeer(key){
     if(this.closed||typeof key!=='string'||!key||key.length>128||this.peers.has(key))return;
+    if(this.peers.size){this.transport.closePeer(key);return;}
     const lane=new PeerTransport(this.transport,key,()=>this.removePeer(key,'rate_limit'));
     const connection=new BRSPConnection({...this.options,transport:lane,role:'target',applyCommand:command=>this.applyOrdered(key,command)});
     const deadline=setTimeout(()=>this.removePeer(key,'authentication_timeout'),10000);

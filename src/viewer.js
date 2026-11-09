@@ -80,11 +80,14 @@ export function createViewer(stage, video, { preview = false } = {}) {
       if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix();}
       if(serial!==lastRecenter){lastRecenter=serial;recenter();}
     },
-    async enterVR() {
+    async enterVR(isAllowed) {
       if(renderer.xr.isPresenting)return;
       if(!navigator.xr?.requestSession)throw new Error('Immersive VR is unavailable.');
       const session=await navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor']});
-      await renderer.xr.setSession(session);
+      if(!isAllowed()){await session.end();return;}
+      try { await renderer.xr.setSession(session); }
+      catch (error) { await session.end().catch(()=>{}); throw error; }
+      if(!isAllowed()&&renderer.xr.getSession()===session)await session.end();
     },
     dispose() { observer.disconnect();renderer.setAnimationLoop(null);renderer.dispose();material.dispose();sphere.geometry.dispose();texture.dispose(); }
   };

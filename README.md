@@ -2,15 +2,15 @@
 
 Watch **Jona** together from [the same player URL](https://georgefejer91.github.io/immersive-video-player/) on Quest, phone, and desktop.
 
-Open the link in Quest Browser and tap **VR**. Open the same link on a phone or desktop to join automatically. Playback controls become available when the viewer connects and synchronizes. All connected devices share **Start**, **Pause**, **Stop**, and the playback position. Stop resets the video for everyone. The Quest's **QR** button shares the same public link.
+Open the link in Quest Browser and tap **VR**. Open the same link on a phone or desktop to join automatically. Playback controls become available when the viewer connects and synchronizes. The pair shares **Start**, **Pause**, **Stop**, and the playback position. Stop resets the video on both devices. The Quest's **QR** button shares the same public link.
 
-The first connected Quest hosts playback. Additional Quest browsers follow its timeline. Keep the hosting Quest open during playback. If it closes, open or reload the link on the Quest that should host next. Phones and desktop browsers join when a viewer becomes available and reconnect after network interruptions. After choosing Disconnect, reload the page to join again.
+The shared room pairs one Quest viewer with one phone or desktop controller. An extra controller waits until the slot is free. If another Quest already hosts, close that viewer before reopening the page on the Quest that should host next. The controller reconnects after network interruptions. After choosing Disconnect, reload the page to join again.
 
-The headset icon shows connection status and opens connection controls. Tap **Video settings** on the controller to select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. Connected controllers adjust the shared projection. Drag the preview to look around. The controller preview is silent.
+The headset icon shows connection status and opens connection controls. Tap **Video settings** on the controller to select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. The paired controller adjusts the shared projection. Drag the preview to look around. The controller preview is silent.
 
 ## How it works
 
-The fixed public room and target ID let every browser discover the same host. Anyone who opens the site can control playback. The rendezvous value shipped with the site is public. The BRSP/1 exchange binds peers to the protocol and scopes, and the hosting Quest orders all playback and projection commands. The pinned VDO.Ninja SDK 1.5.5 carries controls, state, and clock samples over data-only WebRTC. Each device decodes the video locally.
+The fixed public room and target ID let every browser discover the same host. The controller slot is available to the first browser that pairs through the public URL. The rendezvous value shipped with the site is public. The BRSP/1 exchange binds peers to the protocol and scopes, and the hosting Quest orders all playback and projection commands. The pinned VDO.Ninja SDK 1.5.5 carries controls, state, and clock samples over data-only WebRTC. Each device decodes the video locally.
 
 Both devices fetch and decode the same bundled MP4. The phone dewarps it using the viewer's projection shader and falls back to native video without WebGL; it can still adjust the paired viewer. The phone estimates viewer clock offset, receives a playback anchor 500 ms ahead and corrects preview drift. This is approximate synchronization. State older than two seconds disables remote phone commands.
 

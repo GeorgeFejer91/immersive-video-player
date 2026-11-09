@@ -15,7 +15,7 @@ adb devices -l
 adb -s <your-quest-serial> install -r <path-to-ImmersiveVideoPlayer-Quest.apk>
 ```
 
-In the headset, find **Immersive Video Player** under **Library → Unknown Sources** and open it. Tap **VR** in Quest Browser to enable video and request immersive mode. On a phone or desktop, open [the same player URL](https://georgefejer91.github.io/immersive-video-player/) to join automatically. The viewer's **QR** button shares that URL. Use **Start**, **Pause**, or **Stop** from any connected controller.
+In the headset, find **Immersive Video Player** under **Library → Unknown Sources** and open it. Tap **VR** in Quest Browser to enable video and request immersive mode. On a phone or desktop, open [the same player URL](https://georgefejer91.github.io/immersive-video-player/) to join automatically. The viewer's **QR** button shares that URL. Use **Start**, **Pause**, or **Stop** from the paired controller.
 
 Quest Browser requires a local gesture for media and immersive WebXR. The launcher opens the viewer, and **VR** supplies the browser gesture. Internet access is required for synchronization.
 

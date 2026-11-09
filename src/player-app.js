@@ -8,12 +8,12 @@ import { markPlaybackStarted } from './install-app.js';
 
 export function initPlayer({phone,autoConnect,session}) {
 const $ = id => document.getElementById(id);
-let follows=phone;
+const follows=phone;
 document.body.classList.toggle('phone',phone);
 const video=$('video'),stage=$('stage'),screen=video.closest('.screen'),model=new Player(467.3);
 const warpPresets=[...$('warp-presets').querySelectorAll('button')];
 let view, armed=false, state=model.snapshot(), connection, transport;
-let phonePreviewAttempted=false, enabling=false;
+let phonePreviewAttempted=false, enabling=false, viewerOccupied=false;
 let queuedLens,lensTimer,lastLensAt=0;
 let generation=0, heartbeat, connectDeadline, pending, samples=[], offset=0, synced=false;
 let lastStateAt=0, lastAnchor=-1, starting=false, blocked=false, wakeLock, stopped=false, lastPing=0;
@@ -22,7 +22,7 @@ const format=n=>`${String(Math.floor(Math.max(0,n)/60)).padStart(2,'0')}:${Strin
 const notice=text=>{for(const id of ['notice','phone-notice'])if($(id).textContent!==text)$(id).textContent=text;};
 const remoteStatus=text=>{if($('connection').textContent!==text)$('connection').textContent=text;};
 const targetNow=()=>performance.now()+(follows?offset:0);
-function canControl(){return (phone||armed) && (!follows || (connection?.phase==='ready' && synced && lastStateAt>0 && performance.now()-lastStateAt<2000));}
+function canControl(){return !viewerOccupied && (phone||armed) && (!follows || (connection?.phase==='ready' && synced && lastStateAt>0 && performance.now()-lastStateAt<2000));}
 function refreshEnabled(){
   const disabled=!canControl()||Boolean(pending);
   $('controls').disabled=$('phone-controls').disabled=disabled;
@@ -94,12 +94,12 @@ async function enablePlayback(){
 }
 $('arm').addEventListener('click',()=>{void enablePlayback();});
 async function enterImmersive(){
+  if(viewerOccupied)return;
   const enabling=autoConnect&&!phone&&!armed?enablePlayback():Promise.resolve();
   // Request XR and media during the same headset action.
-  const entering=view?view.enterVR().then(()=>true,()=>false):Promise.resolve(false);
+  const entering=view?view.enterVR(()=>!viewerOccupied).then(()=>true,()=>false):Promise.resolve(false);
   await enabling;
-  if(follows)scheduleRetry();
-  if(!await entering)notice('VR unavailable');
+  if(!await entering&&!viewerOccupied)notice('VR unavailable');
 }
 $('enter-vr').addEventListener('click',enterImmersive);
 $('show-qr').addEventListener('click',async()=>{
@@ -218,14 +218,14 @@ async function disconnect({quiet=false,recoveringTransport=false}={}){
   if(!follows){localPause();document.body.dataset.peers='0';}else {video.pause();state={...state,anchor:{...state.anchor,playing:false}};}
   $('invite-link').value='';$('invitation').hidden=true;$('qr-dialog').close();$('show-qr').hidden=true;
   const restoreConnect=document.activeElement===$('stop');
-  $('connect').disabled=false;$('connect').hidden=phone;
+  $('connect').disabled=false;$('connect').hidden=phone||viewerOccupied;
   $('stop').hidden=!(remoteWanted&&!stopped);refreshEnabled();
-  if(restoreConnect&&$('stop').hidden)$(phone?'hide-controls':'connect').focus();
+  if(restoreConnect&&$('stop').hidden)$($('connect').hidden?'hide-controls':'connect').focus();
   if(!quiet)remoteStatus('Disconnected');
   await old?.close({notify:!recoveringTransport});
 }
 function scheduleRetry(){
-  if(retryTimer||recovering||transport||!remoteWanted||stopped||!navigator.onLine||document.hidden||(follows&&!phone&&!armed))return;
+  if(retryTimer||recovering||transport||!remoteWanted||stopped||!navigator.onLine||document.hidden)return;
   $('connect').hidden=true;
   remoteStatus('Reconnecting');
   retryTimer=setTimeout(()=>{
@@ -245,7 +245,6 @@ function received(event){
 }
 async function startRemote(){
   if(transport||recovering)return;
-  if(follows&&!phone&&!armed){notice('Enable first');return;}
   const current=++generation;
   if(follows){state=model.snapshot();lastAnchor=-1;lastStateAt=0;synced=false;samples=[];}
   const t=new VdoNinjaTransport({role:follows?'controller':'target',room:session.room,sharedSecret:session.secret,streamId:session.streamId,label:'Immersive video viewer'});
@@ -262,16 +261,16 @@ async function startRemote(){
   $('connect').disabled=true;$('connect').hidden=true;$('stop').hidden=false;
   if(restoreStop)$('stop').focus();
   const active=()=>generation===current&&connection===c;
-  if(!follows)t.addEventListener('targetconflict',async()=>{
-    if(!active()||recovering)return;
-    recovering=true;
-    try{await disconnect({quiet:true,recoveringTransport:true});}
-    finally{follows=true;recovering=false;}
-    if(stopped)return;
-    remoteStatus('Shared viewer');
-    scheduleRetry();
+  if(!follows)t.addEventListener('targetconflict',()=>{
+    if(!active())return;
+    viewerOccupied=true;remoteWanted=false;
+    $('enter-vr').disabled=true;
+    const xr=view?.renderer.xr;
+    if(xr?.isPresenting)void xr.getSession()?.end().catch(()=>{});
+    remoteStatus('Viewer in use');
+    void disconnect({quiet:true});
   });
-  t.addEventListener('status',e=>{if(active())remoteStatus(e.detail.error?'Connection failed':({connecting:'Connecting',discoverable:'Waiting',discovering:'Waiting','connecting-peer':'Connecting','peer-open':'Connecting'})[e.detail.phase]||'Connecting');});
+  t.addEventListener('status',e=>{if(active()&&(follows||!c.size))remoteStatus(e.detail.error?'Connection failed':({connecting:'Connecting',discoverable:'Waiting',discovering:'Waiting','connecting-peer':'Connecting','peer-open':'Connecting'})[e.detail.phase]||'Connecting');});
   t.addEventListener('quality',e=>{if(active()){document.body.dataset.route=e.detail.route;document.body.dataset.rtt=String(e.detail.rttMs??'unknown');}});
   c.addEventListener('state',e=>{if(active())received(e);});c.addEventListener('snapshot',e=>{if(active())received(e);});
   c.addEventListener('ready',()=>{
@@ -301,6 +300,8 @@ async function startRemote(){
     scheduleLens();
   });
   c.addEventListener('peerclose',()=>{if(active()&&follows)void recoverRemote();});
+  // A reserved controller slot can close the lanes before BRSP attaches.
+  t.addEventListener('peerclose',()=>{if(active()&&follows)void recoverRemote();});
   c.addEventListener('protocolerror',event=>{
     if(!active())return;
     // The pinned protocol reports a failed reliable-lane send through this event too.
@@ -340,14 +341,8 @@ async function startRemote(){
     scheduleRetry();
   }
 }
-$('connect').addEventListener('click',async()=>{
-  const button=$('connect');
-  if(follows&&!armed){
-    button.disabled=true;
-    await enablePlayback();
-    button.disabled=false;
-    if(!armed)return;
-  }
+$('connect').addEventListener('click',()=>{
+  if(viewerOccupied)return;
   remoteWanted=true;stopped=false;retryAttempt=0;clearTimeout(retryTimer);retryTimer=undefined;void startRemote();
 });
 $('stop').addEventListener('click',()=>{stopped=true;remoteWanted=false;void disconnect();});

@@ -54,6 +54,35 @@ test('Quest VR gesture arms playback even if immersive entry is unavailable',asy
   await page.locator('#stop').click();
 });
 
+test('a duplicate viewer closes a VR request that resolves after the slot is refused',async({page})=>{
+  await page.addInitScript(()=>{
+    window.xrEnds=0;
+    Object.defineProperty(navigator,'xr',{value:{
+      requestSession:()=>new Promise(resolve=>{
+        window.finishXR=()=>resolve({end:async()=>{window.xrEnds++;}});
+      })
+    }});
+    class WaitingSdk extends EventTarget{
+      async connect(){}
+      async joinRoom(){}
+      async announce(){
+        window.viewerConflict=()=>this.dispatchEvent(new CustomEvent('alert',{detail:{raw:{code:'STREAMID_IN_USE'}}}));
+      }
+      async disconnect(){}
+    }
+    Object.defineProperty(window,'VDONinjaSDK',{configurable:true,get:()=>WaitingSdk,set:()=>{}});
+  });
+  await page.goto('./?launch=quest');
+  await page.waitForFunction(()=>typeof window.viewerConflict==='function');
+  await page.locator('#enter-vr').click();
+  await page.waitForFunction(()=>typeof window.finishXR==='function');
+  await page.evaluate(()=>window.viewerConflict());
+  await expect(page.locator('#connection')).toHaveText('Viewer in use');
+  await expect(page.locator('#enter-vr')).toBeDisabled();
+  await page.evaluate(()=>window.finishXR());
+  await expect.poll(()=>page.evaluate(()=>window.xrEnds)).toBe(1);
+});
+
 test('Quest auto-pairing retries the shared room after signaling failure and Disconnect cancels retries',async({page})=>{
   await page.addInitScript(()=>{
     window.__attempts=[];

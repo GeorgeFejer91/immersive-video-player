@@ -2,6 +2,10 @@
 
 Updated 2026-11-09. Evidence is scoped to the named surface, not a universal product/hardware claim.
 
+## One automatic viewer and controller pair
+
+38 Node tests, exact asset pins, context check, and production build passed. The 24-scenario source-quality suite passed, then seven focused checks passed after the duplicate XR fix. Real VDO exercised an early controller, the active pair's playback commands, an extra viewer and controller, automatic controller handoff, and recovery after either endpoint's connection drops. A mocked collision during an outstanding XR request verified cleanup. The browser checks used Chromium with Quest and phone modes.
+
 ## Automatic browser controller pairing
 
 38 Node tests, asset pins, context check and production build passed. With the staged source-quality film, 24 of 25 browser scenarios passed. The real public VDO checks covered a desktop opened before its Quest viewer, automatic phone joining, multiple controllers, reconnection after a dropped connection, and Start/Stop. A simulated cold controller decoder warmed on the first Start action. Deterministic checks verified controller signaling before input, a hidden Connect control, Disconnect, and a fresh attempt after reload. Quest VR entry still uses a local gesture.

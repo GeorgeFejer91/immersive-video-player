@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 
 const quest='Mozilla/5.0 (Linux; Android 12; Quest 3) OculusBrowser/39.2 Mobile VR Safari/537.36';
 
-test('one public address connects desktop, phone and a second Quest to the same playback',async({browser,baseURL})=>{
+test('one public address pairs one viewer and one controller, then hands off the controller slot',async({browser,baseURL})=>{
   test.skip(process.env.RUN_NETWORK!=='1','Opt-in: public VDO service is an external dependency.');
   test.setTimeout(120000);
   const address=new URL(baseURL).href;
@@ -23,24 +23,39 @@ test('one public address connects desktop, phone and a second Quest to the same 
     await expect(host.locator('#invite-link')).toHaveValue(address);
     await expect(desktop.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
     const phone=await open('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile Safari/604.1');
-    await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
-    const follower=await open(quest);
-    await expect(follower.locator('#connection')).toHaveText('Shared viewer',{timeout:25000});
-    await follower.locator('#enter-vr').click();
-    await expect(follower.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
-    await expect(host.locator('body')).toHaveAttribute('data-peers','3');
+    await expect(phone.locator('#connection')).toHaveText('Reconnecting',{timeout:25000});
+    await expect(phone.locator('#play')).toBeDisabled();
+    const extraViewer=await open(quest);
+    await expect(extraViewer.locator('#connection')).toHaveText('Viewer in use',{timeout:25000});
+    await expect(extraViewer.locator('#enter-vr')).toBeDisabled();
+    await expect(host.locator('body')).toHaveAttribute('data-peers','1');
+    await expect(host.locator('#connection')).toHaveText('Connected');
     await host.locator('#enter-vr').click();
     await host.waitForFunction(()=>{
       const video=document.querySelector('video');
       return video.paused&&!video.seeking&&video.readyState>=3;
     });
     await desktop.locator('#play').click();
-    for(const page of [host,desktop,phone,follower]){
+    for(const page of [host,desktop]){
       await expect(page.locator('body')).toHaveAttribute('data-playing','true');
       expect(page.url()).toBe(address);
     }
+    await expect(phone.locator('#halt')).toBeDisabled();
+    await desktop.locator('#halt').click();
+    for(const page of [host,desktop])await expect(page.locator('body')).toHaveAttribute('data-playing','false');
+    await desktop.locator('#headset-status').click();
+    await desktop.locator('#stop').click();
+    await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
+    await expect(host.locator('body')).toHaveAttribute('data-peers','1');
+    await expect(desktop.locator('#play')).toBeDisabled();
+    await phone.locator('#play').click();
+    await expect(host.locator('body')).toHaveAttribute('data-playing','true');
     await phone.locator('#halt').click();
-    for(const page of [host,desktop,phone,follower])await expect(page.locator('body')).toHaveAttribute('data-playing','false');
+    await expect(host.locator('body')).toHaveAttribute('data-playing','false');
+    await host.evaluate(()=>window.dispatchEvent(new Event('offline')));
+    await expect(phone.locator('#headset-status')).not.toHaveAttribute('data-state','synced');
+    await expect(host.locator('body')).toHaveAttribute('data-peers','1',{timeout:45000});
+    await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','synced');
   }finally{await Promise.all(contexts.map(context=>context.close()));}
 });
 

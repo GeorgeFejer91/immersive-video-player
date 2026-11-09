@@ -2,7 +2,15 @@
 
 Updated 2026-11-09. This file owns the active checklist; do not create a competing task ledger.
 
-## Automatic browser controller pairing
+## One automatic viewer and controller pair
+
+2026-11-09. One Quest viewer owns the shared timeline. The viewer admits one external controller and releases the slot on disconnect or authentication timeout. Extra controllers wait and retry. A second Quest sees Viewer in use and can reopen the page when the viewer slot is free. The same public URL and existing BRSP/VDO handshake establish the pair automatically. The hosting Quest still uses VR to enter immersive playback.
+
+- [x] Verify early controller entry, duplicate viewer rejection, and handoff after controller disconnect.
+- [x] Verify playback and transport recovery on both sides.
+- Release acceptance requires the matching Pages deployment and live HTTPS entry check.
+
+## Previous release: automatic browser controller pairing
 
 2026-11-09. Opening the shared URL on a phone or desktop starts joining the Quest viewer immediately. The controller shows playback controls on entry and enables them after the handshake and fresh clock/state synchronization. Controllers already waiting join when a viewer arrives. Reconnect after transport interruption using the existing retry path. Keep an explicit Disconnect action in the headset status dialog. Reloading after Disconnect starts a new attempt. Start remains a playback action and the Quest's VR button remains the immersive entry.
 
