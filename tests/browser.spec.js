@@ -96,7 +96,12 @@ test('ending a VR session preserves the browser view until Recenter view is pres
   });
   await page.goto('./?role=viewer');
   const pan=()=>page.evaluate(()=>Math.abs(window.pan));
-  await page.locator('#stage').press('ArrowRight');
+  const stage=page.locator('#stage');
+  await expect(stage.locator('canvas')).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>typeof window.pan)).toBe('number');
+  await stage.focus();
+  await expect(stage).toBeFocused();
+  await stage.press('ArrowRight');
   await expect.poll(pan).toBeGreaterThan(.05);
   await page.locator('#enter-vr').click();
   await page.waitForFunction(()=>window.xrStarted,undefined,{timeout:5000});
