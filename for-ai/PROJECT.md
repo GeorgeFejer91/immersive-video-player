@@ -8,7 +8,7 @@ The headset opens without signaling. **Send control beacon** opens a status dial
 
 - [x] Wire the beacon dialogs, private handshake, and viewer-owned VR state through the existing player.
 - [x] 40 Node and 25 Chromium checks passed, including public VDO discovery, cancellation, reconnect, playback, and simulated WebXR request and exit.
-- [ ] Publish the verified build and confirm the matching live entry.
+- [x] Published cdd3161 through Actions 42659279529 and Pages deployment 7660807315. The HTTPS entry and five focused browser checks passed.
 - [ ] Qualify pairing and remote exit on the physical Quest. The viewer requires a local gesture for immersive entry.
 
 ## Active goal: physical Quest playback and recenter

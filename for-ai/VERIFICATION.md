@@ -8,6 +8,8 @@ Local PASS: 40 Node checks, production build, exact asset pins, context check, a
 
 A gesture-enforcing WebXR fixture confirmed that Request VR prompts only the selected viewer, the headset action starts the session, and Exit VR ends it exactly once. Readback follows viewer session events. Chromium verified keyboard focus, 320 px reflow, and enlarged scan text. The stable ADB wrapper returned no connected devices, so physical VR pairing and exit remain pending.
 
+Published product cdd3161 passed [Actions 42659279529](https://github.com/GeorgeFejer91/immersive-video-player/actions/runs/42659279529) and exact-SHA Pages deployment 7660807315. HTTPS served the beacon controls and exact built JS, CSS, and service-worker bytes. The original-resolution MP4 returned 206 for bytes 0 to 63 of 684,344,780. All five focused scenarios passed both with the staged source-quality film and on the live site, including real VDO viewer selection, beacon removal, target recovery, local VR request, simulated remote exit, and Start/Stop.
+
 ## Physical Quest playback and recenter
 
 Baseline on the live site: desktop Brave sent Start while the physical Quest 3 was in Meta Quest Browser's immersive activity. Video advanced past 13 seconds and decoded 787 frames. Stop paused the same video and reset its current time to 0 while the viewer stayed immersive and paired. The viewer's old Buffering notice remained visible even during successful playback.
