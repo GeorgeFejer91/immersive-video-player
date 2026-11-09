@@ -2,15 +2,19 @@
 
 Watch **Jona** together from [the same player URL](https://georgefejer91.github.io/immersive-video-player/) on Quest, phone, and desktop.
 
-Open the link in Quest Browser and tap **VR**. Open the same link on a phone or desktop and tap **Connect**. The Quest listens as soon as its page opens, and the controller waits for it if needed. Playback controls become available when the viewer connects and synchronizes. The pair shares **Start**, **Pause**, **Stop**, and the playback position. Stop resets the video on both devices. The Quest's **QR** button shares the same public link.
+1. On the headset, open the player and choose **Send control beacon**. Keep the invitation dialog open.
+2. On your phone or desktop, open the same link and choose **Scan for beacons**. Select the viewer shown on the headset and enter its pairing code.
+3. After both browsers synchronize, their pairing controls close and the controller can use **Start**, **Pause**, and **Stop**. Stop resets the video on both devices.
 
-The shared room pairs one Quest viewer with one phone or desktop controller. An extra controller waits until the slot is free. If another Quest already hosts, close that viewer before reopening the page on the Quest that should host next. The viewer listens again when the controller leaves. The controller reconnects after network interruptions. After choosing Disconnect, tap **Connect** to start again.
+On the controller, **Request VR** prompts the wearer to tap **Enter VR** in the viewer. Once the headset enters VR, **Exit VR** ends the immersive session from the controller. WebXR requires the headset gesture for entry. [WebXR protected functionality](https://www.w3.org/TR/webxr/#immersive-session-request-is-allowed)
+
+Each beacon expires after two minutes or closes when pairing succeeds. The Quest's **QR** button shares the player URL. A paired browser retries the selected connection after a network interruption. After disconnecting, send a new beacon to pair again.
 
 Use **Recenter view** in the viewer browser, paired controller, or installed app. In VR, look where you want the center to be, including up or down, then press the button. The glowing headset icon is a controller shortcut for the same action. The player remembers the browser view and the VR center separately. To disconnect, open **Video settings**, then **Connection**. Video settings also let you select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. Drag the preview to look around. The controller preview is silent.
 
 ## How it works
 
-The fixed public room and target ID let every browser discover the same host. The controller slot is available to the first browser that pairs through the public URL. The rendezvous value shipped with the site is public. The BRSP/1 exchange binds peers to the protocol and scopes, and the hosting Quest orders all playback and projection commands. The pinned VDO.Ninja SDK 1.5.5 carries controls, state, and clock samples over data-only WebRTC. Each device decodes the video locally.
+The public VDO.Ninja room lists temporary viewer IDs. The viewer's random pairing code opens a separate, private, one-controller session and stays out of the listing, URL, and persistent storage. The BRSP/1 exchange verifies role-bound proofs, negotiates command scopes, and confirms pairing after the controller receives fresh viewer state and a clock sample. The viewer orders playback, projection, and VR commands. The pinned VDO.Ninja SDK 1.5.5 carries controls, state, and clock samples over data-only WebRTC.
 
 Both devices fetch and decode the same bundled MP4. The phone dewarps it using the viewer's projection shader and falls back to native video without WebGL; it can still adjust the paired viewer. The phone estimates viewer clock offset, receives a playback anchor 500 ms ahead and corrects preview drift. This is approximate synchronization. State older than two seconds disables remote phone commands.
 

@@ -1,6 +1,6 @@
 # Quest launcher
 
-A small sideloadable app icon named **Immersive Video Player**. Opening it sends the published player URL to Meta Quest Browser through the [documented Horizon OS browser deep link](https://developers.meta.com/vr/documentation/spatial-sdk/ps-system-deep-linking/). Each launch opens the shared playback room. No Android WebView, native renderer, background service, boot receiver or app permissions are needed. It is an app launcher, not an Android home-screen AppWidget.
+A small sideloadable app icon named **Immersive Video Player**. Opening it sends the published player URL to Meta Quest Browser through the [documented Horizon OS browser deep link](https://developers.meta.com/vr/documentation/spatial-sdk/ps-system-deep-linking/). Each launch opens the headset viewer. No Android WebView, native renderer, background service, boot receiver or app permissions are needed. It is an app launcher, not an Android home-screen AppWidget.
 
 ## Install on Quest 3
 
@@ -15,7 +15,7 @@ adb devices -l
 adb -s <your-quest-serial> install -r <path-to-ImmersiveVideoPlayer-Quest.apk>
 ```
 
-In the headset, find **Immersive Video Player** under **Library → Unknown Sources** and open it. Tap **VR** in Quest Browser to enable video and request immersive mode. On a phone or desktop, open [the same player URL](https://georgefejer91.github.io/immersive-video-player/) and tap **Connect** to pair with the viewer. The viewer's **QR** button shares that URL. Use **Start**, **Pause**, or **Stop** from the paired controller.
+In the headset, find **Immersive Video Player** under **Library → Unknown Sources** and open it. Choose **Send control beacon** in Quest Browser. On a phone or desktop, open [the same player URL](https://georgefejer91.github.io/immersive-video-player/), choose **Scan for beacons**, and select the viewer and enter its code. Tap **VR** in Quest Browser to enter immersive mode. The paired controller can request entry and end an active VR session. The viewer's **QR** button shares that URL. Use **Start**, **Pause**, or **Stop** from the paired controller.
 
 Quest Browser requires a local gesture for media and immersive WebXR. The launcher opens the viewer, and **VR** supplies the browser gesture. Internet access is required for synchronization.
 

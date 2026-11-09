@@ -1,66 +1,84 @@
 import {test,expect} from '@playwright/test';
+import { pairWithBeacon, sendBeacon } from './beacon-fixture.js';
 
 const quest='Mozilla/5.0 (Linux; Android 12; Quest 3) OculusBrowser/39.2 Mobile VR Safari/537.36';
 
-test('one public address pairs one viewer and one controller, then hands off the controller slot',async({browser,baseURL})=>{
+test('scan lists two viewers, pairs only the chosen one, and controls its VR session',async({browser,baseURL})=>{
   test.skip(process.env.RUN_NETWORK!=='1','Opt-in: public VDO service is an external dependency.');
   test.setTimeout(120000);
-  const address=new URL(baseURL).href;
-  const contexts=[];
-  async function open(userAgent){
-    const context=await browser.newContext({userAgent,viewport:{width:800,height:480},deviceScaleFactor:.5});
-    contexts.push(context);
-    const page=await context.newPage();
-    await page.goto(address);
+  const pages=[];
+  async function open(url,userAgent){
+    const page=await browser.newPage({userAgent,viewport:{width:800,height:560},deviceScaleFactor:.5});
+    pages.push(page);
+    if(userAgent)await page.addInitScript(()=>{
+      window.xrRequests=0;window.xrEnds=0;
+      WebGL2RenderingContext.prototype.makeXRCompatible=async()=>{};
+      window.XRWebGLBinding=undefined;
+      window.XRWebGLLayer=class {
+        framebuffer=null;
+        framebufferWidth=320;
+        framebufferHeight=240;
+      };
+      class Session extends EventTarget {
+        updateRenderState(){}
+        async requestReferenceSpace(){return {};}
+        requestAnimationFrame(callback){return window.requestAnimationFrame(time=>callback(time,{getViewerPose:()=>null}));}
+        cancelAnimationFrame(id){window.cancelAnimationFrame(id);}
+        async end(){window.xrEnds++;this.dispatchEvent(new Event('end'));}
+      }
+      Object.defineProperty(navigator,'xr',{value:Object.assign(new EventTarget(),{
+        requestSession:async()=>{
+          if(!navigator.userActivation.isActive)throw new DOMException('Gesture required','SecurityError');
+          window.xrRequests++;
+          return new Session();
+        }
+      })});
+    });
+    await page.goto(url);
     return page;
   }
   try{
-    const desktop=await open();
-    await desktop.locator('#connect').click();
-    await expect(desktop.locator('#connection')).toHaveText('Waiting',{timeout:20000});
-    await expect(desktop.locator('#play')).toBeDisabled();
-    const host=await open(quest);
-    await expect(host.locator('body')).toHaveAttribute('data-page','viewer');
-    await expect(host.locator('#invite-link')).toHaveValue(address);
-    await expect(desktop.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
-    const phone=await open('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile Safari/604.1');
-    await phone.locator('#connect').click();
-    await expect(phone.locator('#connection')).toHaveText('Reconnecting',{timeout:25000});
-    await expect(phone.locator('#play')).toBeDisabled();
-    const extraViewer=await open(quest);
-    await expect(extraViewer.locator('#connection')).toHaveText('Viewer in use',{timeout:25000});
-    await expect(extraViewer.locator('#enter-vr')).toBeDisabled();
-    await expect(host.locator('body')).toHaveAttribute('data-peers','1');
-    await expect(host.locator('#connection')).toHaveText('Connected');
-    await host.locator('#enter-vr').click();
-    await host.waitForFunction(()=>{
-      const video=document.querySelector('video');
-      return video.paused&&!video.seeking&&video.readyState>=3;
-    });
-    await desktop.locator('#play').click();
-    for(const page of [host,desktop]){
-      await expect(page.locator('body')).toHaveAttribute('data-playing','true');
-      expect(page.url()).toBe(address);
-    }
-    await expect(phone.locator('#halt')).toBeDisabled();
-    await desktop.locator('#halt').click();
-    for(const page of [host,desktop])await expect(page.locator('body')).toHaveAttribute('data-playing','false');
-    await desktop.getByRole('button',{name:'Video settings',exact:true}).click();
-    await desktop.getByRole('button',{name:'Connection',exact:true}).click();
-    await desktop.locator('#stop').click();
-    await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
-    await expect(host.locator('body')).toHaveAttribute('data-peers','1');
-    await expect(desktop.locator('#play')).toBeDisabled();
-    await phone.locator('#play').click();
-    await expect(host.locator('body')).toHaveAttribute('data-playing','true');
-    await phone.locator('#halt').click();
-    await expect(host.locator('body')).toHaveAttribute('data-playing','false');
-    await host.evaluate(()=>window.dispatchEvent(new Event('offline')));
-    await expect(phone.locator('#headset-status')).not.toHaveAttribute('data-state','synced');
-    await expect(host.locator('body')).toHaveAttribute('data-peers','1',{timeout:45000});
-    await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','synced');
-  }finally{await Promise.all(contexts.map(context=>context.close()));}
+    const controller=await open(baseURL);
+    await controller.locator('#scan-beacons').click();
+    await expect(controller.locator('#scan-status')).toHaveText('Searching for beacons…');
+    const first=await open(baseURL,quest),second=await open(baseURL,quest);
+    const other=await sendBeacon(first),chosen=await sendBeacon(second);
+    await expect(controller.locator('#beacons option').filter({hasText:other.name})).toHaveCount(1);
+    await pairWithBeacon(controller,chosen);
+    await expect(first.locator('#beacon-dialog')).toBeVisible();
+    await expect(second.locator('#beacon-dialog')).toBeHidden();
+    await expect(second.locator('#send-beacon')).toBeHidden();
+    await expect(second.locator('body')).toHaveAttribute('data-peers','1');
+    await expect(controller.locator('#headset-status')).toBeFocused();
+
+    const observer=await open(baseURL);
+    await observer.locator('#scan-beacons').click();
+    await expect(observer.locator('#beacons option').filter({hasText:other.name})).toHaveCount(1);
+    await expect(observer.locator('#beacons option').filter({hasText:chosen.name})).toHaveCount(0);
+    await first.locator('#cancel-beacon').click();
+    await expect(observer.locator('#beacons option').filter({hasText:other.name})).toHaveCount(0,{timeout:12000});
+    await observer.locator('#cancel-scan').click();
+
+    await controller.getByRole('button',{name:'Request VR',exact:true}).click();
+    await expect(second.locator('#notice')).toHaveText('Tap Enter VR on this headset');
+    expect(await second.evaluate(()=>window.xrRequests)).toBe(0);
+    await expect(first.locator('body')).toHaveAttribute('data-xr','windowed');
+    await second.getByRole('button',{name:'Enter VR',exact:true}).click();
+    const exit=controller.getByRole('button',{name:'Exit VR',exact:true});
+    await expect(exit).toBeEnabled();
+    await exit.click();
+    await expect(second.locator('body')).toHaveAttribute('data-xr','windowed');
+    await expect(controller.getByRole('button',{name:'Request VR',exact:true})).toBeEnabled();
+    expect(await second.evaluate(()=>[window.xrRequests,window.xrEnds])).toEqual([1,1]);
+
+    await second.evaluate(()=>window.dispatchEvent(new Event('offline')));
+    await expect(controller.locator('#headset-status')).not.toHaveAttribute('data-state','synced');
+    await expect(controller.locator('#headset-status')).toHaveAttribute('data-state','synced',{timeout:45000});
+    await expect(second.locator('body')).toHaveAttribute('data-peers','1');
+    await expect(observer.locator('#play')).toBeDisabled();
+  }finally{await Promise.all(pages.map(page=>page.close()));}
 });
+
 
 test('shared public URL opens phone playback controls without a pairing dialog',async({browser,page})=>{
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
@@ -86,7 +104,7 @@ test('shared public URL opens phone playback controls without a pairing dialog',
         await expect(phone.locator('#player')).toBeVisible();
         await expect(phone.getByRole('dialog',{name:'Headset connection'})).toBeHidden();
         await expect(phone.locator('#phone-controls')).toBeVisible();
-        await expect(phone.locator('#phone-header #connect')).toBeVisible();
+        await expect(phone.locator('#phone-header #scan-beacons')).toBeVisible();
         await expect(phone.locator('#arm')).toBeHidden();
         expect(new URL(phone.url()).hash).toBe('');
       }finally{await context.close();}

@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 const pins = {
   'src/remote/brsp.js':'7f28058297388a128e3acfc146248b627921d4629b8f3a575d80d3f6ff0b6911',
-  'src/remote/vdo-ninja-transport.js':'26f36835766bec6945515cb2bce54606fb9321c79ea8e0ffb832a4bb2d7f1772',
+  'src/remote/vdo-ninja-transport.js':'3c720aa2e286477440e3266045b94816311d936b346951ab892ac1af5e5ec865',
   'public/vendor/vdoninja/1.5.5/vdoninja-sdk.min.js':'390ea6c8b1a4e57bf7fa18ff2b394f25cc79e637130f97e4a29ca958a90fac77',
   'public/vendor/vdoninja/1.5.5/vdoninja-sdk.js':'8097d5420d7ed2426623d7ff08f6abd45f03f89e6540a6cc4b86bcdc057d841e',
   'public/vendor/vdoninja/1.5.5/LICENSE-MPL-2.0.txt':'3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04',

@@ -50,6 +50,14 @@ body.controls-hidden .panel,body.controls-hidden .screen-caption { display:none;
 dialog { width:min(360px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); padding:12px; border:1px solid #b8bdb5; background:#f3f2ec; color:inherit; overflow:auto; }
 dialog::backdrop { background:#0008; }
 dialog form { display:flex; justify-content:flex-end; margin-bottom:12px; }
+#send-beacon { grid-column:1 / -1; }
+.pair-dialog h2 { font-size:1.125em; font-weight:500; margin:0 0 8px; overflow-wrap:break-word; }
+.pair-dialog form { display:block; margin:0; }
+.pair-dialog fieldset { display:grid; gap:6px; min-width:0; margin:12px 0; padding:0; border:0; }
+.pair-dialog > button { margin-top:12px; }
+#beacon-code { overflow-wrap:break-word; }
+#remote-vr { margin-top:var(--gap); width:100%; }
+#phone-controls #remote-vr:hover { background:#253229; }
 #qr-dialog form { flex-wrap:wrap; gap:8px; }
 #invitation { display:grid; gap:12px; }
 #qr { display:block; width:min(100%,280px); height:auto; margin:auto; }
@@ -69,8 +77,8 @@ body.phone .screen[data-preview=warped] #stage { display:block; position:relativ
 body.phone .screen[data-preview=warped] #video { position:absolute; width:1px; height:1px; opacity:0; }
 .phone-header { display:flex; align-items:center; gap:var(--gap); }
 .phone-heading { flex:1; min-width:0; }
-.phone-header #connect { flex:0 1 auto; max-width:45%; border-color:#929b92; }
-.phone-header #connect:hover { background:#18211b; }
+.phone-header #scan-beacons { flex:0 1 auto; max-width:45%; border-color:#929b92; }
+.phone-header #scan-beacons:hover { background:#18211b; }
 .settings-button { width:44px; height:44px; flex:none; padding:8px; place-items:center; border-color:#929b92; line-height:0; }
 .settings-button:hover { background:#18211b; }
 .headset-button { width:48px; height:48px; flex:none; padding:7px; place-items:center; color:#ff817d; border-color:currentColor; line-height:0; }

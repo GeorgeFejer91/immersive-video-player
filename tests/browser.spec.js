@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { pairWithBeacon, sendBeacon } from './beacon-fixture.js';
 
 const QUEST_UA='Mozilla/5.0 (Linux; Android 12; Quest 3) AppleWebKit/537.36 OculusBrowser/39.2 Chrome/137.0.0.0 Mobile VR Safari/537.36';
 const PHONE_UA='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1';
@@ -14,8 +15,8 @@ test('player controls stay hidden until their module and handlers are ready',asy
   finally {release();await navigation;}
   await expect(page.locator('#player')).toBeVisible();
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
-  await page.locator('#connect').click();await expect(page.locator('#show-qr')).toBeVisible();
-  await page.locator('#stop').click();
+  await page.locator('#send-beacon').click();await expect(page.locator('#beacon-dialog')).toBeVisible();
+  await page.locator('#cancel-beacon').click();
 });
 
 test('viewer is inert before explicit connection, local playback works and clean view restores focus',async({page})=>{
@@ -149,56 +150,91 @@ test('rendered labels reflow at phone widths, landscape, desktop, large type and
   }
   await page.setViewportSize({width:320,height:700});
   await page.addStyleTag({content:':root{font-size:32px} button{font-size:2rem} p{line-height:1.5;letter-spacing:.12em;word-spacing:.16em;margin-bottom:2em}'});
-  await page.locator('#connect').evaluate(el=>el.textContent='Smartphone-Fernbedienung verbinden');
+  await page.locator('#send-beacon').evaluate(el=>el.textContent='Steuerungseinladung senden');
   await page.waitForTimeout(250);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  await expect(page.locator('#connect')).toHaveAttribute('data-text-fit','wrapped');
+  await expect(page.locator('#send-beacon')).toHaveAttribute('data-text-fit','wrapped');
 });
 
-test('controller Connect starts the handshake, retries it, and reconnects after Disconnect',async({page})=>{
+test('scanning requires an action, stays cancellable, and restores keyboard focus',async({page})=>{
   let attempts=0;
   await page.clock.install();
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{attempts++;});
   await page.goto('./?controller=1#room=obsolete');
   expect(new URL(page.url()).hash).toBe('');
-  await expect(page.locator('#phone-dialog')).toBeHidden();
-  await expect(page.locator('#phone-controls')).toBeVisible();
   await expect(page.locator('#play')).toBeDisabled();
-  await expect(page.locator('#arm')).toBeHidden();
+  const scan=page.getByRole('button',{name:'Scan for beacons',exact:true});
+  await expect(scan).toBeVisible();
   expect(attempts).toBe(0);
-  const connect=page.getByRole('button',{name:'Connect',exact:true});
-  await expect(connect).toBeVisible();
-  await connect.focus();
-  await page.keyboard.press('Enter');
+  await scan.press('Enter');
   await expect.poll(()=>attempts).toBe(1);
-  await connect.click();
-  await expect.poll(()=>attempts).toBe(2);
-  expect(await page.locator('#video').evaluate(video=>video.paused)).toBe(true);
-  await page.locator('#headset-status').click();
-  await page.locator('#stop').click();
-  await expect(page.locator('#hide-controls')).toBeFocused();
-  await page.clock.fastForward(21000);
-  expect(attempts).toBe(2);
+  await expect(page.getByRole('dialog',{name:'Scan for control beacons'})).toBeVisible();
+  await expect(page.locator('#cancel-scan')).toBeFocused();
+  await expect(page.locator('#beacons')).toBeDisabled();
   await page.keyboard.press('Escape');
-  await connect.click();
-  await expect.poll(()=>attempts).toBe(3);
+  await expect(scan).toBeFocused();
+  await page.clock.fastForward(21000);
+  expect(attempts).toBe(1);
+  await scan.click();
+  await expect.poll(()=>attempts).toBe(2);
+  await page.locator('#cancel-scan').click();
+  await expect(scan).toBeFocused();
 });
 
-test('Disconnect wins while signaling is unavailable and closes the share controls',async({page})=>{
+test('an unavailable selected viewer times out and lets the controller correct the code',async({page})=>{
+  await page.setViewportSize({width:320,height:560});
+  await page.clock.install();
+  await page.addInitScript(()=>{
+    class BeaconSdk extends EventTarget {
+      async connect(){}
+      async joinRoom({room}){
+        const list=room.startsWith('brsp_beacons_')?[{streamID:'brsp_target_beacon_0123456789abcdef01234567'}]:[];
+        this.dispatchEvent(new CustomEvent('listing',{detail:{list}}));
+      }
+      leaveRoom(){}
+      async disconnect(){}
+    }
+    Object.defineProperty(window,'VDONinjaSDK',{configurable:true,get:()=>BeaconSdk,set:()=>{}});
+  });
+  await page.goto('./?controller=1');
+  await page.locator('#scan-beacons').click();
+  const dialog=page.getByRole('dialog',{name:'Scan for control beacons'});
+  await dialog.getByLabel('Available viewers').selectOption({label:'Viewer 012345'});
+  const code=dialog.getByLabel('Pairing code');
+  await code.fill('2222-2222-2222');
+  await dialog.getByRole('button',{name:'Pair with viewer'}).click();
+  await expect(dialog.getByRole('status')).toHaveText('Finding selected viewer');
+  await expect(code).toBeDisabled();
+  await page.clock.fastForward(13000);
+  await expect(dialog.getByRole('status')).toHaveText('Viewer unavailable. Check its code and try again.');
+  await expect(code).toBeFocused();
+  await expect(page.locator('#play')).toBeDisabled();
+  await page.clock.fastForward(4000);
+  await expect(dialog.getByRole('status')).toHaveText('Viewer unavailable. Check its code and try again.');
+  await page.addStyleTag({content:':root{font-size:32px} button{letter-spacing:.12em;word-spacing:.16em}'});
+  await expect.poll(()=>dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
+  await expect(dialog.getByRole('button',{name:'Pair with viewer'})).toHaveAttribute('data-text-fit',/single|wrapped/);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#scan-beacons')).toBeFocused();
+});
+
+
+test('canceling the beacon during signaling revokes the invitation and restores focus',async({page})=>{
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
   await page.goto('./?role=viewer');
-  await page.locator('#connect').click();
-  await page.locator('#show-qr').focus();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('dialog',{name:'Session QR'})).toBeVisible();
-  await expect(page.locator('#invitation')).toBeVisible();
+  const send=page.locator('#send-beacon');
+  await expect(send).toBeVisible();
+  await send.press('Enter');
+  await expect(page.getByRole('dialog',{name:'Send control beacon'})).toBeVisible();
+  const code=await page.locator('#beacon-code').innerText();
+  expect(code).toMatch(/^[A-Z2-9]{4}(?:-[A-Z2-9]{4}){2}$/);
   await page.keyboard.press('Escape');
-  await expect(page.locator('#show-qr')).toBeFocused();
-  await page.locator('#stop').click();
-  await expect(page.locator('#invite-link')).toHaveValue('');
-  await expect(page.locator('#invitation')).toBeHidden();
-  await expect(page.locator('#show-qr')).toBeHidden();
-  await expect(page.locator('#connect')).toBeEnabled();
+  await expect(send).toBeFocused();
+  await expect(page.locator('#beacon-code')).toBeEmpty();
+  await expect(page.locator('#stop')).toBeHidden();
+  await send.click();
+  await expect(page.locator('#beacon-code')).not.toHaveText(code);
+  await page.locator('#cancel-beacon').click();
 });
 
 test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and controller handoff',async({browser})=>{
@@ -218,10 +254,10 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await expect(viewer.locator('#invite-link')).toHaveValue(link);
   await phone.goto(link);await expect(phone.locator('body')).toHaveAttribute('data-page','controller');
   await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
-  await phone.locator('#connect').click();
+  await pairWithBeacon(phone,await sendBeacon(viewer));
   await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
   await expect(phone.locator('#phone-dialog')).not.toBeVisible();
-  await expect(phone.locator('#connect')).toBeHidden();
+  await expect(phone.locator('#scan-beacons')).toBeHidden();
   await expect(phone.locator('#headset-status')).toBeFocused();
   await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','synced');
   await expect(phone.locator('#headset-status')).toHaveAccessibleName('Recenter headset');
@@ -322,18 +358,18 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await phone.getByRole('button',{name:'Video settings',exact:true}).click();
   await phone.getByRole('button',{name:'Connection',exact:true}).click();
   await phone.locator('#stop').click();
-  await expect(viewer.locator('#connection')).toContainText(/waiting|announced/i,{timeout:20000});
+  await expect(viewer.locator('#connection')).toHaveText('Disconnected',{timeout:20000});
   await phone.close();phone=await phoneContext.newPage();
   await phone.goto(link);await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
-  await phone.locator('#connect').click();
+  await pairWithBeacon(phone,await sendBeacon(viewer));
   await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
   await phone.waitForTimeout(2200);
   console.log(JSON.stringify({route:await phone.locator('body').getAttribute('data-route'),rtt:await phone.locator('body').getAttribute('data-rtt'),observedPreviewDriftSeconds:observedDrift,rawDriftSeconds:rawDrift,samplingGapSeconds:samplingGap}));
-  await viewer.locator('#connection-settings summary').click();
-  await viewer.locator('#stop').click();await expect(phone.locator('#connection')).toContainText(/reconnecting|waiting/i);
+  await viewer.locator('#connection-settings').evaluate(el=>{el.open=true;});
+  await viewer.locator('#stop').click();await expect(phone.locator('#connection')).toHaveText('Disconnected');
   await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','disconnected');
   await expect(phone.locator('#phone-dialog')).toBeHidden();
-  await expect(phone.locator('#connect')).toBeVisible();
+  await expect(phone.locator('#scan-beacons')).toBeVisible();
   await expect(phone.getByRole('region',{name:'Jona panorama'})).toBeVisible();
   await expect(phone.locator('#halt')).toBeDisabled();
   await viewerContext.close();await phoneContext.close();

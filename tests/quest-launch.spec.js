@@ -1,12 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { pairWithBeacon, sendBeacon } from './beacon-fixture.js';
 
-test('Quest opens the shared room and offers the same public QR after reconnecting',async({page})=>{
-  await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
+test('Quest opens without signaling and offers the same public QR',async({page})=>{
+  let sockets=0;
+  await page.routeWebSocket('wss://wss.vdo.ninja',()=>{sockets++;});
   await page.goto('./?launch=quest');
   await expect(page.locator('body')).toHaveAttribute('data-page','viewer');
   await expect(page.locator('#play')).toBeDisabled();
   await expect(page.locator('#arm')).toBeHidden();
-  await expect(page.locator('#connect')).toBeHidden();
+  await expect(page.locator('#send-beacon')).toBeVisible();
+  expect(sockets).toBe(0);
   await expect(page.locator('#show-qr')).toBeVisible();
   await page.locator('#show-qr').click();
   const dialog=page.getByRole('dialog',{name:'Session QR'});
@@ -23,11 +26,7 @@ test('Quest opens the shared room and offers the same public QR after reconnecti
   await page.screenshot({path:test.info().outputPath('quest-pairing.png')});
   await page.keyboard.press('Escape');
   await expect(page.locator('#show-qr')).toBeFocused();
-  await page.locator('#stop').click();
-  await expect(page.locator('#connect')).toBeVisible();
-  await page.locator('#connect').click();
-  await expect(page.locator('#invite-link')).toHaveValue(address);
-  await page.locator('#stop').click();
+
 });
 
 test('Quest VR gesture arms playback even if immersive entry is unavailable',async({page})=>{
@@ -51,81 +50,6 @@ test('Quest VR gesture arms playback even if immersive entry is unavailable',asy
   await expect(page.locator('#play')).toBeEnabled();
   await expect(page.locator('#notice')).toHaveText('VR unavailable');
   expect(await page.locator('#video').evaluate(v=>v.paused)).toBe(true);
-  await page.locator('#stop').click();
-});
-
-test('a duplicate viewer closes a VR request that resolves after the slot is refused',async({page})=>{
-  await page.addInitScript(()=>{
-    window.xrEnds=0;
-    Object.defineProperty(navigator,'xr',{value:{
-      requestSession:()=>new Promise(resolve=>{
-        window.finishXR=()=>resolve({end:async()=>{window.xrEnds++;}});
-      })
-    }});
-    class WaitingSdk extends EventTarget{
-      async connect(){}
-      async joinRoom(){}
-      async announce(){
-        window.viewerConflict=()=>this.dispatchEvent(new CustomEvent('alert',{detail:{raw:{code:'STREAMID_IN_USE'}}}));
-      }
-      async disconnect(){}
-    }
-    Object.defineProperty(window,'VDONinjaSDK',{configurable:true,get:()=>WaitingSdk,set:()=>{}});
-  });
-  await page.goto('./?launch=quest');
-  await page.waitForFunction(()=>typeof window.viewerConflict==='function');
-  await page.locator('#enter-vr').click();
-  await page.waitForFunction(()=>typeof window.finishXR==='function');
-  await page.evaluate(()=>window.viewerConflict());
-  await expect(page.locator('#connection')).toHaveText('Viewer in use');
-  await expect(page.locator('#enter-vr')).toBeDisabled();
-  await page.evaluate(()=>window.finishXR());
-  await expect.poll(()=>page.evaluate(()=>window.xrEnds)).toBe(1);
-});
-
-test('Quest auto-pairing retries the shared room after signaling failure and Disconnect cancels retries',async({page})=>{
-  await page.addInitScript(()=>{
-    window.__attempts=[];
-    class OfflineSdk extends EventTarget{
-      constructor(options){super();window.__attempts.push(options.password);}
-      async connect(){throw new Error('Signaling unavailable');}
-      async disconnect(){}
-    }
-    Object.defineProperty(window,'VDONinjaSDK',{configurable:true,get:()=>OfflineSdk,set:()=>{}});
-  });
-  await page.goto('./?launch=quest');
-  await expect(page.locator('#connection')).toHaveText('Reconnecting');
-  await expect.poll(()=>page.evaluate(()=>window.__attempts.length)).toBeGreaterThanOrEqual(2);
-  expect(await page.evaluate(()=>new Set(window.__attempts).size)).toBe(1);
-  await expect(page.locator('#arm')).toBeHidden();
-  // Cancel a queued retry explicitly, then prove it cannot silently reopen a session.
-  await page.locator('#stop').click();
-  const attempts=await page.evaluate(()=>window.__attempts.length);
-  await page.waitForTimeout(1700);expect(await page.evaluate(()=>window.__attempts.length)).toBe(attempts);
-  await expect(page.locator('#show-qr')).toBeHidden();
-});
-
-test('the viewer reopens its listener when signaling retries are exhausted',async({page})=>{
-  await page.addInitScript(()=>{
-    window.announcements=0;
-    class ListenerSdk extends EventTarget{
-      async connect(){}
-      async joinRoom(){}
-      async announce(){
-        window.announcements++;
-        window.signalLost=()=>this.dispatchEvent(new Event('reconnectFailed'));
-      }
-      async disconnect(){}
-    }
-    Object.defineProperty(window,'VDONinjaSDK',{configurable:true,get:()=>ListenerSdk,set:()=>{}});
-  });
-  await page.goto('./?launch=quest');
-  await expect.poll(()=>page.evaluate(()=>window.announcements)).toBe(1);
-  await expect(page.locator('#connection')).toHaveText('Waiting');
-  await page.evaluate(()=>window.signalLost());
-  await expect(page.locator('#connection')).toHaveText('Reconnecting');
-  await expect.poll(()=>page.evaluate(()=>window.announcements)).toBe(2);
-  await expect(page.locator('#connection')).toHaveText('Waiting');
 });
 
 test('Quest app entry pairs a phone over public VDO before the local VR gesture',async({browser})=>{
@@ -139,7 +63,7 @@ test('Quest app entry pairs a phone over public VDO before the local VR gesture'
     await expect(viewer.locator('#show-qr')).toBeVisible();
     await phone.goto(await viewer.locator('#invite-link').inputValue());
     await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
-    await phone.locator('#connect').click();
+    await pairWithBeacon(phone,await sendBeacon(viewer));
     await expect(phone.locator('body')).toHaveAttribute('data-clock','true',{timeout:45000});
     await expect(viewer.locator('#enter-vr')).toBeVisible();
     await expect(viewer.locator('#arm')).toBeHidden();

@@ -73,6 +73,7 @@ export class VdoNinjaTransport extends EventTarget {
     label = "BRSP target",
     sdkFactory = defaultSdkFactory,
     forceTurn = false,
+    discoveryOnly = false,
   }) {
     super();
     if (role !== "controller" && role !== "target") throw new TypeError("role must be controller or target.");
@@ -92,6 +93,7 @@ export class VdoNinjaTransport extends EventTarget {
     this.label = String(label).replace(/[\u0000-\u001f\u007f]/gu, " ").trim().slice(0, 64) || "BRSP target";
     this.sdkFactory = sdkFactory;
     this.forceTurn = Boolean(forceTurn);
+    this.discoveryOnly = discoveryOnly;
     this.phase = "idle";
     this.sdk = undefined;
     this.listeners = [];
@@ -231,10 +233,10 @@ export class VdoNinjaTransport extends EventTarget {
     this.listen(sdk, generation, "videoaddedtoroom", (event) => this.addSource(event.detail));
     this.listen(sdk, generation, "userLeft", (event) => this.removePeerOrSource(event.detail));
     this.listen(sdk, generation, "dataChannelOpen", (event) => {
-      if (this.role === "target") void this.openTargetChannels(event.detail?.uuid);
+      if (this.role === "target" && !this.discoveryOnly) void this.openTargetChannels(event.detail?.uuid);
     });
     this.listen(sdk, generation, "channelOpen", (event) => {
-      if (this.role === "controller") this.acceptControllerChannel(event.detail);
+      if (this.role === "controller" && !this.discoveryOnly) this.acceptControllerChannel(event.detail);
     });
     this.listen(sdk, generation, "dataChannelClose", (event) => this.markPeerClosed(event.detail?.uuid, "VDO.Ninja control channel closed."));
     this.listen(sdk, generation, "connectionFailed", (event) => this.markPeerClosed(
@@ -248,8 +250,11 @@ export class VdoNinjaTransport extends EventTarget {
   }
 
   addListing(detail) {
-    if (Array.isArray(detail?.list)) detail.list.forEach((item) => this.addSource(item, { deferSelection: true }));
-    else this.addSource(detail);
+    if (Array.isArray(detail?.list)) {
+      if (this.discoveryOnly) this.sources.clear();
+      detail.list.forEach((item) => this.addSource(item, { deferSelection: true }));
+      if (this.discoveryOnly) this.dispatchEvent(new Event("sourceschanged"));
+    } else this.addSource(detail);
     if (this.discoveryReady) void this.selectOnlyTarget().catch(() => {});
   }
 
@@ -257,13 +262,14 @@ export class VdoNinjaTransport extends EventTarget {
     if (this.role !== "controller") return;
     const item = sourceItem(value);
     if (!item.streamId.startsWith(VDO_BRSP_STREAM_PREFIX) || (this.expectedTarget && item.streamId !== this.expectedTarget)) return;
+    if (this.sources.size >= 64 && !this.sources.has(item.streamId)) return;
     this.sources.set(item.streamId, item);
-    this.emitStatus(`Discovered ${item.label || item.streamId}.`);
+    if (!this.discoveryOnly || !deferSelection) this.emitStatus(`Discovered ${item.label || item.streamId}.`);
     if (this.discoveryReady && !deferSelection) void this.selectOnlyTarget().catch(() => {});
   }
 
   async selectOnlyTarget({ sdk = this.sdk, generation = this.lifecycleGeneration } = {}) {
-    if (this.role !== "controller" || !this.isCurrentSdk(sdk, generation) || this.selectedStreamId || this.sources.size === 0) return;
+    if (this.discoveryOnly || this.role !== "controller" || !this.isCurrentSdk(sdk, generation) || this.selectedStreamId || this.sources.size === 0) return;
     if (this.sources.size > 1) {
       this.phase = "selection-required";
       this.emitStatus("More than one target was found; explicitly select the intended target.", true);
@@ -274,7 +280,7 @@ export class VdoNinjaTransport extends EventTarget {
   }
 
   async selectTarget(streamId, { sdk = this.sdk, generation = this.lifecycleGeneration } = {}) {
-    if (this.role !== "controller" || !this.isCurrentSdk(sdk, generation)) {
+    if (this.discoveryOnly || this.role !== "controller" || !this.isCurrentSdk(sdk, generation)) {
       throw new Error("Only a started controller can select a target.");
     }
     if (this.selectedStreamId) {
@@ -319,6 +325,7 @@ export class VdoNinjaTransport extends EventTarget {
       }
     }
     for (const peerKey of peerKeys) this.markPeerClosed(peerKey, "Peer left the VDO.Ninja room.");
+    this.dispatchEvent(new Event("sourceschanged"));
   }
 
   peerRecord(peerKey) {

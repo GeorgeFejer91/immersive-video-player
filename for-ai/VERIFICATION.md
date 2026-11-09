@@ -2,6 +2,12 @@
 
 Updated 2026-11-09. Evidence is scoped to the named surface, not a universal product/hardware claim.
 
+## Explicit control beacons and VR commands
+
+Local PASS: 40 Node checks, production build, exact asset pins, context check, and all 25 Chromium checks with RUN_NETWORK=1. Real public VDO discovery listed two concurrent viewer invitations. Explicit selection and the code connected only the chosen viewer. Cancellation and pairing withdrew announcements from open scans. The SDK did not deliver departures to an existing scanner in the first run. Fresh room joins during an open scan corrected that behavior. Wrong-code timeout restored focus and allowed a retry. The controller recovered both a dropped peer and a restarted viewer listener on the selected private session. Playback, recenter, handoff, and data-only SDP checks passed. Observed route direct, rounded SDK RTT 0 ms, and one aligned preview drift sample 0.069 seconds.
+
+A gesture-enforcing WebXR fixture confirmed that Request VR prompts only the selected viewer, the headset action starts the session, and Exit VR ends it exactly once. Readback follows viewer session events. Chromium verified keyboard focus, 320 px reflow, and enlarged scan text. The stable ADB wrapper returned no connected devices, so physical VR pairing and exit remain pending.
+
 ## Physical Quest playback and recenter
 
 Baseline on the live site: desktop Brave sent Start while the physical Quest 3 was in Meta Quest Browser's immersive activity. Video advanced past 13 seconds and decoded 787 frames. Stop paused the same video and reset its current time to 0 while the viewer stayed immersive and paired. The viewer's old Buffering notice remained visible even during successful playback.

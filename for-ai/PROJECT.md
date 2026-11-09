@@ -2,6 +2,15 @@
 
 Updated 2026-11-09. This file owns the active checklist; do not create a competing task ledger.
 
+## Active update: explicit control beacons
+
+The headset opens without signaling. **Send control beacon** opens a status dialog with a temporary viewer name and pairing code. **Scan for beacons** lists live announcements and lets the controller choose one viewer and supply its code. The public room carries discovery. The derived private room carries one authenticated BRSP/1 controller. A reliable confirmation after fresh state and clock sync closes both dialogs and withdraws the announcement. Cancel, timeout, and explicit disconnect revoke pending or active sessions. Recoverable transport loss retries the same private session with a bounded backoff.
+
+- [x] Wire the beacon dialogs, private handshake, and viewer-owned VR state through the existing player.
+- [x] 40 Node and 25 Chromium checks passed, including public VDO discovery, cancellation, reconnect, playback, and simulated WebXR request and exit.
+- [ ] Publish the verified build and confirm the matching live entry.
+- [ ] Qualify pairing and remote exit on the physical Quest. The viewer requires a local gesture for immersive entry.
+
 ## Active goal: physical Quest playback and recenter
 
 The controller distinguishes a viewer that needs its local **VR** gesture from an armed viewer that needs more media buffered. **Recenter view** is visible in the viewer and controller, including the installed app. The glowing headset button is a shortcut for the same paired action. An explicit recenter command sets the immersive center from the current yaw and pitch, while retaining head roll. Browser pan and the immersive center persist separately across VR sessions. Connection controls remain available under **Video settings**.
@@ -11,7 +20,7 @@ The controller distinguishes a viewer that needs its local **VR** gesture from a
 - [x] Confirm the updated Pages build and the controller on the public URL.
 - [ ] Repeat Start, frame advancement, Stop, and recenter on the physical Quest using the published build. Resume when the authorized Quest is reachable.
 
-## Connect request and automatic viewer listener
+## Previous release: Connect request and automatic viewer listener
 
 2026-11-09. The Quest publishes and listens on entry. The controller's header Connect button starts the existing one-to-one handshake and can restart a stalled attempt. The controller keeps discovering and retrying after that action. Hide Connect once the pair has fresh state and clock sync. An explicit Disconnect stops the controller until another Connect. The viewer releases its slot when the controller leaves and restores signaling when a waiting listener's SDK retries are exhausted.
 

@@ -1,6 +1,6 @@
 export const MODES = ['fisheye', 'equirect360', 'equirect180', 'flat'];
 export const JONA_LENS = 240;
-export const SCOPES = ['player.transport', 'player.view'];
+export const SCOPES = ['player.transport', 'player.view', 'player.xr'];
 const finite = (n, min, max) => Number.isFinite(n) && n >= min && n <= max;
 const shape = (v, keys) => v && Object.getPrototypeOf(v) === Object.prototype &&
   Object.keys(v).sort().join(',') === [...keys].sort().join(',');
@@ -20,10 +20,15 @@ export class Player {
   constructor(duration, now = () => performance.now()) {
     this.now = now;
     this.state = { revision: 0, duration, projection: 'fisheye', lens: JONA_LENS, fov: 80,
-      yaw: 0, pitch: 0, volume: 1, recenter: 0,
+      yaw: 0, pitch: 0, volume: 1, recenter: 0, xr: 'windowed',
       anchor: { position: 0, at: now(), playing: false, generation: 0 } };
   }
   snapshot() { return structuredClone(this.state); }
+  setXR(mode) {
+    if (mode === this.state.xr) return;
+    this.state.xr = mode;
+    this.state.revision++;
+  }
   command(scope, action, args, viewerReady = false) {
     const s = this.state, now = this.now();
     const reject = error => ({ ok: false, revision: s.revision, result: null, error });
@@ -65,8 +70,8 @@ export class Player {
 }
 
 export function validateState(s) {
-  if (!shape(s, ['revision','duration','projection','lens','fov','yaw','pitch','volume','recenter','anchor']) ||
-    !Number.isSafeInteger(s.revision) || s.revision < 0 || !Number.isSafeInteger(s.recenter) || s.recenter < 0 ||
+  if (!shape(s, ['revision','duration','projection','lens','fov','yaw','pitch','volume','recenter','xr','anchor']) ||
+    !Number.isSafeInteger(s.revision) || s.revision < 0 || !Number.isSafeInteger(s.recenter) || s.recenter < 0 || !['windowed','requested','immersive'].includes(s.xr) ||
     !finite(s.duration, 0.01, 86400) || !MODES.includes(s.projection) || !finite(s.lens,180,360) ||
     !finite(s.fov,45,110) || !finite(s.yaw,-180,180) || !finite(s.pitch,-90,90) || !finite(s.volume,0,1) ||
     !shape(s.anchor, ['position','at','playing','generation']) || !finite(s.anchor.position,0,s.duration) ||

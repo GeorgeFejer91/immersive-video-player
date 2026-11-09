@@ -53,7 +53,10 @@ export class TargetGroup extends EventTarget {
     connection.addEventListener('command',event=>{
       this.publishState();emit(this,'command',{...event.detail,peerKey:key});
     });
-    connection.addEventListener('peerclose',()=>this.removePeer(key,'disconnected'));
+    connection.addEventListener('peerclose',event=>{
+      this.removePeer(key,'disconnected');
+      if(event.detail.reason==='Peer ended the session.')emit(this,'peerended',{peerKey:key});
+    });
     connection.addEventListener('protocolerror',()=>this.removePeer(key,'authentication_or_protocol_error'));
     void connection.attachPeer({peerKey:key}).catch(()=>this.removePeer(key,'channel_unavailable'));
   }

@@ -438,3 +438,28 @@ test('target attaches a connecting control channel before its open promise resol
   control.readyState='open';control.dispatchEvent(new MessageEvent('message',{data:'hello'}));
   gate.resolve(control);await nextTurn();await t.stop();assert.deepEqual(events,['hello']);
 });
+
+test("discovery lists and removes beacons without dialing one or opening control lanes", async () => {
+  const source = { streamID: "brsp_target_beacon_demo", UUID: "viewer-uuid" };
+  const scanner = new MockSdk({}, [source]), beacon = new MockSdk({});
+  const options = { room: "brsp_beacon_room", sharedSecret: "public-discovery-value", discoveryOnly: true };
+  const controller = new VdoNinjaTransport({ ...options, role: "controller", sdkFactory: () => scanner });
+  const target = new VdoNinjaTransport({ ...options, role: "target", streamId: source.streamID, sdkFactory: () => beacon });
+  try {
+    await controller.start();
+    await target.start();
+    assert.equal(controller.sources.size, 1);
+    assert.equal(controller.selectedStreamId, "");
+    assert.equal(scanner.calls.some(([call]) => call === "view"), false);
+    beacon.emit("dataChannelOpen", { uuid: "probe" });
+    assert.equal(beacon.calls.some(([call]) => call === "openChannel"), false);
+    scanner.emit("userLeft", { UUID: source.UUID });
+    assert.equal(controller.sources.size, 0);
+    scanner.emit("videoaddedtoroom", source);
+    assert.equal(controller.sources.size, 1);
+    scanner.emit("listing", { list: [] });
+    assert.equal(controller.sources.size, 0);
+  } finally {
+    await Promise.all([controller.stop(), target.stop()]);
+  }
+});

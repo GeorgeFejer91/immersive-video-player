@@ -17,9 +17,9 @@ test('phone is a local video player with transport and an accessible headset con
   for(const id of ['play','pause','halt'])await expect(page.locator('#'+id)).toBeDisabled();
   expect(await page.locator('#stage canvas').count()).toBe(0);
   expect(await page.locator('#video').evaluate(v=>!v.controls&&v.muted&&new URL(v.currentSrc||v.src).pathname.endsWith('/media/jona.mp4'))).toBe(true);
-  const connect=page.locator('#phone-header #connect');
+  const connect=page.locator('#phone-header #scan-beacons');
   await expect(connect).toBeVisible();
-  expect((await page.locator('body').innerText()).trim().split(/\s+/).length).toBeLessThanOrEqual(16);
+  expect((await page.locator('body').innerText()).trim().split(/\s+/).length).toBeLessThanOrEqual(18);
   const recenter=page.getByRole('button',{name:'Recenter view',exact:true});
   await expect(recenter).toBeVisible();await expect(recenter).toBeDisabled();
   for(const [width,height] of [[320,560],[390,844],[640,390],[844,390],[1280,720]]){

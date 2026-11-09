@@ -37,7 +37,7 @@ export async function measureTextRegions(){
     }
     if(changed){queue();return;}
     const writes=[];
-    for(const el of document.querySelectorAll('button,.button-link,summary,h1,.status,label>span,output')){
+    for(const el of document.querySelectorAll('button,.button-link,summary,h1,h2,.status,label>span,output')){
       if(!el.checkVisibility())continue;
       const css=getComputedStyle(el),rect=el.getBoundingClientRect();
       const width=rect.width-px(css.paddingLeft)-px(css.paddingRight)-px(css.borderLeftWidth)-px(css.borderRightWidth)-(el.tagName==='SUMMARY'?22:0);

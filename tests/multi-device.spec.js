@@ -1,4 +1,5 @@
 import { test,expect } from '@playwright/test';
+import { pairWithBeacon, sendBeacon } from './beacon-fixture.js';
 test.use({serviceWorkers:'allow'});
 async function seek(page,position){
   const slider=page.locator('#seek');await expect(slider).toBeEnabled();
@@ -14,11 +15,7 @@ test('the controller reconnects to an already playing viewer without changing it
     await context.addInitScript(()=>{const Peer=window.RTCPeerConnection;window.__peers=[];window.RTCPeerConnection=class extends Peer{constructor(...args){super(...args);window.__peers.push(this);}};});
     const page=await context.newPage();pages.push(page);await page.goto(url);
     await page.waitForFunction(()=>document.querySelector('video').readyState>=3);
-    if(phone){
-      await page.locator('#connect').click();
-      await expect(page.locator('#headset-status')).toHaveAttribute('data-state','synced',{timeout:45000});
-    }
-    else {
+    if(!phone){
       await page.locator('#enter-vr').click();
       await page.waitForFunction(()=>{const video=document.querySelector('video');return !video.seeking&&video.readyState>=3;});
     }
@@ -36,6 +33,7 @@ test('the controller reconnects to an already playing viewer without changing it
   try {
     const host=await open(new URL('?launch=quest',process.env.TEST_URL||'http://127.0.0.1:4174/').href);
     const link=await host.locator('#invite-link').inputValue(),first=await open(link,true);
+    await pairWithBeacon(first,await sendBeacon(host));
     await first.locator('#play').click();await synchronized();
     await seek(first,20);
     await expect.poll(()=>host.locator('video').evaluate(video=>video.currentTime)).toBeGreaterThan(19);await synchronized();

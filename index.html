@@ -27,7 +27,7 @@
       <header class="shell-header"><h1>Immersive Video Player</h1><p id="connection" class="status" role="status" aria-live="polite">Offline</p><p id="notice" class="status" role="status" aria-live="polite"></p></header>
       <div class="panel-body stretch-body">
         <details id="connection-settings" name="controls" data-accordion open><summary>Connection</summary><div class="accordion-content">
-          <div class="actions"><button id="arm" class="primary fixed-action">Enable</button><button id="connect" class="fixed-action">Connect</button><button id="enter-vr" class="fixed-action">VR</button><button id="stop" class="fixed-action" hidden>Disconnect</button><button id="show-qr" hidden>QR</button></div>
+          <div class="actions"><button id="send-beacon" class="fixed-action" aria-haspopup="dialog" aria-controls="beacon-dialog">Send control beacon</button><button id="arm" class="primary fixed-action">Enable</button><button id="enter-vr" class="fixed-action">VR</button><button id="stop" class="fixed-action" hidden>Disconnect</button><button id="show-qr" hidden aria-haspopup="dialog" aria-controls="qr-dialog">QR</button></div>
         </div></details>
         <fieldset id="controls" aria-label="Playback controls" disabled>
           <details id="playback-settings" name="controls" data-accordion><summary>Playback</summary><div class="accordion-content">
@@ -47,6 +47,29 @@
       <footer class="shell-footer"><button id="recenter" class="fixed-action" disabled>Recenter view</button><button id="hide-controls" class="fixed-action">Hide</button></footer>
     </aside>
   </main>
+  <button id="scan-beacons" class="fixed-action" hidden aria-haspopup="dialog" aria-controls="scan-dialog">Scan for beacons</button>
+  <button id="remote-vr" class="fixed-action" hidden>Request VR</button>
+  <dialog id="beacon-dialog" class="pair-dialog" aria-labelledby="beacon-title">
+    <h2 id="beacon-title">Send control beacon</h2>
+    <p id="beacon-status" class="status" role="status"></p>
+    <p id="beacon-name" class="status"></p>
+    <p class="status">Pairing code <strong id="beacon-code"></strong></p>
+    <button id="cancel-beacon" autofocus>Cancel beacon</button>
+  </dialog>
+  <dialog id="scan-dialog" class="pair-dialog" aria-labelledby="scan-title">
+    <h2 id="scan-title">Scan for control beacons</h2>
+    <p id="scan-status" class="status" role="status"></p>
+    <form id="scan-form">
+      <fieldset id="scan-fields" disabled>
+        <label for="beacons"><span>Available viewers</span></label>
+        <select id="beacons" required></select>
+        <label for="pairing-code"><span>Pairing code</span></label>
+        <input id="pairing-code" type="text" maxlength="24" required autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button class="primary">Pair with viewer</button>
+      </fieldset>
+    </form>
+    <button id="cancel-scan" autofocus>Cancel scan</button>
+  </dialog>
   <dialog id="phone-dialog" aria-label="Headset connection"></dialog>
   <dialog id="warp-dialog" aria-label="Video warp">
     <form method="dialog"><button>Close</button></form>
