@@ -2,14 +2,14 @@
 
 Updated 2026-11-09. This file owns the active checklist; do not create a competing task ledger.
 
-## Active update: explicit control beacons
+## Active update: click-to-approve beacon pairing
 
-The headset opens without signaling. **Send control beacon** opens a status dialog with a temporary viewer name and pairing code. **Scan for beacons** lists live announcements and lets the controller choose one viewer and supply its code. The public room carries discovery. The derived private room carries one authenticated BRSP/1 controller. A reliable confirmation after fresh state and clock sync closes both dialogs and withdraws the announcement. Cancel, timeout, and explicit disconnect revoke pending or active sessions. Recoverable transport loss retries the same private session with a bounded backoff.
+Every player layout shows **Transmit beacon** and **Scan beacon**. Transmit publishes for two minutes. Scan automatically requests the first discoverable beacon and retries when it is unavailable or canceled. The transmitter sees **Allow to pair** for the first pending request. Approval sends a high-entropy secret over the requesting WebRTC peer's data channel. The private BRSP/1 connection uses the existing state, clock, playback and VR commands. Both sides hide the beacon actions once paired. The device layout and the session role are independent.
 
-- [x] Wire the beacon dialogs, private handshake, and viewer-owned VR state through the existing player.
-- [x] 40 Node and 25 Chromium checks passed, including public VDO discovery, cancellation, reconnect, playback, and simulated WebXR request and exit.
-- [x] Published cdd3161 through Actions 42659279529 and Pages deployment 7660807315. The HTTPS entry and five focused browser checks passed.
-- [ ] Qualify pairing and remote exit on the physical Quest. The viewer requires a local gesture for immersive entry.
+- [x] Replace code entry and manual selection with automatic scanning and local approval.
+- [x] 41 Node and 26 Chromium checks passed, including public WebRTC in both directions, approval gating, cancellation, reconnect, playback, and layout.
+- [ ] Publish and verify the live build.
+- [ ] Qualify pairing and remote exit on the physical Quest. Immersive entry still requires a local gesture.
 
 ## Active goal: physical Quest playback and recenter
 

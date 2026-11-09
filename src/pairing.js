@@ -1,154 +1,202 @@
-import { beaconName, createBeacon, pairingSession } from './session-entry.js';
+import { createBeacon, isBeacon, pairingSession, randomHex } from './session-entry.js';
 import { VdoNinjaTransport } from './remote/vdo-ninja-transport.js';
 
-export function initPairing({phone,discovery,begin,end,focusAfterPair}){
+const decoder=new TextDecoder();
+function readMessage(data){
+  if(typeof data!=='string'&&!(data instanceof ArrayBuffer))return;
+  if((typeof data==='string'?data.length:data.byteLength)>256)return;
+  try{
+    const message=JSON.parse(typeof data==='string'?data:decoder.decode(data));
+    if(typeof message?.id==='string'&&/^[a-f0-9]{24}$/.test(message.id))return message;
+  }catch{/* Ignore malformed rendezvous messages. */}
+}
+
+export function initPairing({discovery,begin,end,prepareTarget,focusAfterPair}){
   const $=id=>document.getElementById(id);
-  const trigger=$(phone?'scan-beacons':'send-beacon'),dialog=$(phone?'scan-dialog':'beacon-dialog');
-  const status=$(phone?'scan-status':'beacon-status'),list=$('beacons'),form=$('scan-form');
-  const inputs=$('scan-fields'),code=$('pairing-code');
-  let transport,refreshing,deadline,refreshTimer,joining=false,revision=0,retryMessage='';
-  const setStatus=text=>{if(status.textContent!==text)status.textContent=text;};
-
-  function updateBeacons(){
-    const selected=list.value;
-    const sources=[...transport.sources.keys()].filter(id=>beaconName(id));
-    if(sources.join()!==[...list.options].slice(1).map(option=>option.value).join()){
-      list.replaceChildren(new Option('Choose a viewer',''),...sources.map(id=>new Option(beaconName(id),id)));
-      if(sources.includes(selected))list.value=selected;
-    }
-    inputs.disabled=joining||!sources.length;
-    if(!joining)setStatus(retryMessage||(sources.length?'Select a viewer and enter its code.':'Searching for beacons…'));
+  const actions=$('beacon-actions'),allow=$('allow-pair');
+  let active;
+  const status=(flow,text)=>{
+    if(flow.status.textContent!==text)flow.status.textContent=text;
+  };
+  function releaseTransport(flow){
+    clearTimeout(flow.retry);
+    const previous=flow.transport;
+    flow.transport=undefined;
+    void previous?.stop();
   }
-
-  function stopDiscovery(){
-    clearTimeout(deadline);clearTimeout(refreshTimer);
-    ++revision;
-    const previous=transport;transport=undefined;
-    void previous?.stop();void refreshing?.stop();refreshing=undefined;
-    joining=false;retryMessage='';code.value='';$('beacon-code').textContent='';$('beacon-name').textContent='';
+  function stop(){
+    const flow=active;
+    active=undefined;
+    if(!flow)return;
+    clearTimeout(flow.deadline);
+    releaseTransport(flow);
+    allow.hidden=true;
+    flow.dialog.close();
   }
-
-  function cancel(){
-    stopDiscovery();
-    end();
-    dialog.close();
-  }
-
   function fail(text){
-    joining=false;retryMessage=text;
-    if(!phone)stopDiscovery();
-    else if(transport){updateBeacons();if(dialog.open&&!inputs.disabled)code.focus();}
-    setStatus(text);
-    return dialog.open;
+    if(!active)return false;
+    clearTimeout(active.deadline);
+    releaseTransport(active);
+    active.request=undefined;
+    allow.hidden=true;
+    status(active,text);
+    return true;
   }
-
-  function createDiscovery(beacon){
-    return new VdoNinjaTransport({
-      role:phone?'controller':'target',room:discovery.room,sharedSecret:discovery.secret,
-      streamId:beacon?.streamId,discoveryOnly:true
-    });
-  }
-
-  function watch(t){
-    const changed=()=>{if(transport===t&&phone)updateBeacons();};
-    t.addEventListener('status',event=>{if(!event.detail.error)changed();});
-    t.addEventListener('sourceschanged',changed);
-    t.addEventListener('signalingfailed',()=>{
-      if(transport!==t)return;
-      stopDiscovery();end();inputs.disabled=true;setStatus('Signaling failed. Close and try again.');
-    });
-  }
-
-  function scheduleRefresh(current){
-    if(revision!==current)return;
-    // A fresh room join is authoritative even when the SDK omits departures.
-    refreshTimer=setTimeout(async()=>{
-      const next=createDiscovery();
-      refreshing=next;
-      try{
-        await next.start();
-        if(revision!==current)return;
-        const previous=transport;transport=next;
-        watch(next);updateBeacons();
-        void previous.stop();
-      }catch{/* Keep the last list while a fresh join is unavailable. */}
-      finally{
-        if(transport!==next)void next.stop();
-        if(refreshing===next)refreshing=undefined;
-        scheduleRefresh(current);
-      }
-    },5000);
-  }
-
-  async function open(){
+  function cancel(){
+    stop();
     end();
-    dialog.showModal();
-    setStatus(phone?'Searching for beacons…':'Starting beacon…');
-    list.replaceChildren(new Option('Choose a viewer',''));inputs.disabled=true;
-    const beacon=phone?null:createBeacon();
-    if(beacon){
-      $('beacon-name').textContent=beaconName(beacon.streamId);
-      $('beacon-code').textContent=beacon.code;
-    }
-    const current=++revision;
-    const t=createDiscovery(beacon);
-    transport=t;
-    deadline=setTimeout(()=>{
-      stopDiscovery();end();inputs.disabled=true;
-      setStatus(phone?'Scan expired. Close and scan again.':'Beacon expired. Close and send a new one.');
-    },120000);
-    const active=()=>transport===t;
-    const failed=()=>{
-      if(!active())return;
-      stopDiscovery();end();inputs.disabled=true;setStatus('Signaling failed. Close and try again.');
-    };
-    watch(t);
-    try{
-      if(beacon){
-        const session=await pairingSession(discovery,beacon.streamId,beacon.code);
-        if(revision!==current)return;
-        begin(session);
+  }
+  function createTransport(flow,streamId){
+    const t=new VdoNinjaTransport({
+      role:flow.role,room:discovery.room,sharedSecret:discovery.secret,streamId,autoSelect:false
+    });
+    flow.transport=t;
+    return t;
+  }
+  function send(t,peer,message){
+    return t.sendControl(peer,JSON.stringify(message));
+  }
+
+  async function transmit(flow){
+    const streamId=createBeacon(),t=createTransport(flow,streamId);
+    const current=()=>active===flow&&flow.transport===t;
+    flow.streamId=streamId;
+    status(flow,'Starting beacon…');
+    t.addEventListener('controlmessage',event=>{
+      if(!current())return;
+      const {peerKey,data}=event.detail;
+      if(flow.request?.peer===peerKey)return;
+      const message=readMessage(data);
+      if(flow.handoff||flow.request||message?.type!=='request'||message.beacon!==streamId){
+        t.closePeer(peerKey);
+        return;
       }
+      if(!send(t,peerKey,{type:'waiting',id:message.id})){t.closePeer(peerKey);return;}
+      flow.request={id:message.id,peer:peerKey};
+      status(flow,'A browser wants to control playback.');
+      allow.hidden=false;
+    });
+    t.addEventListener('peerclose',event=>{
+      if(!current()||flow.handoff||flow.request?.peer!==event.detail.peerKey)return;
+      flow.request=undefined;
+      allow.hidden=true;
+      status(flow,'Waiting for a browser…');
+    });
+    const failed=()=>{if(current()&&!flow.handoff)fail('Beacon unavailable. Close and try again.');};
+    t.addEventListener('signalingfailed',failed);
+    try{
       await t.start();
-      if(phone)scheduleRefresh(current);
-      else if(active())setStatus('Beacon active. Scan on your controller.');
+      if(current()&&!flow.request)status(flow,'Waiting for a browser…');
     }catch{failed();}
   }
 
-  trigger.addEventListener('click',()=>void open());
-  dialog.addEventListener('cancel',event=>{event.preventDefault();cancel();});
-  $(phone?'cancel-scan':'cancel-beacon').addEventListener('click',cancel);
-  form.addEventListener('submit',async event=>{
-    event.preventDefault();
-    const id=list.value;
-    if(!phone||joining||!transport?.sources.has(id))return;
-    const current=revision;
-    joining=true;retryMessage='';inputs.disabled=true;setStatus('Connecting to '+beaconName(id)+'…');
-    try{
-      const session=await pairingSession(discovery,id,code.value);
-      if(revision===current)begin(session);
-    }catch{
-      if(revision!==current)return;
-      fail('Check the code shown on the viewer.');
+  async function scan(flow){
+    if(active!==flow)return;
+    const t=createTransport(flow);
+    const current=()=>active===flow&&flow.transport===t;
+    let beacon,peer,id;
+    status(flow,'Searching for beacons…');
+    function retry(){
+      if(!current())return;
+      if(beacon)flow.recent.set(beacon,Date.now()+12000);
+      releaseTransport(flow);
+      flow.retry=setTimeout(()=>void scan(flow),500);
     }
+    function select(){
+      if(!current()||beacon||t.phase!=='discovering')return;
+      for(const [candidate,until] of flow.recent)if(until<=Date.now())flow.recent.delete(candidate);
+      beacon=[...t.sources.keys()].find(candidate=>isBeacon(candidate)&&!flow.recent.has(candidate));
+      if(!beacon)return;
+      clearTimeout(flow.retry);
+      status(flow,'Requesting approval…');
+      flow.retry=setTimeout(retry,10000);
+      void t.selectTarget(beacon).catch(retry);
+    }
+    t.addEventListener('status',select);
+    t.addEventListener('signalingfailed',retry);
+    t.addEventListener('peeropen',event=>{
+      if(!current()||!beacon||peer)return;
+      peer=event.detail.peerKey;id=randomHex(12);
+      if(!send(t,peer,{type:'request',id,beacon}))retry();
+    });
+    t.addEventListener('peerclose',retry);
+    t.addEventListener('controlmessage',async event=>{
+      if(!current()||!id||event.detail.peerKey!==peer)return;
+      const message=readMessage(event.detail.data);
+      if(message?.id!==id)return;
+      if(message.type==='waiting'){
+        clearTimeout(flow.retry);
+        status(flow,'Waiting for approval…');
+      } else if(message.type==='approved'&&typeof message.secret==='string'&&/^[a-f0-9]{64}$/.test(message.secret)){
+        flow.handoff=true;
+        releaseTransport(flow);
+        status(flow,'Connecting…');
+        try{
+          const session=await pairingSession(discovery,beacon,message.secret);
+          if(active===flow)begin(session,'controller');
+        }catch{if(active===flow)fail('Pairing failed. Close and try again.');}
+      }
+    });
+    try{
+      await t.start();
+      select();
+      if(current()&&!beacon)flow.retry=setTimeout(retry,5000);
+    }catch{retry();}
+  }
+
+  function open(role){
+    end();
+    const dialog=$(role==='target'?'beacon-dialog':'scan-dialog');
+    const flow={role,dialog,status:dialog.querySelector('[role=status]'),recent:new Map()};
+    active=flow;
+    dialog.showModal();
+    flow.deadline=setTimeout(()=>{
+      if(active!==flow)return;
+      end();fail('Pairing expired. Close and try again.');
+    },120000);
+    if(role==='target')void transmit(flow);
+    else void scan(flow);
+  }
+  $('send-beacon').addEventListener('click',()=>open('target'));
+  $('scan-beacons').addEventListener('click',()=>open('controller'));
+  for(const name of ['beacon','scan']){
+    $(name+'-dialog').addEventListener('cancel',event=>{event.preventDefault();cancel();});
+    $('cancel-'+name).addEventListener('click',cancel);
+  }
+  allow.addEventListener('click',async()=>{
+    const flow=active,request=flow?.request,t=flow?.transport;
+    if(!request||!t||flow.handoff)return;
+    allow.hidden=true;
+    $('cancel-beacon').focus();
+    prepareTarget();
+    const secret=randomHex(32);
+    try{
+      const session=await pairingSession(discovery,flow.streamId,secret);
+      if(active!==flow||flow.transport!==t||flow.request!==request)return;
+      if(!send(t,request.peer,{type:'approved',id:request.id,secret})){
+        t.closePeer(request.peer);
+        flow.request=undefined;
+        status(flow,'Waiting for a browser…');
+        return;
+      }
+      flow.handoff=true;
+      status(flow,'Connecting…');
+      begin(session,'target');
+    }catch{if(active===flow)fail('Pairing failed. Close and try again.');}
   });
 
   return {
-    status(text){
-      if(!dialog.open||(phone&&!joining))return;
-      setStatus(!phone&&text==='Waiting'&&transport?.phase==='discoverable'?'Beacon active. Scan on your controller.':text);
-    },
+    status(text){if(active?.handoff)status(active,text);},
     fail,
     connected(value){
-      if(trigger.hidden===value)return;
-      const moveFocus=document.activeElement===trigger||dialog.open;
-      trigger.hidden=value;
+      if(actions.hidden===value)return;
+      const moveFocus=actions.contains(document.activeElement)||Boolean(active);
+      actions.hidden=value;
       if(value){
-        stopDiscovery();
-        dialog.close();
+        stop();
         if(moveFocus)focusAfterPair();
       }
     },
-    stop(){stopDiscovery();dialog.close();}
+    stop
   };
 }

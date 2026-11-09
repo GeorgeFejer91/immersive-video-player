@@ -2,9 +2,11 @@
 
 Watch **Jona** together from [the same player URL](https://georgefejer91.github.io/immersive-video-player/) on Quest, phone, and desktop.
 
-1. On the headset, open the player and choose **Send control beacon**. Keep the invitation dialog open.
-2. On your phone or desktop, open the same link and choose **Scan for beacons**. Select the viewer shown on the headset and enter its pairing code.
-3. After both browsers synchronize, their pairing controls close and the controller can use **Start**, **Pause**, and **Stop**. Stop resets the video on both devices.
+1. On the browser that will play the video, tap **Transmit beacon**.
+2. On the browser that will control it, tap **Scan beacon**. It automatically requests pairing with the first available beacon.
+3. On the transmitting browser, tap **Allow to pair**. Both dialogs and beacon buttons close once the connection is ready.
+
+Either browser can transmit or scan. The pair shares **Start**, **Pause**, and **Stop**. Stop resets the video on both devices.
 
 On the controller, **Request VR** prompts the wearer to tap **Enter VR** in the viewer. Once the headset enters VR, **Exit VR** ends the immersive session from the controller. WebXR requires the headset gesture for entry. [WebXR protected functionality](https://www.w3.org/TR/webxr/#immersive-session-request-is-allowed)
 
@@ -14,7 +16,7 @@ Use **Recenter view** in the viewer browser, paired controller, or installed app
 
 ## How it works
 
-The public VDO.Ninja room lists temporary viewer IDs. The viewer's random pairing code opens a separate, private, one-controller session and stays out of the listing, URL, and persistent storage. The BRSP/1 exchange verifies role-bound proofs, negotiates command scopes, and confirms pairing after the controller receives fresh viewer state and a clock sample. The viewer orders playback, projection, and VR commands. The pinned VDO.Ninja SDK 1.5.5 carries controls, state, and clock samples over data-only WebRTC.
+The public VDO.Ninja room lists temporary beacon IDs. On approval, the transmitter sends a fresh secret to the requesting browser over its WebRTC data channel. The browsers use the secret to open a separate private BRSP/1 session for one controller. The secret stays out of the listing, URL, and persistent storage. BRSP verifies role-bound proofs, negotiates command scopes, and confirms pairing after the controller receives fresh viewer state and a clock sample. The viewer orders playback, projection, and VR commands. VDO.Ninja SDK 1.5.5 carries controls and state over data-only WebRTC.
 
 Both devices fetch and decode the same bundled MP4. The phone dewarps it using the viewer's projection shader and falls back to native video without WebGL; it can still adjust the paired viewer. The phone estimates viewer clock offset, receives a playback anchor 500 ms ahead and corrects preview drift. This is approximate synchronization. State older than two seconds disables remote phone commands.
 

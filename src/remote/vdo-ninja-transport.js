@@ -74,6 +74,7 @@ export class VdoNinjaTransport extends EventTarget {
     sdkFactory = defaultSdkFactory,
     forceTurn = false,
     discoveryOnly = false,
+    autoSelect = true,
   }) {
     super();
     if (role !== "controller" && role !== "target") throw new TypeError("role must be controller or target.");
@@ -94,6 +95,7 @@ export class VdoNinjaTransport extends EventTarget {
     this.sdkFactory = sdkFactory;
     this.forceTurn = Boolean(forceTurn);
     this.discoveryOnly = discoveryOnly;
+    this.autoSelect = autoSelect;
     this.phase = "idle";
     this.sdk = undefined;
     this.listeners = [];
@@ -261,7 +263,7 @@ export class VdoNinjaTransport extends EventTarget {
   addSource(value, { deferSelection = false } = {}) {
     if (this.role !== "controller") return;
     const item = sourceItem(value);
-    if (!item.streamId.startsWith(VDO_BRSP_STREAM_PREFIX) || (this.expectedTarget && item.streamId !== this.expectedTarget)) return;
+    if (typeof item.streamId !== "string" || !item.streamId.startsWith(VDO_BRSP_STREAM_PREFIX) || (this.expectedTarget && item.streamId !== this.expectedTarget)) return;
     if (this.sources.size >= 64 && !this.sources.has(item.streamId)) return;
     this.sources.set(item.streamId, item);
     if (!this.discoveryOnly || !deferSelection) this.emitStatus(`Discovered ${item.label || item.streamId}.`);
@@ -269,7 +271,7 @@ export class VdoNinjaTransport extends EventTarget {
   }
 
   async selectOnlyTarget({ sdk = this.sdk, generation = this.lifecycleGeneration } = {}) {
-    if (this.discoveryOnly || this.role !== "controller" || !this.isCurrentSdk(sdk, generation) || this.selectedStreamId || this.sources.size === 0) return;
+    if (this.discoveryOnly || !this.autoSelect || this.role !== "controller" || !this.isCurrentSdk(sdk, generation) || this.selectedStreamId || this.sources.size === 0) return;
     if (this.sources.size > 1) {
       this.phase = "selection-required";
       this.emitStatus("More than one target was found; explicitly select the intended target.", true);
@@ -389,7 +391,7 @@ export class VdoNinjaTransport extends EventTarget {
   }
 
   acceptControllerChannel(detail = {}) {
-    if (!detail.uuid || !detail.channel) return;
+    if (!detail.uuid || !detail.channel || (!this.autoSelect && !this.selectedStreamId)) return;
     if (detail.streamID && this.selectedStreamId && detail.streamID !== this.selectedStreamId) return;
     if (this.selectedPeerKey && detail.uuid !== this.selectedPeerKey) return;
     const lane = normalizeChannelLabel(detail.label);

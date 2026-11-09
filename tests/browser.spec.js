@@ -163,14 +163,15 @@ test('scanning requires an action, stays cancellable, and restores keyboard focu
   await page.goto('./?controller=1#room=obsolete');
   expect(new URL(page.url()).hash).toBe('');
   await expect(page.locator('#play')).toBeDisabled();
-  const scan=page.getByRole('button',{name:'Scan for beacons',exact:true});
+  const scan=page.getByRole('button',{name:'Scan beacon',exact:true});
   await expect(scan).toBeVisible();
   expect(attempts).toBe(0);
   await scan.press('Enter');
   await expect.poll(()=>attempts).toBe(1);
-  await expect(page.getByRole('dialog',{name:'Scan for control beacons'})).toBeVisible();
+  await expect(page.getByRole('dialog',{name:'Scan beacon'})).toBeVisible();
   await expect(page.locator('#cancel-scan')).toBeFocused();
-  await expect(page.locator('#beacons')).toBeDisabled();
+  await expect(page.locator('#send-beacon')).toBeVisible();
+  await expect(page.locator('#scan-dialog input,#scan-dialog select')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(scan).toBeFocused();
   await page.clock.fastForward(21000);
@@ -181,43 +182,37 @@ test('scanning requires an action, stays cancellable, and restores keyboard focu
   await expect(scan).toBeFocused();
 });
 
-test('an unavailable selected viewer times out and lets the controller correct the code',async({page})=>{
+test('a stalled beacon is skipped automatically and the scan dialog reflows',async({page})=>{
   await page.setViewportSize({width:320,height:560});
   await page.clock.install();
   await page.addInitScript(()=>{
+    window.views=[];
     class BeaconSdk extends EventTarget {
       async connect(){}
-      async joinRoom({room}){
-        const list=room.startsWith('brsp_beacons_')?[{streamID:'brsp_target_beacon_0123456789abcdef01234567'}]:[];
+      async joinRoom(){
+        const list=['0123456789abcdef01234567','76543210fedcba9876543210'].map(id=>({streamID:'brsp_target_approve_'+id}));
         this.dispatchEvent(new CustomEvent('listing',{detail:{list}}));
       }
-      leaveRoom(){}
+      async view(streamId){window.views.push(streamId);}
       async disconnect(){}
     }
     Object.defineProperty(window,'VDONinjaSDK',{configurable:true,get:()=>BeaconSdk,set:()=>{}});
   });
   await page.goto('./?controller=1');
   await page.locator('#scan-beacons').click();
-  const dialog=page.getByRole('dialog',{name:'Scan for control beacons'});
-  await dialog.getByLabel('Available viewers').selectOption({label:'Viewer 012345'});
-  const code=dialog.getByLabel('Pairing code');
-  await code.fill('2222-2222-2222');
-  await dialog.getByRole('button',{name:'Pair with viewer'}).click();
-  await expect(dialog.getByRole('status')).toHaveText('Finding selected viewer');
-  await expect(code).toBeDisabled();
-  await page.clock.fastForward(13000);
-  await expect(dialog.getByRole('status')).toHaveText('Viewer unavailable. Check its code and try again.');
-  await expect(code).toBeFocused();
+  const dialog=page.getByRole('dialog',{name:'Scan beacon'});
+  await expect.poll(()=>page.evaluate(()=>window.views.length)).toBe(1);
+  await page.clock.fastForward(10100);
+  await page.clock.fastForward(1000);
+  await expect.poll(()=>page.evaluate(()=>window.views.length)).toBe(2);
+  expect(await page.evaluate(()=>new Set(window.views).size)).toBe(2);
   await expect(page.locator('#play')).toBeDisabled();
-  await page.clock.fastForward(4000);
-  await expect(dialog.getByRole('status')).toHaveText('Viewer unavailable. Check its code and try again.');
   await page.addStyleTag({content:':root{font-size:32px} button{letter-spacing:.12em;word-spacing:.16em}'});
   await expect.poll(()=>dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
-  await expect(dialog.getByRole('button',{name:'Pair with viewer'})).toHaveAttribute('data-text-fit',/single|wrapped/);
+  await expect(dialog.getByRole('button',{name:'Cancel'})).toHaveAttribute('data-text-fit',/single|wrapped/);
   await page.keyboard.press('Escape');
   await expect(page.locator('#scan-beacons')).toBeFocused();
 });
-
 
 test('canceling the beacon during signaling revokes the invitation and restores focus',async({page})=>{
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
@@ -225,15 +220,14 @@ test('canceling the beacon during signaling revokes the invitation and restores 
   const send=page.locator('#send-beacon');
   await expect(send).toBeVisible();
   await send.press('Enter');
-  await expect(page.getByRole('dialog',{name:'Send control beacon'})).toBeVisible();
-  const code=await page.locator('#beacon-code').innerText();
-  expect(code).toMatch(/^[A-Z2-9]{4}(?:-[A-Z2-9]{4}){2}$/);
+  await expect(page.getByRole('dialog',{name:'Transmit beacon'})).toBeVisible();
+  await expect(page.locator('#allow-pair')).toBeHidden();
+  await expect(page.locator('#beacon-dialog input')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(send).toBeFocused();
-  await expect(page.locator('#beacon-code')).toBeEmpty();
   await expect(page.locator('#stop')).toBeHidden();
+  await expect(page.locator('#scan-beacons')).toBeVisible();
   await send.click();
-  await expect(page.locator('#beacon-code')).not.toHaveText(code);
   await page.locator('#cancel-beacon').click();
 });
 

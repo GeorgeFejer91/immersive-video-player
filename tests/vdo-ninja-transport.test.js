@@ -463,3 +463,31 @@ test("discovery lists and removes beacons without dialing one or opening control
     await Promise.all([controller.stop(), target.stop()]);
   }
 });
+
+test("application-selected discovery opens lanes only after selecting a listed source", async () => {
+  const streamID = "brsp_target_approve_viewer";
+  const sdk = new MockSdk({}, [{ streamID, UUID: "approved-viewer" }]);
+  const transport = new VdoNinjaTransport({
+    role: "controller", room: "brsp_approval_room", sharedSecret: "public-discovery-value",
+    autoSelect: false, sdkFactory: () => sdk,
+  });
+  try {
+    await transport.start();
+    assert.equal(sdk.calls.some(([name]) => name === "view"), false);
+    function offer(uuid) {
+      sdk.emit("channelOpen", {
+        uuid, streamID, label: VDO_BRSP_CONTROL_CHANNEL,
+        channel: new MockChannel(VDO_BRSP_CONTROL_CHANNEL),
+      });
+    }
+    offer("approved-viewer");
+    assert.equal(transport.peers.size, 0);
+    await transport.selectTarget(streamID);
+    offer("other-viewer");
+    assert.equal(transport.peers.size, 0);
+    offer("approved-viewer");
+    assert.equal(transport.peers.has("approved-viewer"), true);
+  } finally {
+    await transport.stop();
+  }
+});

@@ -2,6 +2,10 @@
 
 Updated 2026-11-09. Evidence is scoped to the named surface, not a universal product/hardware claim.
 
+## Click-to-approve beacon pairing
+
+Local PASS: 41 Node checks, exact asset pins, context check, production build, and all 26 Chromium scenarios with public VDO enabled. A scan opened before transmission and automatically requested approval. Controls stayed disabled while approval was pending. Canceling the first transmitter caused the scan to request the next beacon. The selected viewer approved and used the existing private playback and VR controls. An independent scenario proved a phone transmitting and a Quest-layout browser scanning, including an older local revision followed by the phone's fresh state. Playback handoff, interrupted transport recovery, and pre-VR buffering checks passed. The scan popup reflowed at 320 px and enlarged type, and Escape restored trigger focus. XR exit used simulated WebXR. Physical Quest acceptance is pending.
+
 ## Explicit control beacons and VR commands
 
 Local PASS: 40 Node checks, production build, exact asset pins, context check, and all 25 Chromium checks with RUN_NETWORK=1. Real public VDO discovery listed two concurrent viewer invitations. Explicit selection and the code connected only the chosen viewer. Cancellation and pairing withdrew announcements from open scans. The SDK did not deliver departures to an existing scanner in the first run. Fresh room joins during an open scan corrected that behavior. Wrong-code timeout restored focus and allowed a retry. The controller recovered both a dropped peer and a restarted viewer listener on the selected private session. Playback, recenter, handoff, and data-only SDP checks passed. Observed route direct, rounded SDK RTT 0 ms, and one aligned preview drift sample 0.069 seconds.

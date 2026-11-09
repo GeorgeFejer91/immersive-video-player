@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { entryRoute, sharedSession, createBeacon, beaconName, pairingSession } from '../src/session-entry.js';
+import { entryRoute, sharedSession, createBeacon, pairingSession } from '../src/session-entry.js';
 
 const base='https://example.org/player/';
 const quest='Mozilla/5.0 (Linux; Android 12; Quest 3) OculusBrowser/39.2 Mobile VR Safari/537.36';
@@ -28,16 +28,16 @@ test('the same deployment has one rendezvous across query strings and fragments'
 });
 
 
-test('beacon names identify invitations without exposing the private pairing code',async()=>{
-  const discovery=await sharedSession(base), beacon=createBeacon();
-  assert.notEqual(createBeacon().streamId,beacon.streamId);
-  assert.match(beaconName(beacon.streamId),/^Viewer [A-F0-9]{6}$/);
-  assert.equal(beaconName('brsp_target_legacy'),undefined);
-  assert.equal(beacon.streamId.includes(beacon.code),false);
-  const paired=await pairingSession(discovery,beacon.streamId,beacon.code);
-  assert.deepEqual(await pairingSession(discovery,beacon.streamId,beacon.code.toLowerCase()),paired);
+test('beacons are public identifiers and an approval secret derives a private session',async()=>{
+  const discovery=await sharedSession(base),beacon=createBeacon();
+  assert.equal(typeof beacon,'string');
+  assert.notEqual(createBeacon(),beacon);
+  const secret='a'.repeat(64);
+  const paired=await pairingSession(discovery,beacon,secret);
+  assert.deepEqual(await pairingSession(discovery,beacon,secret),paired);
   assert.notEqual(paired.room,discovery.room);
   assert.notEqual(paired.secret,discovery.secret);
-  assert.notEqual((await pairingSession(discovery,beacon.streamId,beacon.code==='2222-2222-2222'?'3333-3333-3333':'2222-2222-2222')).room,paired.room);
-  await assert.rejects(pairingSession(discovery,beacon.streamId,'1234'));
+  assert.notEqual((await pairingSession(discovery,beacon,'b'.repeat(64))).room,paired.room);
+  await assert.rejects(pairingSession(discovery,beacon,'1234'));
+  await assert.rejects(pairingSession(discovery,'brsp_target_legacy',secret));
 });

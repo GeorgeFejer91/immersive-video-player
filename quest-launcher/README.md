@@ -15,7 +15,7 @@ adb devices -l
 adb -s <your-quest-serial> install -r <path-to-ImmersiveVideoPlayer-Quest.apk>
 ```
 
-In the headset, find **Immersive Video Player** under **Library → Unknown Sources** and open it. Choose **Send control beacon** in Quest Browser. On a phone or desktop, open [the same player URL](https://georgefejer91.github.io/immersive-video-player/), choose **Scan for beacons**, and select the viewer and enter its code. Tap **VR** in Quest Browser to enter immersive mode. The paired controller can request entry and end an active VR session. The viewer's **QR** button shares that URL. Use **Start**, **Pause**, or **Stop** from the paired controller.
+In the headset, find **Immersive Video Player** under **Library → Unknown Sources** and open it. Choose **Transmit beacon** in Quest Browser. On a phone or desktop, open [the same player URL](https://georgefejer91.github.io/immersive-video-player/) and choose **Scan beacon**. When the request appears in Quest Browser, choose **Allow to pair**. Tap **VR** in Quest Browser to enter immersive mode. The paired controller can request entry and end an active VR session. The viewer's **QR** button shares that URL. Use **Start**, **Pause**, or **Stop** from the paired controller.
 
 Quest Browser requires a local gesture for media and immersive WebXR. The launcher opens the viewer, and **VR** supplies the browser gesture. Internet access is required for synchronization.
 

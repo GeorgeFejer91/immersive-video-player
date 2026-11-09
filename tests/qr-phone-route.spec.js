@@ -3,7 +3,7 @@ import { pairWithBeacon, sendBeacon } from './beacon-fixture.js';
 
 const quest='Mozilla/5.0 (Linux; Android 12; Quest 3) OculusBrowser/39.2 Mobile VR Safari/537.36';
 
-test('scan lists two viewers, pairs only the chosen one, and controls its VR session',async({browser,baseURL})=>{
+test('scan requests approval, retries a canceled beacon, and controls the approved VR session',async({browser,baseURL})=>{
   test.skip(process.env.RUN_NETWORK!=='1','Opt-in: public VDO service is an external dependency.');
   test.setTimeout(120000);
   const pages=[];
@@ -42,21 +42,21 @@ test('scan lists two viewers, pairs only the chosen one, and controls its VR ses
     await controller.locator('#scan-beacons').click();
     await expect(controller.locator('#scan-status')).toHaveText('Searching for beacons…');
     const first=await open(baseURL,quest),second=await open(baseURL,quest);
-    const other=await sendBeacon(first),chosen=await sendBeacon(second);
-    await expect(controller.locator('#beacons option').filter({hasText:other.name})).toHaveCount(1);
-    await pairWithBeacon(controller,chosen);
-    await expect(first.locator('#beacon-dialog')).toBeVisible();
+    await sendBeacon(first);
+    await expect(first.locator('#allow-pair')).toBeVisible({timeout:20000});
+    await expect(controller.locator('#play')).toBeDisabled();
+    await expect(controller.locator('#beacon-actions')).toBeVisible();
+    await sendBeacon(second);
+    await expect(second.locator('#allow-pair')).toBeHidden();
+    await first.locator('#cancel-beacon').click();
+    await pairWithBeacon(controller,second);
     await expect(second.locator('#beacon-dialog')).toBeHidden();
-    await expect(second.locator('#send-beacon')).toBeHidden();
     await expect(second.locator('body')).toHaveAttribute('data-peers','1');
     await expect(controller.locator('#headset-status')).toBeFocused();
 
     const observer=await open(baseURL);
     await observer.locator('#scan-beacons').click();
-    await expect(observer.locator('#beacons option').filter({hasText:other.name})).toHaveCount(1);
-    await expect(observer.locator('#beacons option').filter({hasText:chosen.name})).toHaveCount(0);
-    await first.locator('#cancel-beacon').click();
-    await expect(observer.locator('#beacons option').filter({hasText:other.name})).toHaveCount(0,{timeout:12000});
+    await expect(observer.locator('#scan-status')).toHaveText(/Searching for beacons/);
     await observer.locator('#cancel-scan').click();
 
     await controller.getByRole('button',{name:'Request VR',exact:true}).click();
@@ -79,6 +79,27 @@ test('scan lists two viewers, pairs only the chosen one, and controls its VR ses
   }finally{await Promise.all(pages.map(page=>page.close()));}
 });
 
+
+test('a phone can transmit and a Quest-layout browser can scan and control playback',async({browser,baseURL})=>{
+  test.skip(process.env.RUN_NETWORK!=='1','Opt-in: public VDO service is an external dependency.');
+  const phone=await browser.newPage({viewport:{width:390,height:844}});
+  const headset=await browser.newPage({userAgent:quest,viewport:{width:800,height:560},deviceScaleFactor:.5});
+  try{
+    await Promise.all([phone.goto(baseURL),headset.goto(baseURL)]);
+    await expect(phone.locator('#send-beacon')).toBeVisible();
+    await expect(headset.locator('#scan-beacons')).toBeVisible();
+    await headset.locator('#recenter').click();
+    await expect(headset.locator('body')).toHaveAttribute('data-revision','1');
+    await pairWithBeacon(headset,await sendBeacon(phone));
+    await expect(headset.locator('body')).toHaveAttribute('data-revision','0');
+    await phone.waitForFunction(()=>document.querySelector('video').readyState>=3);
+    await headset.locator('#play').click();
+    for(const page of [phone,headset])await expect(page.locator('body')).toHaveAttribute('data-playing','true',{timeout:10000});
+    await headset.locator('#halt').click();
+    for(const page of [phone,headset])await expect(page.locator('body')).toHaveAttribute('data-playing','false');
+    await expect(headset.locator('#remote-vr')).toBeHidden();
+  }finally{await Promise.all([phone.close(),headset.close()]);}
+});
 
 test('shared public URL opens phone playback controls without a pairing dialog',async({browser,page})=>{
   await page.routeWebSocket('wss://wss.vdo.ninja',()=>{});
@@ -105,6 +126,7 @@ test('shared public URL opens phone playback controls without a pairing dialog',
         await expect(phone.getByRole('dialog',{name:'Headset connection'})).toBeHidden();
         await expect(phone.locator('#phone-controls')).toBeVisible();
         await expect(phone.locator('#phone-header #scan-beacons')).toBeVisible();
+        await expect(phone.locator('#phone-header #send-beacon')).toBeVisible();
         await expect(phone.locator('#arm')).toBeHidden();
         expect(new URL(phone.url()).hash).toBe('');
       }finally{await context.close();}
