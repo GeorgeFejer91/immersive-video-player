@@ -35,7 +35,7 @@ export function createViewer(stage, video, { preview = false } = {}) {
       #include <colorspace_fragment>
     }` });
   const sphere = new THREE.Mesh(new THREE.SphereGeometry(10, 64, 40), material); scene.add(sphere);
-  let longitude = 0, latitude = 0, drag, xrBase = 0, lastRecenter = 0;
+  let longitude = 0, latitude = 0, drag, xrYaw = 0;
   let dirty = true, lastFrame = -1, lastView;
   const frameKey = 'requestVideoFrameCallback' in video ? () => texture.version : () => video.currentTime;
   const resize = () => {
@@ -56,21 +56,24 @@ export function createViewer(stage, video, { preview = false } = {}) {
       if(document.hidden||video.readyState<2||(!dirty&&frame===lastFrame))return;
       dirty=false;lastFrame=frame;
     }
-    if (!renderer.xr.isPresenting) camera.quaternion.setFromEuler(new THREE.Euler(-latitude, longitude, 0, 'YXZ'));
+    const immersive=renderer.xr.isPresenting;
+    const rigYaw=immersive?xrYaw:0;
+    if(rig.rotation.y!==rigYaw)rig.rotation.y=rigYaw;
+    if(!immersive)camera.quaternion.setFromEuler(new THREE.Euler(-latitude, longitude, 0, 'YXZ'));
     // Keep the sphere centered at the eyes even when the wearer walks.
-    if(renderer.xr.isPresenting){renderer.xr.updateCamera(camera);rig.updateWorldMatrix(true,false);sphere.position.copy(renderer.xr.getCamera().position).applyMatrix4(rig.matrixWorld);}
+    if(immersive){rig.updateWorldMatrix(true,false);renderer.xr.updateCamera(camera);sphere.position.copy(renderer.xr.getCamera().position).applyMatrix4(rig.matrixWorld);}
     else camera.getWorldPosition(sphere.position);
     renderer.render(scene,camera);
   });
-  renderer.xr.addEventListener('sessionend',()=>{xrBase=0;rig.rotation.y=0;longitude=0;latitude=0;});
-  function recenter() {
-    if(renderer.xr.isPresenting){ const e=new THREE.Euler().setFromQuaternion(renderer.xr.getCamera().quaternion,'YXZ'); xrBase=-e.y; rig.rotation.y=xrBase; }
-    else { longitude=0;latitude=0; }
-  }
   return {
     renderer,
-    update({projection,lens,fov,yaw,pitch,recenter:serial}) {
-      const nextView=`${projection}:${lens}:${fov}:${yaw}:${pitch}:${serial}`;
+    recenter() {
+      if(renderer.xr.isPresenting)xrYaw=-new THREE.Euler().setFromQuaternion(renderer.xr.getCamera().quaternion,'YXZ').y;
+      else {longitude=0;latitude=0;drag=undefined;}
+      dirty=true;
+    },
+    update({projection,lens,fov,yaw,pitch}) {
+      const nextView=`${projection}:${lens}:${fov}:${yaw}:${pitch}`;
       if(nextView===lastView)return;
       lastView=nextView;dirty=true;
       uniforms.mode.value=MODES.indexOf(projection);
@@ -78,7 +81,6 @@ export function createViewer(stage, video, { preview = false } = {}) {
       uniforms.yaw.value=THREE.MathUtils.degToRad(yaw);
       uniforms.pitch.value=THREE.MathUtils.degToRad(pitch);
       if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix();}
-      if(serial!==lastRecenter){lastRecenter=serial;recenter();}
     },
     async enterVR(isAllowed) {
       if(renderer.xr.isPresenting)return;

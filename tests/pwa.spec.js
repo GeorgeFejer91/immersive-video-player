@@ -29,8 +29,12 @@ test('controller has a valid subpath-safe manifest, real icons and an offline sh
   expect(cached.length).toBeGreaterThan(5);expect(cached.length).toBeLessThanOrEqual(32);
   for(const address of cached){const url=new URL(address);expect(url.search).toBe('');expect(url.hash).toBe('');expect(url.pathname).not.toMatch(/\/media\/|\/downloads\/|\.apk$/);}
   await context.setOffline(true);
-  await page.goto('./?controller=1#room=brsp_offline12345678&secret='+ 'a'.repeat(43));
+  const start=new URL(manifest.start_url,manifestResponse.url());
+  start.hash='room=brsp_offline12345678&secret='+ 'a'.repeat(43);
+  await page.goto(start.href);
   await expect(page.locator('body')).toHaveClass(/phone/);await expect(page.locator('#phone-controls')).toBeVisible();
+  const recenter=page.getByRole('button',{name:'Recenter view',exact:true});
+  await expect(recenter).toBeVisible();await expect(recenter).toBeDisabled();
   await expect.poll(()=>new URL(page.url()).hash).toBe('');
   await context.setOffline(false);
 });

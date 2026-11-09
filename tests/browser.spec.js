@@ -67,6 +67,48 @@ test('seeking a playing video preserves its playing state through transient nati
   await page.locator('#pause').click();await expect(page.locator('body')).toHaveAttribute('data-playing','false');
 });
 
+test('ending a VR session preserves the browser view until Recenter view is pressed',async({page})=>{
+  await page.addInitScript(()=>{
+    const gl=WebGL2RenderingContext.prototype,locations=new WeakSet();
+    const getLocation=gl.getUniformLocation,setMatrix=gl.uniformMatrix4fv;
+    gl.getUniformLocation=function(program,name){
+      const location=getLocation.call(this,program,name);
+      if(location&&name==='modelViewMatrix')locations.add(location);
+      return location;
+    };
+    gl.uniformMatrix4fv=function(location,transpose,data,...rest){
+      if(locations.has(location))window.pan=data[2];
+      return setMatrix.call(this,location,transpose,data,...rest);
+    };
+    gl.makeXRCompatible=async()=>{};
+    window.XRWebGLBinding=undefined;
+    window.XRWebGLLayer=class {framebufferWidth=320;framebufferHeight=240;};
+    class Session extends EventTarget {
+      updateRenderState(){}
+      async requestReferenceSpace(){return {};}
+      requestAnimationFrame(){window.xrStarted=true;return 1;}
+      cancelAnimationFrame(){}
+      async end(){this.dispatchEvent(new Event('end'));}
+    }
+    Object.defineProperty(navigator,'xr',{value:Object.assign(new EventTarget(),{
+      requestSession:async()=>window.xrSession=new Session()
+    })});
+  });
+  await page.goto('./?role=viewer');
+  const pan=()=>page.evaluate(()=>Math.abs(window.pan));
+  await page.locator('#stage').press('ArrowRight');
+  await expect.poll(pan).toBeGreaterThan(.05);
+  await page.locator('#enter-vr').click();
+  await page.waitForFunction(()=>window.xrStarted,undefined,{timeout:5000});
+  await page.evaluate(async()=>{
+    await window.xrSession.end();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  });
+  expect(await pan()).toBeGreaterThan(.05);
+  await page.getByRole('button',{name:'Recenter view',exact:true}).press('Enter');
+  await expect.poll(pan).toBe(0);
+});
+
 test('rendered labels reflow at phone widths, landscape, desktop, large type and spacing',async({page})=>{
   await page.goto('./?role=viewer');
   await expect(page.locator('html')).toHaveAttribute('data-pretext','measured');
@@ -157,8 +199,13 @@ test('public VDO route: local phone video, Start/Pause/Stop, data-only sync and 
   await expect(phone.locator('#headset-status')).toHaveAccessibleName('Recenter headset');
   await expect(phone.locator('#headset-state')).toHaveText('Headset synced');
   const recenterRevision=Number(await viewer.locator('body').getAttribute('data-revision'));
-  await phone.getByRole('button',{name:'Recenter headset'}).click();
+  const recenter=phone.getByRole('button',{name:'Recenter view',exact:true});
+  await recenter.press('Enter');
   await expect(viewer.locator('body')).toHaveAttribute('data-revision',String(recenterRevision+1));
+  await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','synced');
+  await expect(recenter).toBeFocused();
+  await phone.getByRole('button',{name:'Recenter headset'}).click();
+  await expect(viewer.locator('body')).toHaveAttribute('data-revision',String(recenterRevision+2));
   await expect(phone.locator('#phone-dialog')).toBeHidden();
   await expect(phone.locator('#headset-status')).toHaveAttribute('data-state','synced');
   expect(await phone.locator('#headset-status').evaluate(el=>getComputedStyle(el).animationName)).toBe('headset-pulse');

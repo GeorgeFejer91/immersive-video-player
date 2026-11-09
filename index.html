@@ -34,7 +34,6 @@
             <div id="transport" class="transport"><button id="play" class="primary">Play</button><button id="pause">Pause</button><button id="halt">Stop</button></div>
             <label class="range-row" for="seek"><span>Time</span><input id="seek" type="range" min="0" max="467.3" step="0.1" value="0"><output id="position">00:00</output></label>
             <label class="range-row" for="volume"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.05" value="1"><output id="volume-value">100%</output></label>
-            <button id="recenter">Recenter</button>
           </div></details>
           <details id="view-settings" name="controls" data-accordion><summary>View</summary><div class="accordion-content">
             <label class="select-row" for="projection"><span>Mode</span><select id="projection"><option value="fisheye">Fisheye</option><option value="equirect360">360°</option><option value="equirect180">180°</option><option value="flat">Flat</option></select></label>
@@ -45,7 +44,7 @@
           </div></details>
         </fieldset>
       </div>
-      <footer class="shell-footer"><button id="hide-controls" class="fixed-action">Hide</button></footer>
+      <footer class="shell-footer"><button id="recenter" class="fixed-action" disabled>Recenter view</button><button id="hide-controls" class="fixed-action">Hide</button></footer>
     </aside>
   </main>
   <dialog id="phone-dialog" aria-label="Headset connection"></dialog>

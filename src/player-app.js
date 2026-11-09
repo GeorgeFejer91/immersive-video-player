@@ -24,11 +24,15 @@ const commandNotice=error=>({viewer_needs_vr:'Tap VR on the headset',viewer_buff
 const remoteStatus=text=>{if($('connection').textContent!==text)$('connection').textContent=text;};
 const targetNow=()=>performance.now()+(follows?offset:0);
 function canControl(){return !viewerOccupied && (phone||armed) && (!follows || (connection?.phase==='ready' && synced && lastStateAt>0 && performance.now()-lastStateAt<2000));}
-function canRecenter(){return phone&&canControl()&&connection.acceptedScopes.includes('player.view');}
+function canRecenter(){return phone?canControl()&&connection.acceptedScopes.includes('player.view'):!viewerOccupied&&Boolean(view);}
 function refreshEnabled(){
   const available=canControl();
   const disabled=!available||Boolean(pending);
   $('controls').disabled=$('phone-controls').disabled=disabled;
+  const recenter=$('recenter');
+  recenter.disabled=!canRecenter();
+  if(!recenter.disabled&&pending&&pending.action!=='ping')recenter.setAttribute('aria-disabled','true');
+  else recenter.removeAttribute('aria-disabled');
   if(phone){
     const connect=$('connect'),restoreFocus=available&&document.activeElement===connect;
     if(connect.hidden!==available)connect.hidden=available;
@@ -71,6 +75,7 @@ if(phone){
   video.removeAttribute('aria-hidden');video.setAttribute('aria-label','Jona');video.classList.add('stretch-body');
   stage.classList.add('stretch-body');stage.setAttribute('role','region');stage.setAttribute('aria-label','Jona panorama');
   screen.classList.add('stretch-shell');
+  screen.insertBefore($('recenter'),$('install-app'));
   $('phone-controls').append($('transport'),$('seek').closest('label'));$('controls').hidden=true;$('play').textContent='Start';
   $('hide-controls').textContent='Close';$('phone-dialog').append($('panel'));
   video.muted=true; notice('');
@@ -137,9 +142,12 @@ function showConnection(){
 }
 $('headset-status').addEventListener('click',()=>{
   if(!canRecenter()){showConnection();return;}
+  requestRecenter();
+});
+function requestRecenter(){
   if(pending?.action==='ping')recenterAfterPing=true;
   else issue('recenter',{},'player.view');
-});
+}
 $('phone-dialog').addEventListener('close',()=>{
   if($('headset-status').hasAttribute('aria-expanded'))$('headset-status').setAttribute('aria-expanded','false');
 });
@@ -208,12 +216,15 @@ function localPause(){ model.command('player.transport','pause',{},true);renderS
 function applyCommand(command){
   if(command.expectedRevision!==null && command.expectedRevision!==model.state.revision) return {ok:false,revision:model.state.revision,result:null,error:'revision_conflict'};
   const outcome=model.command(command.scope,command.action,command.args,armed&&video.readyState>=3);
-  if(outcome.ok)renderState(model.snapshot());
+  if(outcome.ok){
+    renderState(model.snapshot());
+    if(command.scope==='player.view'&&command.action==='recenter')view?.recenter();
+  }
   else if(outcome.error==='viewer_not_ready')outcome.error=armed||enabling?'viewer_buffering':'viewer_needs_vr';
   return outcome;
 }
 function issue(action,args={},scope='player.transport'){
-  if(!canControl()||pending)return;
+  if(pending||!(action==='recenter'?canRecenter():canControl()))return;
   if(phone&&enabling&&(action==='pause'||action==='stop'||action==='seek'))video.pause();
   if(!follows){const result=applyCommand({scope,action,args,expectedRevision:null});connection?.publishState(); if(!result.ok)notice(commandNotice(result.error));return;}
   const expectedRevision=phone&&action==='projection'?state.revision:null;
@@ -235,7 +246,7 @@ $('pause').addEventListener('click',()=>issue('pause'));
 $('halt').addEventListener('click',()=>issue('stop'));
 $('seek').addEventListener('change',()=>issue('seek',{position:Number($('seek').value)}));
 $('volume').addEventListener('change',()=>issue('volume',{volume:Number($('volume').value)}));
-$('recenter').addEventListener('click',()=>issue('recenter',{},'player.view'));
+$('recenter').addEventListener('click',requestRecenter);
 for(const id of ['projection','lens','fov','yaw','pitch'])$(id).addEventListener('change',()=>issue('projection',{
   mode:state.projection,lens:state.lens,fov:state.fov,yaw:state.yaw,pitch:state.pitch,
   [id==='projection'?'mode':id]:id==='projection'?$(id).value:Number($(id).value)
@@ -340,7 +351,10 @@ async function startRemote(){
       offset=clockOffset(samples);synced=true;remoteStatus('Connected');
       if(samples.length<4)setTimeout(()=>{if(active())sendClockPing();},100);
     } else if(!e.detail.ok)notice(commandNotice(e.detail.error));
-    else notice('');
+    else {
+      if(action==='recenter')view?.recenter();
+      notice('');
+    }
     refreshEnabled();
     if(recenterAfterPing){recenterAfterPing=false;issue('recenter',{},'player.view');}
     scheduleLens();

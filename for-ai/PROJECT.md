@@ -4,7 +4,7 @@ Updated 2026-11-09. This file owns the active checklist; do not create a competi
 
 ## Active goal: physical Quest playback and recenter
 
-The controller distinguishes a viewer that needs its local **VR** gesture from an armed viewer that needs more media buffered. The glowing headset button sends the existing recenter action to the paired Quest. Connection controls remain available under **Video settings**.
+The controller distinguishes a viewer that needs its local **VR** gesture from an armed viewer that needs more media buffered. **Recenter view** is visible in the viewer and controller, including the installed app. The glowing headset button is a shortcut for the same paired action. Only an explicit recenter command changes the forward heading. Browser pan and immersive heading persist separately across VR sessions. Connection controls remain available under **Video settings**.
 
 - [x] Reproduce and distinguish the Start readiness outcomes.
 - [x] Observe the paired desktop Start advance and decode video in a physical Quest immersive session, and Stop pause and reset it.

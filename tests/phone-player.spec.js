@@ -19,12 +19,15 @@ test('phone is a local video player with transport and an accessible headset con
   expect(await page.locator('#video').evaluate(v=>!v.controls&&v.muted&&new URL(v.currentSrc||v.src).pathname.endsWith('/media/jona.mp4'))).toBe(true);
   const connect=page.locator('#phone-header #connect');
   await expect(connect).toBeVisible();
-  expect((await page.locator('body').innerText()).trim().split(/\s+/).length).toBeLessThanOrEqual(14);
+  expect((await page.locator('body').innerText()).trim().split(/\s+/).length).toBeLessThanOrEqual(16);
+  const recenter=page.getByRole('button',{name:'Recenter view',exact:true});
+  await expect(recenter).toBeVisible();await expect(recenter).toBeDisabled();
   for(const [width,height] of [[320,560],[390,844],[640,390],[844,390],[1280,720]]){
     await page.setViewportSize({width,height});await page.waitForTimeout(150);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
     const boxes=await page.locator('#phone-header,#video,#phone-controls').evaluateAll(els=>els.map(el=>{const r=el.getBoundingClientRect();return{top:r.top,bottom:r.bottom,width:r.width,height:r.height};}));
     expect(boxes[1].height).toBeGreaterThan(100);expect(boxes[0].bottom).toBeLessThanOrEqual(boxes[1].top+1);expect(boxes[1].bottom).toBeLessThanOrEqual(boxes[2].top+1);expect(boxes[2].bottom).toBeLessThanOrEqual(height);
+    await expect(recenter).toBeInViewport();
   }
   await headset.click();await expect(settings).toBeVisible();
   await page.locator('#hide-controls').click();await expect(settings).toBeHidden();await expect(headset).toBeFocused();
@@ -36,6 +39,7 @@ test('phone is a local video player with transport and an accessible headset con
   expect(await page.locator('.screen').evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(32);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   expect(await connect.evaluate(el=>el.scrollWidth<=el.clientWidth+2&&el.scrollHeight<=el.clientHeight+2)).toBe(true);
+  expect(await recenter.evaluate(el=>el.scrollWidth<=el.clientWidth+2&&el.scrollHeight<=el.clientHeight+2)).toBe(true);
   expect(await page.locator('#phone-controls button').evaluateAll(els=>els.every(el=>el.scrollWidth<=el.clientWidth+2&&el.scrollHeight<=el.clientHeight+2))).toBe(true);
 });
 

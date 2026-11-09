@@ -7,7 +7,7 @@ button,.button-link { display:grid; grid-template-columns:minmax(0,1fr); align-i
 button:hover,.button-link:hover { background:#e5e7df; }
 .primary { color:#fff; background:#314d3b; border-color:#314d3b; }
 .primary:hover { background:#243d2d; }
-button:disabled, input:disabled, select:disabled { opacity:.48; cursor:default; }
+button:disabled, input:disabled, select:disabled,#recenter[aria-disabled=true] { opacity:.48; cursor:default; }
 :focus-visible { outline:3px solid #b66b29; outline-offset:2px; }
 .stretch-shell { --ui-font:16px; --gap:8px; --control:44px; --summary:32px; --range:32px; display:grid; grid-template-rows:auto minmax(0,1fr) auto; gap:var(--gap); min-width:0; min-height:0; padding:var(--gap); font-size:var(--ui-font); }
 .shell-header { min-width:0; }
@@ -17,9 +17,10 @@ h1 { font-size:1.125em; line-height:1.3; font-weight:500; margin:0; overflow-wra
 .stretch-body { min-width:0; min-height:0; }
 .shell-footer,.actions,.transport { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--gap); min-width:0; }
 .shell-footer { grid-template-columns:1fr; }
+.shell-footer:has(#recenter) { grid-template-columns:repeat(2,minmax(0,1fr)); }
 #install-app { grid-column:1 / -1; }
 .screen>#install-app { position:absolute; top:12px; left:12px; max-width:calc(100% - 24px); background:#151716; color:#f7f7f0; z-index:1; }
-body.phone .screen { grid-template-rows:auto minmax(0,1fr) auto auto; }
+body.phone .screen { grid-template-rows:auto minmax(0,1fr); grid-auto-rows:auto; }
 body.phone .screen>#install-app { position:static; max-width:none; }
 .transport { grid-template-columns:repeat(3,minmax(0,1fr)); }
 details { margin:0; min-width:0; }
@@ -78,7 +79,7 @@ body.phone .screen[data-preview=warped] #video { position:absolute; width:1px; h
 #phone-controls { min-width:0; margin:0; padding:0; border:0; }
 #phone-controls .range-row { margin-top:var(--gap); }
 #phone-controls .transport button { color:#f7f7f0; }
-#phone-controls .transport button:hover { background:#253229; }
+#phone-controls .transport button:hover,body.phone #recenter:hover { background:#253229; }
 #phone-dialog { width:min(384px,calc(100vw - 24px)); padding:0; }
 #phone-dialog .panel { height:min(560px,calc(100dvh - 28px)); border:0; }
 #warp-dialog { --gap:6px; --range:36px; --popup-top:max(12px,env(safe-area-inset-top)); --popup-bottom:max(12px,env(safe-area-inset-bottom)); inset-block-start:var(--popup-top); inset-block-end:auto; margin-block:0; max-height:calc(100dvh - var(--popup-top) - var(--popup-bottom)); }
