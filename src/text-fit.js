@@ -22,7 +22,7 @@ export async function measureTextRegions(){
       const {width,height:rawHeight}=shell.getBoundingClientRect();const height=Math.min(rawHeight,innerHeight),short=innerHeight<=430;
       const gap=short?4:Math.round(Math.max(6,Math.min(20,width*.025,height*.018)));
       let size=Math.max(floor,Math.min(20,Math.floor(Math.min(width*.052,height*.034))));
-      const actions=[...shell.querySelectorAll('.fixed-action')].filter(el=>el.getClientRects().length);
+      const actions=[...shell.querySelectorAll('.fixed-action')].filter(el=>el.checkVisibility());
       while(size>floor){
         const allFit=actions.every(el=>{
           const css=getComputedStyle(el),budget=el.clientWidth-px(css.paddingLeft)-px(css.paddingRight)-2;

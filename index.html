@@ -45,6 +45,22 @@
             <label class="range-row" for="pitch"><span>Pitch</span><input id="pitch" type="range" min="-90" max="90" step="5" value="0"><output id="pitch-value">0°</output></label>
           </div></details>
         </fieldset>
+        <details id="affect-settings" name="controls" data-accordion hidden>
+          <summary>Affect Tracker</summary>
+          <div class="accordion-content">
+            <div class="actions">
+              <label class="affect-toggle"><input id="show-affect" type="checkbox"><span>Show Flubber</span></label>
+              <button id="affect-import" class="fixed-action" type="button">Import JSON</button>
+              <input id="affect-file" type="file" accept=".json,application/json" aria-label="Affect Tracker placement file" hidden>
+            </div>
+            <div class="affect-placement">
+              <label><span>Azimuth (°)</span><input name="azimuthDegrees" type="number" step="any" required></label>
+              <label><span>Elevation (°)</span><input name="elevationDegrees" type="number" step="any" required></label>
+              <label><span>Diameter (°)</span><input name="angularDiameterDegrees" type="number" step="any" required></label>
+            </div>
+            <p id="affect-import-status" class="status" role="status"></p>
+          </div>
+        </details>
       </div>
       <footer class="shell-footer"><button id="recenter" class="fixed-action" disabled>Recenter view</button><button id="hide-controls" class="fixed-action">Hide</button></footer>
     </aside>

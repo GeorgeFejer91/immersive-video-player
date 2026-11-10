@@ -1,6 +1,20 @@
 # Project contract
 
-Updated 2026-11-09. This file owns the active checklist; do not create a competing task ledger.
+Updated 2026-11-10. This file owns the active checklist; do not create a competing task ledger.
+
+## Active update: immersive Affect Tracker
+
+Add an Affect Tracker group to the viewer controls and a flat Flubber inside the video sphere. Keep its center at a fixed azimuth and elevation relative to the panorama forward direction, translate with the participant's eye position, and face the eye midpoint. A single angular diameter controls apparent size at a fixed radius. The default is 0° azimuth, −15° elevation and 9° diameter. The participant can show the overlay independently of playback and rate valence and arousal with a WebXR thumbstick. Placement and current affect coordinates are local to the viewer.
+
+- [x] Sync the product to `2bdcc62`, preserve the earlier local test evidence, and review the Affect Tracker lineages.
+- [x] Implement a measured native accordion, live placement controls and versioned local JSON import.
+- [x] Verify radial placement, feedback input, keyboard and responsive layout, and playback through the production build.
+- [ ] Verify the Pages release.
+- [ ] Repeat the immersive check on a physical Quest when a wearer is available.
+
+Playground supplies the WebXR Flubber and controller conventions. Research supplies the maintained BSD-licensed Flubber math and the right-positive, up-positive placement convention. Its P6 profile configures a flat video and feedback as one rig. The immersive player uses a dedicated three-angle profile for feedback inside a sphere. The Unity upstream documents a center-bottom position near −15°. [Playground WebXR](https://github.com/GeorgeFejer91/affect-tracker-playground/blob/91783c13f7af4ce6ddce787d04f514de5269f2f3/site/src/webxr-study.js), [Research XR geometry](https://github.com/GeorgeFejer91/affect-tracker-research/blob/06e017dce7307dd7a01e885773517a12f216cf07/site/src/research/xr-layout.js), [Unity AffectTracker](https://github.com/afourcade/AffectTracker).
+
+Online Affect Rating and VLC+ keep feedback separate from transport. Research Planner and Runner own experiment recipes and acquisition separately. The stimulus pool catalogs research media and ratings. [Online Affect Rating](https://github.com/GeorgeFejer91/online-affect-rating), [VLC+](https://github.com/GeorgeFejer91/vlc-plus), [Planner](https://github.com/GeorgeFejer91/experiment-planner-ledger), [Runner](https://github.com/GeorgeFejer91/experiment-runner).
 
 ## Active update: click-to-approve beacon pairing
 

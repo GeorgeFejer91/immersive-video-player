@@ -6,4 +6,6 @@ BRSP/1 core and VDO adapter originate from the installed `browser-remote-sync-pr
 
 Three.js **0.187.0**, QRCode **1.5.4** and Pretext **1.0.0** are MIT-licensed; versions and transitive dependencies are locked in `package-lock.json`. See each upstream package for source and license: https://github.com/mrdoob/three.js, https://github.com/soldair/node-qrcode, https://github.com/chenglou/pretext. Their license files are also included under `public/licenses/` in the site.
 
+Flubber geometry and color math in `src/vendor/affect-tracker/math.js` comes from [Affect Tracker Research at 06e017d](https://github.com/GeorgeFejer91/affect-tracker-research/blob/06e017dce7307dd7a01e885773517a12f216cf07/site/src/math.js). The unmodified source and its BSD 3-Clause license are hash-pinned. The license is included in the site under `public/licenses/affect-tracker-BSD-3-Clause.txt`.
+
 Jona is a separately authorized film asset. Publication authorization and exact bytes are documented in `public/media-provenance.json`; software licenses do not grant reuse rights in the film.

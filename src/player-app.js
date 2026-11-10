@@ -2,6 +2,7 @@ import { Player, positionAt, clockOffset, validateState, previewMatches, SCOPES 
 import { BRSPConnection } from './remote/brsp.js';
 import { VdoNinjaTransport } from './remote/vdo-ninja-transport.js';
 import { createViewer } from './viewer.js';
+import { mountAffectControls } from './affect-controls.js';
 import { measureTextRegions } from './text-fit.js';
 import { TargetGroup } from './remote/target-group.js';
 import { initPairing } from './pairing.js';
@@ -79,6 +80,7 @@ function updatePhoneStatus(){
 $('arm').hidden=phone||armOnVR;
 try { if(!phone)view=createViewer(stage,video); }
 catch { notice('Video unavailable'); $('enter-vr').disabled=true; }
+if(view)mountAffectControls($('affect-settings'),view.setAffectPlacement);
 
 if(phone){
   $('role-label').textContent='Controller';

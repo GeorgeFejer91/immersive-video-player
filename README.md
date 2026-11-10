@@ -14,6 +14,24 @@ Each beacon expires after two minutes or closes when pairing succeeds. The Quest
 
 Use **Recenter view** in the viewer browser, paired controller, or installed app. In VR, look where you want the center to be, including up or down, then press the button. The glowing headset icon is a controller shortcut for the same action. The player remembers the browser view and the VR center separately. To disconnect, open **Video settings**, then **Connection**. Video settings also let you select a warp preset or adjust **Angle** from 180° to 360° in 1° steps. **Jona 240°** restores the fitted default. Drag the preview to look around. The controller preview is silent.
 
+## Affect Tracker
+
+In the viewer's **Affect Tracker** accordion, select **Show Flubber** to add the overlay to the panorama. Set its placement before entering VR. Azimuth increases to the right and elevation increases upward from the panorama center. The flat surface faces the viewer's eyes. **Diameter** sets the base shape's angular size at a fixed distance of 1.5 m. The Flubber outline changes with the rating.
+
+In VR, move the right thumbstick left or right for valence and down or up for arousal. Releasing the stick holds the current rating. Placement and ratings stay in the viewer tab for that session.
+
+Use **Import JSON** to load a placement file. This example matches the defaults. Azimuth accepts −180° to 180°, elevation −80° to 80°, and diameter 1° to 30°. The file must be 4 KB or smaller.
+
+```json
+{
+  "schema": "immersive-video-player-affect-placement",
+  "version": 1,
+  "azimuthDegrees": 0,
+  "elevationDegrees": -15,
+  "angularDiameterDegrees": 9
+}
+```
+
 ## How it works
 
 The public VDO.Ninja room lists temporary beacon IDs. On approval, the transmitter sends a fresh secret to the requesting browser over its WebRTC data channel. The browsers use the secret to open a separate private BRSP/1 session for one controller. The secret stays out of the listing, URL, and persistent storage. BRSP verifies role-bound proofs, negotiates command scopes, and confirms pairing after the controller receives fresh viewer state and a clock sample. The viewer orders playback, projection, and VR commands. VDO.Ninja SDK 1.5.5 carries controls and state over data-only WebRTC.

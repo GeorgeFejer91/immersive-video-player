@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { JONA_LENS, MODES } from './player.js';
+import { createAffectOverlay } from './affect-overlay.js';
 
 // A ray-to-source shader: the circular fisheye source is dewarped, not stretched onto equirectangular UVs.
 export function createViewer(stage, video, { preview = false } = {}) {
@@ -36,7 +37,9 @@ export function createViewer(stage, video, { preview = false } = {}) {
     }` });
   const sphere = new THREE.Mesh(new THREE.SphereGeometry(10, 64, 40), material); scene.add(sphere);
   let longitude = 0, latitude = 0, drag;
+  let affect;
   const xrCenter = new THREE.Quaternion(), flatCenter = new THREE.Quaternion();
+  const affectEye = new THREE.Vector3();
   let dirty = true, lastFrame = -1, lastView;
   const frameKey = 'requestVideoFrameCallback' in video ? () => texture.version : () => video.currentTime;
   const resize = () => {
@@ -51,7 +54,7 @@ export function createViewer(stage, video, { preview = false } = {}) {
   stage.addEventListener('pointerup', () => { drag=undefined; });
   stage.addEventListener('pointercancel', () => { drag=undefined; });
   stage.addEventListener('keydown', e => { if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return; e.preventDefault(); longitude+=(e.key==='ArrowLeft'?.08:e.key==='ArrowRight'?-.08:0); latitude=THREE.MathUtils.clamp(latitude+(e.key==='ArrowUp'?-.08:e.key==='ArrowDown'?.08:0),-1.4,1.4);dirty=true; });
-  renderer.setAnimationLoop(() => {
+  renderer.setAnimationLoop((time) => {
     if(preview){
       const frame=frameKey();
       if(document.hidden||video.readyState<2||(!dirty&&frame===lastFrame))return;
@@ -64,10 +67,21 @@ export function createViewer(stage, video, { preview = false } = {}) {
     // Keep the sphere centered at the eyes even when the wearer walks.
     if(immersive){rig.updateWorldMatrix(true,false);renderer.xr.updateCamera(camera);sphere.position.copy(renderer.xr.getCamera().position).applyMatrix4(rig.matrixWorld);}
     else camera.getWorldPosition(sphere.position);
+    if(affect?.visible){
+      const eyes=immersive?renderer.xr.getCamera().cameras:[];
+      affectEye.copy(sphere.position);
+      if(eyes.length===2)affectEye.addVectors(eyes[0].position,eyes[1].position).multiplyScalar(.5).applyMatrix4(rig.matrixWorld);
+      affect.update(time,affectEye,immersive?renderer.xr.getSession()?.inputSources:undefined);
+    }
     renderer.render(scene,camera);
   });
   return {
     renderer,
+    setAffectPlacement(placement, enabled) {
+      if (!affect && !enabled) return;
+      affect ??= createAffectOverlay(scene);
+      affect.setPlacement(placement, enabled);
+    },
     recenter() {
       if(renderer.xr.isPresenting){
         // The look direction gives yaw and pitch without folding in head roll near vertical.
@@ -98,6 +112,6 @@ export function createViewer(stage, video, { preview = false } = {}) {
       catch (error) { await session.end().catch(()=>{}); throw error; }
       if(!isAllowed()&&renderer.xr.getSession()===session)await session.end();
     },
-    dispose() { observer.disconnect();renderer.setAnimationLoop(null);renderer.dispose();material.dispose();sphere.geometry.dispose();texture.dispose(); }
+    dispose() { observer.disconnect();renderer.setAnimationLoop(null);affect?.dispose();renderer.dispose();material.dispose();sphere.geometry.dispose();texture.dispose(); }
   };
 }

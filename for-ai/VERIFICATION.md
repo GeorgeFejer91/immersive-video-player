@@ -1,6 +1,12 @@
 # Verification record
 
-Updated 2026-11-09. Evidence is scoped to the named surface, not a universal product/hardware claim.
+Updated 2026-11-10. Evidence is scoped to the named surface, not a universal product/hardware claim.
+
+## Immersive Affect Tracker
+
+Local verification on `codex/affect-tracker` from `2bdcc62` passed 43 Node tests, the production build, the exact asset pins and the context check. All 28 Chromium scenarios passed with public VDO enabled on the checked-in preview. The new browser regression first failed on the missing accordion. Rendered WebGL pixels confirmed the default position, imported right/up displacement and larger diameter, rejection of an out-of-range file, and overlay removal.
+
+The four accordion groups fit the existing 320×560, 390×844, 640×390, 844×390, 800×480 and 1280×720 matrix. The new labels remained reachable at 320 px with 32 px root type and text-spacing overrides. Simulated stereo WebXR verified the radial panel followed head translation, faced the eye midpoint, and responded to the right thumbstick during native film playback. The film reset on Stop. Physical headset and thumbstick acceptance is pending.
 
 ## Click-to-approve beacon pairing
 

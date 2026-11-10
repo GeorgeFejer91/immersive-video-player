@@ -4,4 +4,5 @@
 public/vendor/** -text -whitespace
 public/licenses/** -text -whitespace
 src/remote/** -text -whitespace
+src/vendor/affect-tracker/** -text -whitespace
 public/downloads/*.apk -text

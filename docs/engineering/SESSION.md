@@ -1,7 +1,7 @@
-# Controller PWA and shared playback change scope
+# Immersive Affect Tracker change scope
 
 The active plan and acceptance evidence belong to `for-ai/PROJECT.md` and `for-ai/VERIFICATION.md`.
 
-Allowed changes: a per-peer BRSP host group, player integration, follower routes, PWA manifest/icons/service worker/install presentation, phone seek and reconnect behavior, focused unit/browser/network tests and the canonical control plane/docs. Preserve pinned BRSP/VDO/SDK bytes, film bytes, host authority, authentication, native activation and projection. No chat, media streaming, new backend/account, native APK changes or device operations.
+Scope covers the viewer accordion, placement profile validation, the Three.js overlay, the licensed Flubber math, and focused tests and documentation. Preserve media, playback, beacon pairing, BRSP/VDO/SDK, phone preview, and the local immersive-entry gesture.
 
-Initial state: branch `codex/multi-controller-pwa` from `25a3856`, carrying only the prior tasks' local control-plane receipts. Preserve those facts. The public signed APK remains optional; keys and device evidence stay private. For-AI PROJECT.md owns the plan, decisions, progress and handoff.
+Baseline is a clean `codex/affect-tracker` worktree at `2bdcc62`. The standard build and 41 Node tests passed. The source-quality multi-device buffering and physical Quest checks remain separate in the project checklist.
