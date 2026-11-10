@@ -8,6 +8,8 @@ Local verification on `codex/affect-tracker` from `2bdcc62` passed 43 Node tests
 
 The four accordion groups fit the existing 320×560, 390×844, 640×390, 844×390, 800×480 and 1280×720 matrix. The new labels remained reachable at 320 px with 32 px root type and text-spacing overrides. Simulated stereo WebXR verified the radial panel followed head translation, faced the eye midpoint, and responded to the right thumbstick during native film playback. The film reset on Stop. Physical headset and thumbstick acceptance is pending.
 
+Product `ba703c9` passed [Actions 42891974614](https://github.com/GeorgeFejer91/immersive-video-player/actions/runs/42891974614) and exact-SHA Pages deployment `7692992533`. CI staged the original-resolution film and passed all 23 deterministic browser checks. Both new Affect Tracker tests passed again over HTTPS. The live MP4 returned 206 for bytes 0 to 63 of 684,344,780.
+
 ## Click-to-approve beacon pairing
 
 Local PASS: 41 Node checks, exact asset pins, context check, production build, and all 26 Chromium scenarios with public VDO enabled. A scan opened before transmission and automatically requested approval. Controls stayed disabled while approval was pending. Canceling the first transmitter caused the scan to request the next beacon. The selected viewer approved and used the existing private playback and VR controls. An independent scenario proved a phone transmitting and a Quest-layout browser scanning, including an older local revision followed by the phone's fresh state. Playback handoff, interrupted transport recovery, and pre-VR buffering checks passed. The scan popup reflowed at 320 px and enlarged type, and Escape restored trigger focus. XR exit used simulated WebXR. Physical Quest acceptance is pending.

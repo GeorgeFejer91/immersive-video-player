@@ -9,7 +9,7 @@ Add an Affect Tracker group to the viewer controls and a flat Flubber inside the
 - [x] Sync the product to `2bdcc62`, preserve the earlier local test evidence, and review the Affect Tracker lineages.
 - [x] Implement a measured native accordion, live placement controls and versioned local JSON import.
 - [x] Verify radial placement, feedback input, keyboard and responsive layout, and playback through the production build.
-- [ ] Verify the Pages release.
+- [x] Verify the Pages release. Product `ba703c9` passed Actions `42891974614`, Pages deployment `7692992533` and both new HTTPS browser tests.
 - [ ] Repeat the immersive check on a physical Quest when a wearer is available.
 
 Playground supplies the WebXR Flubber and controller conventions. Research supplies the maintained BSD-licensed Flubber math and the right-positive, up-positive placement convention. Its P6 profile configures a flat video and feedback as one rig. The immersive player uses a dedicated three-angle profile for feedback inside a sphere. The Unity upstream documents a center-bottom position near −15°. [Playground WebXR](https://github.com/GeorgeFejer91/affect-tracker-playground/blob/91783c13f7af4ce6ddce787d04f514de5269f2f3/site/src/webxr-study.js), [Research XR geometry](https://github.com/GeorgeFejer91/affect-tracker-research/blob/06e017dce7307dd7a01e885773517a12f216cf07/site/src/research/xr-layout.js), [Unity AffectTracker](https://github.com/afourcade/AffectTracker).
